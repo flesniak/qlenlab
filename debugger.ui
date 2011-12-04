@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>debugger</class>
  <widget class="QDialog" name="debugger">
@@ -5,13 +6,127 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>450</width>
     <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Debugging</string>
   </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_command">
+     <property name="text">
+      <string>Befehl</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLabel" name="label_p1">
+     <property name="text">
+      <string>Parameter 1</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QLabel" name="label_p2">
+     <property name="text">
+      <string>Parameter 2</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QComboBox" name="comboBox_command">
+     <item>
+      <property name="text">
+       <string>69 64 0D 0A + &quot;id\n&quot;</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>dso_arm</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>dso_stop</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>sig_sin</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>dso_oft</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>dso_div</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>sig_squ</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>dso_cfg</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="lineEdit_p1">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QLineEdit" name="lineEdit_p2">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_protocol">
+     <property name="text">
+      <string>Protokoll</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QPushButton" name="pushButton_send">
+     <property name="text">
+      <string>Senden</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <widget class="QTextEdit" name="textEdit_protocol">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

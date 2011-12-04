@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "debugger.h"
+
 namespace Ui {
     class QLenLab;
 }
@@ -16,7 +18,11 @@ public:
     ~QLenLab();
 
 private:
+    debugger *debug;
     Ui::QLenLab *ui;
+
+private slots:
+    void show_debug();
 };
 
 #endif // QLENLAB_H

@@ -4,15 +4,18 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT += core gui
 
 TARGET = qlenlab
 TEMPLATE = app
+LIBS += -lstdc++
+
+SOURCES += main.cpp qlenlab.cpp \
+    debugger.cpp
+HEADERS += qlenlab.h \
+    debugger.h
+FORMS += qlenlab.ui \
+    debugger.ui
 
 
-SOURCES += main.cpp\
-        qlenlab.cpp
 
-HEADERS  += qlenlab.h
-
-FORMS    += qlenlab.ui
