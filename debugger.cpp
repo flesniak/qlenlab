@@ -1,3 +1,22 @@
+/************************************************************************
+ * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
+ *                                                                      *
+ * This file is part of the QLenLab project.                            *
+ *                                                                      *
+ * QLenLab is free software: you can redistribute it and/or modify      *
+ * it under the terms of the GNU General Public License as published by *
+ * the Free Software Foundation, either version 3 of the License, or    *
+ * (at your option) any later version.                                  *
+ *                                                                      *
+ * QLenLab is distributed in the hope that it will be useful,           *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
+ * GNU General Public License for more details.                         *
+ *                                                                      *
+ * You should have received a copy of the GNU General Public License    *
+ * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
+ ***********************************************************************/
+
 #include "debugger.h"
 #include "ui_debugger.h"
 
@@ -20,8 +39,8 @@ debugger::debugger(QWidget *parent) : QDialog(parent), ui(new Ui::debugger)
 {
     ui->setupUi(this);
 
-    connect(ui->comboBox_command,SIGNAL(currentIndexChanged(int)),SLOT(update_editfields(int)));
-    connect(ui->pushButton_send,SIGNAL(clicked()),SLOT(send_command()));
+    connect(ui->comboBox_command,SIGNAL(currentIndexChanged(int)),SLOT(updateEditfields(int)));
+    connect(ui->pushButton_send,SIGNAL(clicked()),SLOT(sendCommand()));
 }
 
 debugger::~debugger()
@@ -29,7 +48,7 @@ debugger::~debugger()
     delete ui;
 }
 
-void debugger::send_command()
+void debugger::sendCommand()
 {
     if( ui->comboBox_command->currentIndex() > 2 ) {
         if( ui->lineEdit_p1->text().isEmpty() )
@@ -65,12 +84,12 @@ void debugger::send_command()
     }
 }
 
-void debugger::process_incoming(QByteArray data)
+void debugger::processIncoming(QByteArray data)
 {
     ui->textEdit_protocol->append("< "+QString::fromLatin1(data));
 }
 
-void debugger::update_editfields(int index)
+void debugger::updateEditfields(int index)
 {
     if( index <= 2 ) {
         ui->lineEdit_p1->setEnabled(false);

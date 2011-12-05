@@ -17,18 +17,36 @@
  * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
  ***********************************************************************/
 
-#include <QtGui/QApplication>
-#include "qlenlab.h"
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
-int main(int argc, char *argv[])
-{
-    QApplication a(argc, argv);
-    QCoreApplication::setOrganizationName("QLenLab Project");
-    QCoreApplication::setOrganizationDomain("https://gitorious.org/qlenlab");
-    QCoreApplication::setApplicationName("QLenLab");
+#include <QDialog>
+#include <QString>
+#include <QSettings>
 
-    QLenLab w;
-    w.show();
-
-    return a.exec();
+namespace Ui {
+    class settingsdialog;
 }
+
+class settingsdialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit settingsdialog(QWidget *parent = 0);
+    ~settingsdialog();
+
+public slots:
+    int exec();
+
+private:
+    Ui::settingsdialog *ui;
+
+private slots:
+    void rescanDevices();
+    void connectSerial();
+    void accept();
+    void reject();
+};
+
+#endif // SETTINGSDIALOG_H

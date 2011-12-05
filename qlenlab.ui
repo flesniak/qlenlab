@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>609</width>
+    <width>611</width>
     <height>455</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>QLenLab</string>
+  </property>
+  <property name="dockOptions">
+   <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_3">
@@ -32,7 +35,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>609</width>
+     <width>611</width>
      <height>20</height>
     </rect>
    </property>
@@ -42,7 +45,6 @@
     </property>
     <addaction name="action_settings"/>
     <addaction name="separator"/>
-    <addaction name="action_debug"/>
     <addaction name="action_quit"/>
    </widget>
    <widget class="QMenu" name="menu_measurement">
@@ -51,8 +53,23 @@
     </property>
     <addaction name="action_start"/>
     <addaction name="action_stop"/>
+    <addaction name="action_debug"/>
+   </widget>
+   <widget class="QMenu" name="menu_interface">
+    <property name="title">
+     <string>Anzeige</string>
+    </property>
+    <widget class="QMenu" name="menu_docks">
+     <property name="title">
+      <string>Docks</string>
+     </property>
+     <addaction name="action_scope"/>
+     <addaction name="action_viewport"/>
+    </widget>
+    <addaction name="menu_docks"/>
    </widget>
    <addaction name="menu_lenlab"/>
+   <addaction name="menu_interface"/>
    <addaction name="menu_measurement"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -286,6 +303,9 @@
    </property>
   </action>
   <action name="action_stop">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Stoppen</string>
    </property>
@@ -293,6 +313,28 @@
   <action name="action_debug">
    <property name="text">
     <string>Debuggen...</string>
+   </property>
+  </action>
+  <action name="action_scope">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Oszilloskop</string>
+   </property>
+  </action>
+  <action name="action_viewport">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Anzeigeparameter</string>
    </property>
   </action>
  </widget>
