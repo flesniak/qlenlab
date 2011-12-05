@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>611</width>
-    <height>455</height>
+    <width>612</width>
+    <height>451</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,34 +17,24 @@
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_3">
-    <item row="0" column="0">
-     <widget class="QLabel" name="label_dummy">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="pixmap">
-       <pixmap>plotter-dummy.jpg</pixmap>
-      </property>
-     </widget>
-    </item>
-   </layout>
+   <layout class="QGridLayout" name="gridLayout_2"/>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>611</width>
+     <width>612</width>
      <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_lenlab">
     <property name="title">
-     <string>LENlab</string>
+     <string>QLenlab</string>
     </property>
     <addaction name="action_settings"/>
     <addaction name="separator"/>
+    <addaction name="action_about"/>
     <addaction name="action_quit"/>
    </widget>
    <widget class="QMenu" name="menu_measurement">
@@ -335,6 +325,11 @@
    </property>
    <property name="text">
     <string>Anzeigeparameter</string>
+   </property>
+  </action>
+  <action name="action_about">
+   <property name="text">
+    <string>Über QLenLab</string>
    </property>
   </action>
  </widget>

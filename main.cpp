@@ -18,6 +18,8 @@
  ***********************************************************************/
 
 #include <QtGui/QApplication>
+#include <QTextCodec>
+
 #include "qlenlab.h"
 
 int main(int argc, char *argv[])
@@ -26,6 +28,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName("QLenLab Project");
     QCoreApplication::setOrganizationDomain("https://gitorious.org/qlenlab");
     QCoreApplication::setApplicationName("QLenLab");
+    QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
     QLenLab w;
     w.show();

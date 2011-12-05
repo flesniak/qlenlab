@@ -19,7 +19,8 @@
 QT += core gui
 
 TARGET = qlenlab
-TEMPLATE = app
+#TEMPLATE = app
+CONFIG += qwt
 LIBS += -lstdc++
 
 SOURCES += main.cpp qlenlab.cpp \
@@ -31,9 +32,3 @@ HEADERS += qlenlab.h \
 FORMS += qlenlab.ui \
     debugger.ui \
     settingsdialog.ui
-
-
-
-
-
-

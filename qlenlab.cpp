@@ -22,10 +22,17 @@
 
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 {
+    ui->setupUi(this);
+
     debug = NULL;
     settingsdlg = NULL;
 
-    ui->setupUi(this);
+    tabWidget = new QTabWidget(this);
+    setCentralWidget(tabWidget);
+
+    plot = new QwtPlot(this);
+
+    tabWidget->addTab(plot,tr("Plot"));
 
     label_connectionstatus = new QLabel(this);
     setConnectionStatus(false);
@@ -40,6 +47,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 
     connect(ui->action_debug,SIGNAL(triggered()),SLOT(showDebug()));
     connect(ui->action_settings,SIGNAL(triggered()),SLOT(showSettings()));
+    connect(ui->action_about,SIGNAL(triggered()),SLOT(about()));
     connect(ui->action_quit,SIGNAL(triggered()),SLOT(quit()));
 
     QSettings settings;
@@ -48,6 +56,8 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 
     ui->action_viewport->setChecked(ui->dockWidget_viewport->isVisible());
     ui->action_scope->setChecked(ui->dockWidget_scope->isVisible());
+
+    QwtPlotCurve curve1;
 }
 
 QLenLab::~QLenLab()
@@ -84,7 +94,20 @@ void QLenLab::showDebug()
 void QLenLab::setConnectionStatus(bool connected)
 {
     if( connected )
-        label_connectionstatus->setText("<font color='green'><b>Verbunden</b></font>");
+        label_connectionstatus->setText(tr("<font color='green'><b>Verbunden</b></font>"));
     else
-        label_connectionstatus->setText("<font color='red'><b>Nicht verbunden</b></font>");
+        label_connectionstatus->setText(tr("<font color='red'><b>Nicht verbunden</b></font>"));
+}
+
+void QLenLab::about()
+{
+    QMessageBox::information(this,tr("Über QLenLab"),
+                             tr("QLenLab ist ein Softwareprojekt, das die Ansteuerung der Hardware-Platine LENlab des Instituts für Biomedizinische Technik (IBT, http://ibt.kit.edu) "
+                                "am Karlsruhe Institute of Technology (KIT) "
+                                "ermöglichen soll.\n\nEs steht in keinerlei Zusammenhang mit den Entwicklern dieser Platform. Die Nutzung von QLenLab erfolgt auf eigene Gefahr, "
+                                "allgemein gilt:\n\nQLenLab is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
+                                "the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n"
+                                "QLenLab is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. "
+                                "See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with QLenLab. "
+                                "If not, see <http://www.gnu.org/licenses/>.\n\nQLenLab is based in part on the work of the Qwt project (http://qwt.sf.net)."));
 }

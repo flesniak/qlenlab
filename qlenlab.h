@@ -23,7 +23,11 @@
 #include <QMainWindow>
 #include <QLabel>
 #include <QSettings>
-#include <QDebug>
+#include <QTabWidget>
+
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_curve.h>
 
 #include "debugger.h"
 #include "settingsdialog.h"
@@ -50,11 +54,14 @@ private:
     debugger *debug;
     settingsdialog *settingsdlg;
     QLabel *label_connectionstatus;
+    QTabWidget *tabWidget;
     Ui::QLenLab *ui;
+    QwtPlot *plot;
 
 private slots:
     void showDebug();
     void showSettings();
+    void about();
     void quit();
 };
 

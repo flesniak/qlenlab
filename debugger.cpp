@@ -52,9 +52,9 @@ void debugger::sendCommand()
 {
     if( ui->comboBox_command->currentIndex() > 2 ) {
         if( ui->lineEdit_p1->text().isEmpty() )
-            QMessageBox::critical(this,"Fehler","Parameter 1 darf nicht leer sein!");
+            QMessageBox::critical(this,tr("Fehler"),tr("Parameter 1 darf nicht leer sein!"));
         if( (ui->comboBox_command->currentIndex() > 5) & ui->lineEdit_p2->text().isEmpty() )
-            QMessageBox::critical(this,"Fehler","Parameter 2 darf nicht leer sein!");
+            QMessageBox::critical(this,tr("Fehler"),tr("Parameter 2 darf nicht leer sein!"));
     }
     switch(ui->comboBox_command->currentIndex()) {
     case 0 : //do_something
