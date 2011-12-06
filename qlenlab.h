@@ -22,15 +22,12 @@
 
 #include <QMainWindow>
 #include <QLabel>
-#include <QSettings>
 #include <QTabWidget>
-
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_curve.h>
-#include <qwt/qwt_plot_curve.h>
+#include <QString>
 
 #include "debugger.h"
 #include "settingsdialog.h"
+#include "plot.h"
 
 namespace Ui {
     class QLenLab;
@@ -51,14 +48,17 @@ protected:
     void closeEvent(QCloseEvent *);
 
 private:
+    void restoreSettings();
     debugger *debug;
     settingsdialog *settingsdlg;
     QLabel *label_connectionstatus;
     QTabWidget *tabWidget;
     Ui::QLenLab *ui;
-    QwtPlot *plot;
+    Plot *plot;
 
 private slots:
+    void viewportXChanged(QString);
+    void viewportYChanged();
     void showDebug();
     void showSettings();
     void about();

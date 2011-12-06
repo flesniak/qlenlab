@@ -209,13 +209,42 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLineEdit" name="lineEdit_xaxis">
-          <property name="minimumSize">
-           <size>
-            <width>40</width>
-            <height>0</height>
-           </size>
-          </property>
+         <widget class="QComboBox" name="comboBox_xaxis">
+          <item>
+           <property name="text">
+            <string>20</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>50</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>100</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>200</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>500</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>1000</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>2000</string>
+           </property>
+          </item>
          </widget>
         </item>
         <item>
@@ -235,28 +264,58 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QCheckBox" name="checkBox_yaxis_autoscale">
-          <property name="text">
-           <string>Autoscale</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QLineEdit" name="lineEdit_yaxis_a"/>
-          </item>
-          <item>
-           <widget class="QLabel" name="label_yaxis_dash">
-            <property name="text">
-             <string>-</string>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_yaxis_lower">
+            <property name="minimum">
+             <double>-35.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>35.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>-5.000000000000000</double>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_yaxis_b"/>
+           <widget class="QLabel" name="label_xaxis_unit_lower">
+            <property name="text">
+             <string>V -</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_yaxis_upper">
+            <property name="minimum">
+             <double>-35.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>35.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>5.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_xaxis_unit_upper">
+            <property name="text">
+             <string>V</string>
+            </property>
+           </widget>
           </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox_yaxis_autoscale">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Autoscale</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

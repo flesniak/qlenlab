@@ -25,10 +25,22 @@ LIBS += -lstdc++
 
 SOURCES += main.cpp qlenlab.cpp \
     debugger.cpp \
-    settingsdialog.cpp
+    settingsdialog.cpp \
+    plot.cpp \
+    signaldata.cpp \
+    lenlib.cpp
 HEADERS += qlenlab.h \
     debugger.h \
-    settingsdialog.h
+    settingsdialog.h \
+    plot.h \
+    signaldata.h \
+    lenlib.h
 FORMS += qlenlab.ui \
     debugger.ui \
     settingsdialog.ui
+
+
+
+
+
+

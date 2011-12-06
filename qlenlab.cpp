@@ -17,6 +17,8 @@
  * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
  ***********************************************************************/
 
+#include <QSettings>
+
 #include "qlenlab.h"
 #include "ui_qlenlab.h"
 
@@ -30,7 +32,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
 
-    plot = new QwtPlot(this);
+    plot = new Plot(this);
 
     tabWidget->addTab(plot,tr("Plot"));
 
@@ -40,22 +42,24 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 
     ui->action_quit->setIcon(QIcon::fromTheme("application-exit"));
 
+    connect(ui->comboBox_xaxis,SIGNAL(currentIndexChanged(QString)),SLOT(viewportXChanged(QString)));
+    connect(ui->doubleSpinBox_yaxis_lower,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
+    connect(ui->doubleSpinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
     connect(ui->action_viewport,SIGNAL(triggered(bool)),ui->dockWidget_viewport,SLOT(setShown(bool)));
     connect(ui->action_scope,SIGNAL(triggered(bool)),ui->dockWidget_scope,SLOT(setShown(bool)));
     connect(ui->dockWidget_viewport,SIGNAL(visibilityChanged(bool)),ui->action_viewport,SLOT(setChecked(bool)));
     connect(ui->dockWidget_scope,SIGNAL(visibilityChanged(bool)),ui->action_scope,SLOT(setChecked(bool)));
-
     connect(ui->action_debug,SIGNAL(triggered()),SLOT(showDebug()));
     connect(ui->action_settings,SIGNAL(triggered()),SLOT(showSettings()));
     connect(ui->action_about,SIGNAL(triggered()),SLOT(about()));
     connect(ui->action_quit,SIGNAL(triggered()),SLOT(quit()));
 
-    QSettings settings;
-    restoreGeometry(settings.value("mainwindow/geometry").toByteArray());
-    restoreState(settings.value("mainwindow/state").toByteArray(),1);
+    restoreSettings();
 
     ui->action_viewport->setChecked(ui->dockWidget_viewport->isVisible());
     ui->action_scope->setChecked(ui->dockWidget_scope->isVisible());
+    plot->updateViewportX(ui->comboBox_xaxis->currentText().toInt());
+    plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());
 
     QwtPlotCurve curve1;
 }
@@ -65,16 +69,59 @@ QLenLab::~QLenLab()
     delete ui;
 }
 
+void QLenLab::restoreSettings()
+{
+    QSettings settings;
+    restoreGeometry(settings.value("mainwindow/geometry").toByteArray());
+    restoreState(settings.value("mainwindow/state").toByteArray(),1);
+    int xaxis = settings.value("viewport/xaxis").toInt();
+    if( xaxis != 0 ) {
+        int index = ui->comboBox_xaxis->findText(QString::number(xaxis));
+        if( index == -1 ) {
+            ui->comboBox_xaxis->addItem(QString::number(index));
+            ui->comboBox_xaxis->setCurrentIndex(ui->comboBox_xaxis->count()-1);
+        }
+        else
+            ui->comboBox_xaxis->setCurrentIndex(index);
+    }
+    double yaxis_lower = settings.value("viewport/yaxis_lower").toDouble();
+    double yaxis_upper = settings.value("viewport/yaxis_upper").toDouble();
+    if( yaxis_lower < yaxis_upper) {
+        ui->doubleSpinBox_yaxis_lower->setValue(yaxis_lower);
+        ui->doubleSpinBox_yaxis_upper->setValue(yaxis_upper);
+    }
+}
+
 void QLenLab::closeEvent(QCloseEvent *)
 {
     QSettings settings;
     settings.setValue("mainwindow/geometry",saveGeometry());
     settings.setValue("mainwindow/state",saveState(1));
+    settings.setValue("viewport/xaxis",ui->comboBox_xaxis->currentText().toInt());
+    settings.setValue("viewport/yaxis_lower",ui->doubleSpinBox_yaxis_lower->value());
+    settings.setValue("viewport/yaxis_upper",ui->doubleSpinBox_yaxis_upper->value());
 }
 
 void QLenLab::quit()
 {
     close();
+}
+
+void QLenLab::viewportXChanged(QString str)
+{
+    bool ok;
+    int value = str.toInt(&ok);
+    if( ok )
+        plot->updateViewportX(value);
+}
+
+void QLenLab::viewportYChanged()
+{
+    double lower, upper;
+    lower = ui->doubleSpinBox_yaxis_lower->value();
+    upper = ui->doubleSpinBox_yaxis_upper->value();
+    if( lower < upper )
+        plot->updateViewportY(lower, upper);
 }
 
 void QLenLab::showSettings()
