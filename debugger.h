@@ -34,6 +34,7 @@ class debugger : public QDialog
 public:
     explicit debugger(QWidget *parent = 0);
     ~debugger();
+    bool openport(char*);
 
 public slots:
     void processIncoming(QByteArray data);

@@ -3,9 +3,6 @@
 
 #include <qwt/qwt_series_data.h>
 
-//class QRectF;
-//class QVector;
-
 class signaldata : public QwtSeriesData<QPointF>
 {
 public:

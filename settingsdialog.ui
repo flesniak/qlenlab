@@ -6,41 +6,36 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>246</width>
-    <height>125</height>
+    <width>242</width>
+    <height>176</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QGroupBox" name="groupBox_serialport">
      <property name="title">
       <string>Serieller Anschluss</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QComboBox" name="comboBox_serialport">
         <property name="editable">
          <bool>true</bool>
         </property>
-        <item>
-         <property name="text">
-          <string>Deaktiviert (debugging)</string>
-         </property>
-        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_rescan">
+        <property name="text">
+         <string>Geräte aktualisieren</string>
+        </property>
        </widget>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="pushButton_rescan">
-          <property name="text">
-           <string>Geräte aktualisieren</string>
-          </property>
-         </widget>
-        </item>
         <item>
          <widget class="QPushButton" name="pushButton_connect">
           <property name="text">
@@ -48,7 +43,24 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_disconnect">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Verbindung trennen</string>
+          </property>
+         </widget>
+        </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox_autoconnect">
+        <property name="text">
+         <string>Bei Start automatisch verbinden</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

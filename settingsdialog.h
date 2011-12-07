@@ -24,6 +24,8 @@
 #include <QString>
 #include <QSettings>
 
+class communicator;
+
 namespace Ui {
     class settingsdialog;
 }
@@ -33,20 +35,24 @@ class settingsdialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit settingsdialog(QWidget *parent = 0);
+    explicit settingsdialog(communicator* com, QWidget *parent = 0);
     ~settingsdialog();
 
 public slots:
     int exec();
+    void connectSerial();
+    void disconnectSerial();
+    void restoreSettings();
 
 private:
     Ui::settingsdialog *ui;
+    communicator* com;
 
 private slots:
     void rescanDevices();
-    void connectSerial();
     void accept();
     void reject();
+    void updateConnectButton(int);
 };
 
 #endif // SETTINGSDIALOG_H

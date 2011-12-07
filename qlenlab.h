@@ -27,9 +27,10 @@
 #include <QTabWidget>
 #include <QString>
 
-#include "debugger.h"
-#include "settingsdialog.h"
-#include "plot.h"
+class settingsdialog;
+class Plot;
+class communicator;
+class signaldata;
 
 namespace Ui {
     class QLenLab;
@@ -56,6 +57,8 @@ private:
     QTabWidget *tabWidget;
     Ui::QLenLab *ui;
     Plot *plot;
+    communicator* com;
+    signaldata* data;
     #ifdef USE_DEBUGGING_WINDOW
     debugger *debug;
     #endif

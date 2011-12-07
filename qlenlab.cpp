@@ -21,6 +21,11 @@
 
 #include "qlenlab.h"
 #include "ui_qlenlab.h"
+#include "signaldata.h"
+#include "debugger.h"
+#include "settingsdialog.h"
+#include "plot.h"
+#include "communicator.h"
 
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 {
@@ -31,16 +36,23 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
 
-    plot = new Plot(this);
-
-    tabWidget->addTab(plot,tr("Plot"));
+    data = new signaldata();
+    com = new communicator(data,this);
+    plot = new Plot(data,this);
+    settingsdlg = new settingsdialog(com,this);
 
     label_connectionstatus = new QLabel(this);
-    setConnectionStatus(false);
-    ui->statusBar->addWidget(label_connectionstatus);
+    tabWidget->addTab(plot,tr("Plot"));
+    ui->statusBar->addPermanentWidget(label_connectionstatus);
 
+    ui->action_settings->setIcon(QIcon::fromTheme("configure"));
     ui->action_quit->setIcon(QIcon::fromTheme("application-exit"));
 
+    connect(ui->checkBox_ch1,SIGNAL(toggled(bool)),com,SLOT(setchannel1active(bool)));
+    connect(ui->checkBox_ch2,SIGNAL(toggled(bool)),com,SLOT(setchannel2active(bool)));
+    connect(ui->checkBox_ch3,SIGNAL(toggled(bool)),com,SLOT(setchannel3active(bool)));
+    connect(ui->checkBox_ch4,SIGNAL(toggled(bool)),com,SLOT(setchannel4active(bool)));
+    connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
     connect(ui->comboBox_xaxis,SIGNAL(currentIndexChanged(QString)),SLOT(viewportXChanged(QString)));
     connect(ui->doubleSpinBox_yaxis_lower,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
     connect(ui->doubleSpinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
@@ -59,15 +71,14 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     ui->action_debug->setVisible(false);
     #endif
 
+    setConnectionStatus(false);
+    statusBar()->clearMessage();
     restoreSettings();
 
     ui->action_viewport->setChecked(ui->dockWidget_viewport->isVisible());
     ui->action_scope->setChecked(ui->dockWidget_scope->isVisible());
     plot->updateViewportX(ui->comboBox_xaxis->currentText().toInt());
-    plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());
-
-    QwtPlotCurve curve1;
-}
+    plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());}
 
 QLenLab::~QLenLab()
 {
@@ -95,6 +106,7 @@ void QLenLab::restoreSettings()
         ui->doubleSpinBox_yaxis_lower->setValue(yaxis_lower);
         ui->doubleSpinBox_yaxis_upper->setValue(yaxis_upper);
     }
+    settingsdlg->restoreSettings();
 }
 
 void QLenLab::closeEvent(QCloseEvent *)
@@ -131,8 +143,6 @@ void QLenLab::viewportYChanged()
 
 void QLenLab::showSettings()
 {
-    if( settingsdlg == NULL )
-        settingsdlg = new settingsdialog(this);
     settingsdlg->exec();
 }
 
@@ -147,10 +157,14 @@ void QLenLab::showDebug()
 
 void QLenLab::setConnectionStatus(bool connected)
 {
-    if( connected )
+    if( connected ) {
         label_connectionstatus->setText(tr("<font color='green'><b>Verbunden</b></font>"));
-    else
+        statusBar()->showMessage(tr("Verbunden mit: ")+com->getid(),5000);
+    }
+    else {
         label_connectionstatus->setText(tr("<font color='red'><b>Nicht verbunden</b></font>"));
+        statusBar()->showMessage(tr("Keine Verbindung zur Karte über Schnittstelle \"")+com->lastTriedPort()+"\"",5000);
+    }
 }
 
 void QLenLab::about()

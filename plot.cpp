@@ -1,14 +1,14 @@
 #include <QPalette>
 #include <QTimerEvent>
-#include <QDebug>
 
 #include <qwt/qwt_plot_grid.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
 
 #include "plot.h"
+#include "signaldata.h"
 
-Plot::Plot(QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0)
+Plot::Plot(signaldata* data, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), data(data)
 {
     setAxisTitle(QwtPlot::xBottom, "Zeit [ms]");
     setAxisTitle(QwtPlot::yLeft, "Spannung [V]");

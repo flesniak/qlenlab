@@ -34,17 +34,16 @@
 #define VDIV_2   2
 #define VDIV_10  3
 
-
 class lenboard {
 public:
     lenboard();
     ~lenboard();
-    
+
     int     openport(char* port);
     int     closeport();
-    
+
     char*   getid();
-    
+
     int     setsinusfrequency(unsigned int frequency);
     unsigned int getsinusfrequency();
     
@@ -52,7 +51,7 @@ public:
     int     setsquareratio(int ratio);
     unsigned int getsquarefrequency();
     int     getsquareratio();
-    
+
     int     setactivechannels(int channels);
     int     activatechannel(int channel, bool active);
     int     setvoltagedivision(int channel, int voltagedevision);
@@ -61,23 +60,23 @@ public:
     int     getvoltagedevision(int channel);
     int     getoffset(int channel);
     int     getchannelactive(int channel);
-    
+
     int     setsamplerate(long unsigned int samplerate);
     long unsigned int getsamplerate();
-    
+
     int     measure();
     void    stopmeasure();
     int     getvalue(int number, int channel);
     int     getvaluecount();
     unsigned char* getrawmeasurement();
-    
+
     void    freeme(bool checkrange);
 
 private:
     int     portsend(char* data, int length);
     unsigned char flagstonum(bool* flagarray);
     void    numtoflags(bool* flagarray, unsigned char number);
-    
+
     int     hserial;
     bool    checkrange;
     char    idstring[50];
@@ -88,7 +87,7 @@ private:
     bool    activechannels[4];
     int     vdivision[2];
     bool    offsetchannels[4];
-    
+
     unsigned char measurement[16500];
     unsigned char* measuredvalues;
     unsigned int measurementlenght;
