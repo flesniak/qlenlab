@@ -20,6 +20,8 @@
 #ifndef QLENLAB_H
 #define QLENLAB_H
 
+//#define USE_DEBUGGING_WINDOW
+
 #include <QMainWindow>
 #include <QLabel>
 #include <QTabWidget>
@@ -49,12 +51,14 @@ protected:
 
 private:
     void restoreSettings();
-    debugger *debug;
     settingsdialog *settingsdlg;
     QLabel *label_connectionstatus;
     QTabWidget *tabWidget;
     Ui::QLenLab *ui;
     Plot *plot;
+    #ifdef USE_DEBUGGING_WINDOW
+    debugger *debug;
+    #endif
 
 private slots:
     void viewportXChanged(QString);

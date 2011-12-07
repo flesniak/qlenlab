@@ -16,10 +16,9 @@
 # * You should have received a copy of the GNU General Public License    *
 # * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
 # ************************************************************************
-QT += core gui
 
+QT += core gui
 TARGET = qlenlab
-#TEMPLATE = app
 CONFIG += qwt
 LIBS += -lstdc++
 
@@ -27,20 +26,12 @@ SOURCES += main.cpp qlenlab.cpp \
     debugger.cpp \
     settingsdialog.cpp \
     plot.cpp \
-    signaldata.cpp \
-    lenlib.cpp
+    signaldata.cpp
 HEADERS += qlenlab.h \
     debugger.h \
     settingsdialog.h \
     plot.h \
-    signaldata.h \
-    lenlib.h
+    signaldata.h
 FORMS += qlenlab.ui \
     debugger.ui \
     settingsdialog.ui
-
-
-
-
-
-

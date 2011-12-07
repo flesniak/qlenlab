@@ -26,7 +26,6 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 {
     ui->setupUi(this);
 
-    debug = NULL;
     settingsdlg = NULL;
 
     tabWidget = new QTabWidget(this);
@@ -49,10 +48,16 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     connect(ui->action_scope,SIGNAL(triggered(bool)),ui->dockWidget_scope,SLOT(setShown(bool)));
     connect(ui->dockWidget_viewport,SIGNAL(visibilityChanged(bool)),ui->action_viewport,SLOT(setChecked(bool)));
     connect(ui->dockWidget_scope,SIGNAL(visibilityChanged(bool)),ui->action_scope,SLOT(setChecked(bool)));
-    connect(ui->action_debug,SIGNAL(triggered()),SLOT(showDebug()));
     connect(ui->action_settings,SIGNAL(triggered()),SLOT(showSettings()));
     connect(ui->action_about,SIGNAL(triggered()),SLOT(about()));
     connect(ui->action_quit,SIGNAL(triggered()),SLOT(quit()));
+
+    #ifdef USE_DEBUGGING_WINDOW
+    debug = NULL;
+    connect(ui->action_debug,SIGNAL(triggered()),SLOT(showDebug()));
+    #else
+    ui->action_debug->setVisible(false);
+    #endif
 
     restoreSettings();
 
@@ -133,9 +138,11 @@ void QLenLab::showSettings()
 
 void QLenLab::showDebug()
 {
+    #ifdef USE_DEBUGGING_WINDOW
     if( debug == NULL )
         debug = new debugger(this);
     debug->exec();
+    #endif
 }
 
 void QLenLab::setConnectionStatus(bool connected)
