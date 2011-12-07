@@ -26,12 +26,20 @@ SOURCES += main.cpp qlenlab.cpp \
     debugger.cpp \
     settingsdialog.cpp \
     plot.cpp \
-    signaldata.cpp
+    signaldata.cpp \
+    LENlib/LENlib.cpp \
+    communicator.cpp
 HEADERS += qlenlab.h \
     debugger.h \
     settingsdialog.h \
     plot.h \
-    signaldata.h
+    signaldata.h \
+    LENlib/LENlib.h \
+    communicator.h
 FORMS += qlenlab.ui \
     debugger.ui \
     settingsdialog.ui
+
+
+
+
