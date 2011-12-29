@@ -60,7 +60,7 @@ private:
     Plot *plot;
     communicator* com;
     signaldata* data;
-    QMutex
+    QMutex freqChanging;
     #ifdef USE_DEBUGGING_WINDOW
     debugger *debug;
     #endif
@@ -72,6 +72,8 @@ private slots:
     void freqSliderSqrChanged(int);
     void freqBoxSinChanged(int);
     void freqBoxSqrChanged(int);
+    void freqRangeSinChanged(int);
+    void freqRangeSqrChanged(int);
     void showDebug();
     void showSettings();
     void about();

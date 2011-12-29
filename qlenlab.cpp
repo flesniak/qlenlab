@@ -62,6 +62,8 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     connect(ui->slider_square,SIGNAL(valueChanged(int)),SLOT(freqSliderSqrChanged(int)));
     connect(ui->spinBox_sinus,SIGNAL(valueChanged(int)),SLOT(freqBoxSinChanged(int)));
     connect(ui->spinBox_square,SIGNAL(valueChanged(int)),SLOT(freqBoxSqrChanged(int)));
+    connect(ui->comboBox_range_sinus,SIGNAL(currentIndexChanged(int)),SLOT(freqRangeSinChanged(int)));
+    connect(ui->comboBox_range_square,SIGNAL(currentIndexChanged(int)),SLOT(freqRangeSqrChanged(int)));
 
     //connects for dockWidget_viewport
     connect(ui->comboBox_xaxis,SIGNAL(currentIndexChanged(QString)),SLOT(viewportXChanged(QString)));
@@ -177,29 +179,97 @@ void QLenLab::showDebug()
 void QLenLab::setConnectionStatus(bool connected)
 {
     if( connected ) {
-        label_connectionstatus->setText(tr("<font color='green'><b>Verbunden</b></font>"));
+        label_connectionstatus->setText("<font color='green'><b>"+tr("Verbunden")+"</b></font>");
         statusBar()->showMessage(tr("Verbunden mit: ")+com->getid(),5000);
     }
     else {
-        label_connectionstatus->setText(tr("<font color='red'><b>Nicht verbunden</b></font>"));
+        label_connectionstatus->setText("<font color='red'><b>"+tr("Nicht verbunden")+"</b></font>");
         statusBar()->showMessage(tr("Keine Verbindung zur Karte über Schnittstelle \"")+com->lastTriedPort()+"\"",5000);
     }
 }
 
 void QLenLab::freqSliderSinChanged(int value) {
-    ui->spinBox_sinus->setValue(round((1.0*9/1001)*value*value+(1+1.0*9/1001)*value));
+    if( freqChanging.tryLock() ) {
+        if( ui->comboBox_range_sinus->currentIndex() == 0 )
+            ui->spinBox_sinus->setValue(round(1.0*value*value/100+1));
+        else
+            ui->spinBox_sinus->setValue(value);
+        freqChanging.unlock();
+    }
 }
 
 void QLenLab::freqSliderSqrChanged(int value) {
-    ui->spinBox_square->setValue(round((1.0*9/1001)*value*value+(1+1.0*9/1001)*value));
+    if( freqChanging.tryLock() ) {
+        if( ui->comboBox_range_square->currentIndex() == 0 )
+            ui->spinBox_square->setValue(round(1.0*value*value/100+1));
+        else
+            ui->spinBox_square->setValue(value);
+        freqChanging.unlock();
+    }
 }
 
 void QLenLab::freqBoxSinChanged(int value) {
-    ui->slider_sinus->setValue(sqrt((value + (1.0*9/1001)*(1.0*9/1001)/(4.0*9/1001))/(1.0*9/1001)) - (1.0*9/1001)/(1+1.0*9/1001) );
+    if( freqChanging.tryLock() ) {
+        if( ui->comboBox_range_sinus->currentIndex() == 0 )
+            ui->slider_sinus->setValue(round(10.0*sqrt(value-(99.0/100))));
+        else
+            ui->slider_sinus->setValue(value);
+        freqChanging.unlock();
+    }
 }
 
 void QLenLab::freqBoxSqrChanged(int value) {
+    if( freqChanging.tryLock() ) {
+        if( ui->comboBox_range_square->currentIndex() == 0 )
+            ui->slider_square->setValue(round(10.0*sqrt(value-(99.0/100))));
+        else
+            ui->slider_square->setValue(value);
+        freqChanging.unlock();
+    }
+}
 
+void QLenLab::freqRangeSinChanged(int index)
+{
+    freqChanging.lock();
+    switch( index ) {
+    case 0 : ui->spinBox_sinus->setRange(1,10000);
+             ui->slider_sinus->setRange(1,1000);
+             break;
+    case 1 : ui->spinBox_sinus->setRange(1,100);
+             ui->slider_sinus->setRange(1,100);
+             break;
+    case 2 : ui->spinBox_sinus->setRange(100,1000);
+             ui->slider_sinus->setRange(100,1000);
+             break;
+    case 3 : ui->spinBox_sinus->setRange(1000,10000);
+             ui->slider_sinus->setRange(1000,10000);
+             break;
+    default: break;
+    }
+    freqChanging.unlock();
+    freqBoxSinChanged(ui->spinBox_sinus->value());
+}
+
+void QLenLab::freqRangeSqrChanged(int index)
+{
+    freqChanging.lock();
+    switch( index ) {
+    case 0 : ui->spinBox_square->setRange(1,10000);
+             ui->slider_square->setRange(1,1000);
+             break;
+    case 1 : ui->spinBox_square->setRange(1,100);
+             ui->slider_square->setRange(1,100);
+             break;
+    case 2 : ui->spinBox_square->setRange(100,1000);
+             ui->slider_square->setRange(100,1000);
+             break;
+    case 3 : ui->spinBox_square->setRange(1000,10000);
+             ui->slider_square->setRange(1000,10000);
+             break;
+    default: break;
+    }
+    freqChanging.unlock();
+    freqBoxSqrChanged(ui->spinBox_square->value());
 }
 
 void QLenLab::about()
