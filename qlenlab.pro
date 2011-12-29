@@ -20,7 +20,7 @@
 QT += core gui
 TARGET = qlenlab
 CONFIG += qwt
-LIBS += -lstdc++
+LIBS += -lstdc++ -lqwt
 
 SOURCES += main.cpp qlenlab.cpp \
     debugger.cpp \

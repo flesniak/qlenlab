@@ -48,18 +48,37 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     ui->action_settings->setIcon(QIcon::fromTheme("configure"));
     ui->action_quit->setIcon(QIcon::fromTheme("application-exit"));
 
+    //internal connects
+    connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
+
+    //connects for dockWidget_scope
     connect(ui->checkBox_ch1,SIGNAL(toggled(bool)),com,SLOT(setchannel1active(bool)));
     connect(ui->checkBox_ch2,SIGNAL(toggled(bool)),com,SLOT(setchannel2active(bool)));
     connect(ui->checkBox_ch3,SIGNAL(toggled(bool)),com,SLOT(setchannel3active(bool)));
     connect(ui->checkBox_ch4,SIGNAL(toggled(bool)),com,SLOT(setchannel4active(bool)));
-    connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
+
+    //connects for dockWidget_generator
+    connect(ui->slider_sinus,SIGNAL(valueChanged(int)),SLOT(freqSliderSinChanged(int)));
+    connect(ui->slider_square,SIGNAL(valueChanged(int)),SLOT(freqSliderSqrChanged(int)));
+    connect(ui->spinBox_sinus,SIGNAL(valueChanged(int)),SLOT(freqBoxSinChanged(int)));
+    connect(ui->spinBox_square,SIGNAL(valueChanged(int)),SLOT(freqBoxSqrChanged(int)));
+
+    //connects for dockWidget_viewport
     connect(ui->comboBox_xaxis,SIGNAL(currentIndexChanged(QString)),SLOT(viewportXChanged(QString)));
     connect(ui->doubleSpinBox_yaxis_lower,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
     connect(ui->doubleSpinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
+
+    //connects for dockWidget_trigger
+
+    //connect DockWidgets and corresponding menu actions
     connect(ui->action_viewport,SIGNAL(triggered(bool)),ui->dockWidget_viewport,SLOT(setShown(bool)));
     connect(ui->action_scope,SIGNAL(triggered(bool)),ui->dockWidget_scope,SLOT(setShown(bool)));
+    connect(ui->action_generator,SIGNAL(triggered(bool)),ui->dockWidget_generator,SLOT(setShown(bool)));
     connect(ui->dockWidget_viewport,SIGNAL(visibilityChanged(bool)),ui->action_viewport,SLOT(setChecked(bool)));
     connect(ui->dockWidget_scope,SIGNAL(visibilityChanged(bool)),ui->action_scope,SLOT(setChecked(bool)));
+    connect(ui->dockWidget_generator,SIGNAL(visibilityChanged(bool)),ui->action_generator,SLOT(setChecked(bool)));
+
+    //connect other menu actions
     connect(ui->action_settings,SIGNAL(triggered()),SLOT(showSettings()));
     connect(ui->action_about,SIGNAL(triggered()),SLOT(about()));
     connect(ui->action_quit,SIGNAL(triggered()),SLOT(quit()));
@@ -165,6 +184,22 @@ void QLenLab::setConnectionStatus(bool connected)
         label_connectionstatus->setText(tr("<font color='red'><b>Nicht verbunden</b></font>"));
         statusBar()->showMessage(tr("Keine Verbindung zur Karte über Schnittstelle \"")+com->lastTriedPort()+"\"",5000);
     }
+}
+
+void QLenLab::freqSliderSinChanged(int value) {
+    ui->spinBox_sinus->setValue(round((1.0*9/1001)*value*value+(1+1.0*9/1001)*value));
+}
+
+void QLenLab::freqSliderSqrChanged(int value) {
+    ui->spinBox_square->setValue(round((1.0*9/1001)*value*value+(1+1.0*9/1001)*value));
+}
+
+void QLenLab::freqBoxSinChanged(int value) {
+    ui->slider_sinus->setValue(sqrt((value + (1.0*9/1001)*(1.0*9/1001)/(4.0*9/1001))/(1.0*9/1001)) - (1.0*9/1001)/(1+1.0*9/1001) );
+}
+
+void QLenLab::freqBoxSqrChanged(int value) {
+
 }
 
 void QLenLab::about()

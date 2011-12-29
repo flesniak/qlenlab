@@ -26,6 +26,7 @@
 #include <QLabel>
 #include <QTabWidget>
 #include <QString>
+#include <QMutex>
 
 class settingsdialog;
 class Plot;
@@ -59,6 +60,7 @@ private:
     Plot *plot;
     communicator* com;
     signaldata* data;
+    QMutex
     #ifdef USE_DEBUGGING_WINDOW
     debugger *debug;
     #endif
@@ -66,6 +68,10 @@ private:
 private slots:
     void viewportXChanged(QString);
     void viewportYChanged();
+    void freqSliderSinChanged(int);
+    void freqSliderSqrChanged(int);
+    void freqBoxSinChanged(int);
+    void freqBoxSqrChanged(int);
     void showDebug();
     void showSettings();
     void about();

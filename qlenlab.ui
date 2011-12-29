@@ -47,16 +47,10 @@
     <property name="title">
      <string>Anzeige</string>
     </property>
-    <widget class="QMenu" name="menu_docks">
-     <property name="title">
-      <string>Docks</string>
-     </property>
-     <addaction name="action_oszi"/>
-     <addaction name="action_generator"/>
-     <addaction name="action_trigger"/>
-     <addaction name="action_viewport_2"/>
-    </widget>
-    <addaction name="menu_docks"/>
+    <addaction name="action_scope"/>
+    <addaction name="action_generator"/>
+    <addaction name="action_trigger"/>
+    <addaction name="action_viewport"/>
    </widget>
    <addaction name="menu_lenlab"/>
    <addaction name="menu_interface"/>
@@ -554,11 +548,6 @@
     </layout>
    </widget>
   </widget>
-  <action name="action_settings">
-   <property name="text">
-    <string>Einstellungen</string>
-   </property>
-  </action>
   <action name="action_quit">
    <property name="text">
     <string>Beenden</string>
@@ -582,56 +571,46 @@
     <string>Debuggen...</string>
    </property>
   </action>
+  <action name="action_about">
+   <property name="text">
+    <string>Über QLenLab</string>
+   </property>
+  </action>
   <action name="action_scope">
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="checked">
+   <property name="text">
+    <string>Oszilloskop</string>
+   </property>
+  </action>
+  <action name="action_generator">
+   <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Oszilloskop</string>
+    <string>Frequenzgenerator</string>
+   </property>
+  </action>
+  <action name="action_trigger">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Trigger</string>
    </property>
   </action>
   <action name="action_viewport">
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
    <property name="text">
     <string>Anzeigeparameter</string>
    </property>
   </action>
-  <action name="action_about">
+  <action name="action_settings">
    <property name="text">
-    <string>Über QLenLab</string>
-   </property>
-  </action>
-  <action name="actionText2">
-   <property name="text">
-    <string>Text2</string>
-   </property>
-  </action>
-  <action name="action_oszi">
-   <property name="text">
-    <string>Oszilloskop</string>
-   </property>
-  </action>
-  <action name="action_generator">
-   <property name="text">
-    <string>Frequenzgenerator</string>
-   </property>
-  </action>
-  <action name="action_trigger">
-   <property name="text">
-    <string>Trigger</string>
-   </property>
-  </action>
-  <action name="action_viewport_2">
-   <property name="text">
-    <string>Anzeigeparameter</string>
+    <string>Einstellungen</string>
    </property>
   </action>
  </widget>
