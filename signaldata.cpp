@@ -19,7 +19,7 @@ QRectF signaldata::boundingRect() const
     return cachedRect;
 }
 
-// We need absolute data here, means we have to rescale the char-values before calling signaldata::append! (done in lenlib)
+// We need absolute data here, means we have to rescale the char-values before calling signaldata::append! (afaik done in lenlib)
 void signaldata::append(const QPointF &pos)
 {
     data.append(pos);

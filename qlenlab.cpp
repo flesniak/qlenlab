@@ -30,15 +30,15 @@
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 {
     ui->setupUi(this);
+    setWindowTitle(tr("QLenLab %1").arg(version));
 
     settingsdlg = NULL;
 
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
 
-    data = new signaldata();
-    com = new communicator(data,this);
-    plot = new Plot(data,this);
+    com = new communicator(this);
+    plot = new Plot(com,this);
     settingsdlg = new settingsdialog(com,this);
 
     label_connectionstatus = new QLabel(this);
@@ -48,8 +48,10 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     ui->action_settings->setIcon(QIcon::fromTheme("configure"));
     ui->action_quit->setIcon(QIcon::fromTheme("application-exit"));
 
-    //internal connects
+    //various connects
     connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
+    connect(ui->action_start,SIGNAL(triggered()),SLOT(start()));
+    connect(ui->action_stop,SIGNAL(triggered()),SLOT(stop()));
 
     //connects for dockWidget_scope
     connect(ui->checkBox_ch1,SIGNAL(toggled(bool)),com,SLOT(setchannel1active(bool)));
@@ -59,11 +61,15 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 
     //connects for dockWidget_generator
     connect(ui->slider_sinus,SIGNAL(valueChanged(int)),SLOT(freqSliderSinChanged(int)));
+    connect(ui->slider_sinus,SIGNAL(sliderReleased()),SLOT(submitSinusFreq()));
     connect(ui->slider_square,SIGNAL(valueChanged(int)),SLOT(freqSliderSqrChanged(int)));
+    connect(ui->slider_sinus,SIGNAL(sliderReleased()),SLOT(submitSquareFreq()));
     connect(ui->spinBox_sinus,SIGNAL(valueChanged(int)),SLOT(freqBoxSinChanged(int)));
     connect(ui->spinBox_square,SIGNAL(valueChanged(int)),SLOT(freqBoxSqrChanged(int)));
     connect(ui->comboBox_range_sinus,SIGNAL(currentIndexChanged(int)),SLOT(freqRangeSinChanged(int)));
     connect(ui->comboBox_range_square,SIGNAL(currentIndexChanged(int)),SLOT(freqRangeSqrChanged(int)));
+    connect(ui->slider_square_ratio,SIGNAL(valueChanged(int)),SLOT(freqSliderSqrRatioChanged(int)));
+    connect(ui->slider_square_ratio,SIGNAL(sliderReleased()),SLOT(submitSquareRatio()));
 
     //connects for dockWidget_viewport
     connect(ui->comboBox_xaxis,SIGNAL(currentIndexChanged(QString)),SLOT(viewportXChanged(QString)));
@@ -71,6 +77,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     connect(ui->doubleSpinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(viewportYChanged()));
 
     //connects for dockWidget_trigger
+    ui->action_trigger->setVisible(false); //not implemented yet
 
     //connect DockWidgets and corresponding menu actions
     connect(ui->action_viewport,SIGNAL(triggered(bool)),ui->dockWidget_viewport,SLOT(setShown(bool)));
@@ -99,7 +106,8 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     ui->action_viewport->setChecked(ui->dockWidget_viewport->isVisible());
     ui->action_scope->setChecked(ui->dockWidget_scope->isVisible());
     plot->updateViewportX(ui->comboBox_xaxis->currentText().toInt());
-    plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());}
+    plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());
+}
 
 QLenLab::~QLenLab()
 {
@@ -142,7 +150,22 @@ void QLenLab::closeEvent(QCloseEvent *)
 
 void QLenLab::quit()
 {
+    com->closeport();
     close();
+}
+
+void QLenLab::start()
+{
+    com->start();
+    ui->action_start->setEnabled(false);
+    ui->action_stop->setEnabled(true);
+}
+
+void QLenLab::stop()
+{
+    com->stop();
+    ui->action_start->setEnabled(true);
+    ui->action_stop->setEnabled(false);
 }
 
 void QLenLab::viewportXChanged(QString str)
@@ -181,10 +204,14 @@ void QLenLab::setConnectionStatus(bool connected)
     if( connected ) {
         label_connectionstatus->setText("<font color='green'><b>"+tr("Verbunden")+"</b></font>");
         statusBar()->showMessage(tr("Verbunden mit: ")+com->getid(),5000);
+        ui->action_start->setEnabled(true);
+        ui->action_stop->setEnabled(false);
     }
     else {
         label_connectionstatus->setText("<font color='red'><b>"+tr("Nicht verbunden")+"</b></font>");
         statusBar()->showMessage(tr("Keine Verbindung zur Karte über Schnittstelle \"")+com->lastTriedPort()+"\"",5000);
+        ui->action_start->setEnabled(false);
+        ui->action_stop->setEnabled(false);
     }
 }
 
@@ -216,6 +243,7 @@ void QLenLab::freqBoxSinChanged(int value) {
             ui->slider_sinus->setValue(value);
         freqChanging.unlock();
     }
+    submitSinusFreq();
 }
 
 void QLenLab::freqBoxSqrChanged(int value) {
@@ -226,6 +254,7 @@ void QLenLab::freqBoxSqrChanged(int value) {
             ui->slider_square->setValue(value);
         freqChanging.unlock();
     }
+    submitSquareFreq();
 }
 
 void QLenLab::freqRangeSinChanged(int index)
@@ -270,6 +299,27 @@ void QLenLab::freqRangeSqrChanged(int index)
     }
     freqChanging.unlock();
     freqBoxSqrChanged(ui->spinBox_square->value());
+}
+
+void QLenLab::freqSliderSqrRatioChanged(int value)
+{
+    //ui->label_square_ratio->setText(QString::number(value)+":"+QString::number(ui->slider_square_ratio->maximum()-value+1));
+    ui->label_square_ratio->setText(QString::number(value)+"%");
+}
+
+void QLenLab::submitSinusFreq()
+{
+    com->setsinusfrequency(ui->spinBox_sinus->value());
+}
+
+void QLenLab::submitSquareFreq()
+{
+    com->setsquarefrequency(ui->spinBox_square->value());
+}
+
+void QLenLab::submitSquareRatio()
+{
+    com->setsquareratio(ui->slider_square_ratio->value());
 }
 
 void QLenLab::about()

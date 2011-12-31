@@ -4,21 +4,20 @@
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_interval.h>
-#include <qwt/qwt_plot_directpainter.h>
 
-class signaldata;
+class communicator;
 
 class Plot : public QwtPlot
 {
     Q_OBJECT
 public:
-    explicit Plot(signaldata* data, QWidget *parent = 0);
+    explicit Plot(communicator* data, QWidget *parent = 0);
 
 private:
     QwtInterval interval;
-    QwtPlotDirectPainter painter;
+    QwtPlotCurve* curve[4];
     int timerId;
-    signaldata* data;
+    communicator* com;
 
 protected:
     void timerEvent(QTimerEvent *event);

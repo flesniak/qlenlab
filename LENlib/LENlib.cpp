@@ -19,7 +19,6 @@
  * along with LENlib. If not, see <http://www.gnu.org/licenses/>.       *
  ***********************************************************************/
 
-
 #include "LENlib.h"
 #include <iostream>
 #include <dirent.h>

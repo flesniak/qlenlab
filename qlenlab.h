@@ -28,6 +28,8 @@
 #include <QString>
 #include <QMutex>
 
+#include "meta.h"
+
 class settingsdialog;
 class Plot;
 class communicator;
@@ -69,11 +71,17 @@ private slots:
     void viewportXChanged(QString);
     void viewportYChanged();
     void freqSliderSinChanged(int);
-    void freqSliderSqrChanged(int);
     void freqBoxSinChanged(int);
-    void freqBoxSqrChanged(int);
     void freqRangeSinChanged(int);
+    void submitSinusFreq();
+    void freqSliderSqrChanged(int);
+    void freqBoxSqrChanged(int);
     void freqRangeSqrChanged(int);
+    void freqSliderSqrRatioChanged(int);
+    void submitSquareFreq();
+    void submitSquareRatio();
+    void start();
+    void stop();
     void showDebug();
     void showSettings();
     void about();

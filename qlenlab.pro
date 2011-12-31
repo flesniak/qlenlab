@@ -35,10 +35,12 @@ HEADERS += qlenlab.h \
     plot.h \
     signaldata.h \
     LENlib/LENlib.h \
-    communicator.h
+    communicator.h \
+    meta.h
 FORMS += qlenlab.ui \
     debugger.ui \
     settingsdialog.ui
+
 
 
 
