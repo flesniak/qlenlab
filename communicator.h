@@ -19,39 +19,61 @@ public:
     bool closeport();
     bool connected() { return p_connected; }
     signaldata* getdata(char channel);
+    int activechannelcount() const;
 
 public slots:
     void stop();
 
     //making functions available as Qt slots
-    bool setsinusfrequency(unsigned int frequency);
-    bool setsquarefrequency(unsigned int frequency);
-    bool setsquareratio(int ratio);
-    bool setactivechannels(int channels);
-    bool activatechannel(int channel, bool active);
-    bool setvoltagedivision(int channel, int voltagedivision);
-    bool setoffsetchannel(int channel, bool active);
-    bool setoffset(int channels);
-    bool setsamplerate(long unsigned int samplerate);
+    bool setsinusfrequency(unsigned short frequency);
+    bool setsquarefrequency(unsigned short frequency);
+    bool setsquareratio(char ratio);
+    bool setactivechannels(char channels);
+    bool activatechannel(channel c, bool active);
+    bool setvoltagedivision(channel c, int voltagedivision);
+    bool setoffsetchannel(channel c, bool active);
+    bool setoffset(char channels);
+    bool setsamplerate(unsigned int samplerate);
 
     //some stuff for easier signal/slot handling
     bool setchannel1active(bool active);
     bool setchannel2active(bool active);
     bool setchannel3active(bool active);
     bool setchannel4active(bool active);
+    bool setchannel1offset(bool active);
+    bool setchannel2offset(bool active);
+    bool setchannel3offset(bool active);
+    bool setchannel4offset(bool active);
+    void setrange1(int index);
+    void setrange2(int index);
 
 private:
     portlist* p_portlist;
-    dataset p_data;
     QString p_lastTriedPort;
-    bool p_connected;
-    bool p_stop;
+    void setParameters();
 
 protected:
     void run();
+    dataset p_data;
+    bool p_connected;
+    bool p_stop;
+    char p_activechannels; // 4 lower bytes = activechannels, 4 higher bytes = channeloffset
+    bool p_activechannels_changed;
+    bool p_channeloffset_changed;
+    unsigned int p_samplerate;
+    bool p_samplerate_changed;
+    unsigned short p_sinusfrequency;
+    bool p_sinusfrequency_changed;
+    unsigned short p_squarefrequency;
+    bool p_squarefrequency_changed;
+    char p_squareratio;
+    bool p_squareratio_changed;
+    char p_voltagedivision;
+    bool p_voltagedivision_changed;
 
 signals:
     void connectionStateChanged(bool);
+    void newDataset();
 };
 
 #endif // COMMUNICATOR_H

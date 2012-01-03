@@ -55,6 +55,7 @@ protected:
 
 private:
     void restoreSettings();
+    void initCom();
     settingsdialog *settingsdlg;
     QLabel *label_connectionstatus;
     QTabWidget *tabWidget;
@@ -80,6 +81,7 @@ private slots:
     void freqSliderSqrRatioChanged(int);
     void submitSquareFreq();
     void submitSquareRatio();
+    void submitSampleRate(int);
     void start();
     void stop();
     void showDebug();

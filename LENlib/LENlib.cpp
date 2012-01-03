@@ -70,7 +70,7 @@ int lenboard::portsend(char* data, int length){
 	return 0;
 }
 
-unsigned char lenboard::flagstonum(bool* flagarray){
+unsigned char lenboard::flagstonum(bool* flagarray) const {
     unsigned char number = 0;
     if(flagarray[0])
         number += CH1A;
@@ -84,7 +84,7 @@ unsigned char lenboard::flagstonum(bool* flagarray){
     return number;
 }
 
-void lenboard::numtoflags(bool* flagarray, unsigned char number){
+void lenboard::numtoflags(bool* flagarray, unsigned char number) const {
     if(number >= 8){
         number -= 8;
         flagarray[3] = true;
@@ -175,7 +175,7 @@ int lenboard::closeport(){
 }
 
 
-char* lenboard::getid(){
+const char* lenboard::getid() const {
     if(hserial < 0)
         return NULL;
     return idstring;
@@ -197,7 +197,7 @@ int lenboard::setsinusfrequency(unsigned int freq){
     return 0;
 }
 
-unsigned int lenboard::getsinusfrequency(){
+unsigned int lenboard::getsinusfrequency() const {
     return sinusfrequency;
 }
 
@@ -216,7 +216,7 @@ int lenboard::setsquarefrequency(unsigned int freq){
     return 0;
 }
 
-unsigned int lenboard::getsquarefrequency(){
+unsigned int lenboard::getsquarefrequency() const {
     return squarefrequency;
 }
 
@@ -235,7 +235,7 @@ int lenboard::setsquareratio(int ratio){
     return 0;
 }
 
-int lenboard::getsquareratio(){
+int lenboard::getsquareratio() const {
     return squareratio;
 }
 
@@ -255,7 +255,7 @@ int lenboard::setsamplerate(unsigned long int sampless){
     return 0;
 }
 
-long unsigned int lenboard::getsamplerate(){
+long unsigned int lenboard::getsamplerate() const {
     return samplerate;
 }
 
@@ -306,7 +306,7 @@ int lenboard::activatechannel(int channel, bool active){
     return 0;
 }
 
-int lenboard::getchannelactive(int channel){
+int lenboard::getchannelactive(int channel) const {
     if(channel > 8 || channel < 1)
         return -1;
 
@@ -376,7 +376,7 @@ int lenboard::setoffset(int channels){
     return 0;
 }
 
-int lenboard::getoffset(int channel){
+int lenboard::getoffset(int channel) const {
     if(channel > 8 || channel < 1)
         return -1;
 
@@ -418,7 +418,7 @@ int lenboard::setvoltagedivision(int channel, int div){
     return 0;
 }
 
-int lenboard::getvoltagedevision(int channel){
+int lenboard::getvoltagedevision(int channel) const {
     if(channel != CH1 && channel != CH2)
         return -1;
 
@@ -492,15 +492,15 @@ int lenboard::measure(){
     return -1;
 }
 
-unsigned char* lenboard::getrawmeasurement(){
+unsigned char* lenboard::getrawmeasurement() const {
     return measuredvalues;
 }
 
-int lenboard::getvaluecount(){
+int lenboard::getvaluecount() const {
     return measurementlenght/((activechannels[0] ? 1 : 0)+(activechannels[1] ? 1 : 0)+(activechannels[2] ? 1 : 0)+(activechannels[3] ? 1 : 0));
 }
 
-int lenboard::getvalue(int count, int channel){
+int lenboard::getvalue(int count, int channel) const {
     int chnum = 0;
     switch(channel){
         case CH1A:

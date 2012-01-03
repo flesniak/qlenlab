@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>851</width>
-    <height>598</height>
+    <height>624</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,8 +65,54 @@
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_scope">
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="1" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_samplerate">
+       <property name="text">
+        <string>Samplerate</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="3">
+      <widget class="QComboBox" name="comboBox_samplerate">
+       <item>
+        <property name="text">
+         <string>400kHz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>200kHz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>125kHz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>100kHz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>50kHz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>10kHz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>1kHz</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="1">
       <widget class="QLabel" name="label_offset">
        <property name="toolTip">
         <string>Manuelles Offset. Addiert den eingestellten Wert in Volt auf die Spannung des Kanals.</string>
@@ -76,7 +122,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
+     <item row="1" column="2">
       <widget class="QLabel" name="label_alt">
        <property name="toolTip">
         <string>Macht den Eingang symmetrisch, d.h. es wird möglich, negative Spannungen zu messen.</string>
@@ -89,171 +135,178 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="1" column="3">
+      <widget class="QLabel" name="label_inv">
+       <property name="toolTip">
+        <string>Invertiert die Spannung des jeweiligen Kanals</string>
+       </property>
+       <property name="text">
+        <string>Invert</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
       <widget class="QCheckBox" name="checkBox_ch1">
        <property name="text">
         <string>Kanal 1</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1" colspan="2">
+     <item row="2" column="1">
       <widget class="QDoubleSpinBox" name="doubleSpinBox_ch1_offset"/>
      </item>
-     <item row="1" column="3">
+     <item row="2" column="2">
       <widget class="QCheckBox" name="checkBox_ch1_alt">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
+     <item row="2" column="3">
       <widget class="QCheckBox" name="checkBox_ch1_inv">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
+     <item row="3" column="0">
       <widget class="QCheckBox" name="checkBox_ch2">
        <property name="text">
         <string>Kanal 2</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1" colspan="2">
+     <item row="3" column="1">
       <widget class="QDoubleSpinBox" name="doubleSpinBox_ch2_offset"/>
      </item>
-     <item row="2" column="3">
+     <item row="3" column="2">
       <widget class="QCheckBox" name="checkBox_ch2_alt">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="2" column="4">
+     <item row="3" column="3">
       <widget class="QCheckBox" name="checkBox_ch2_inv">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QCheckBox" name="checkBox_ch3">
        <property name="text">
         <string>Kanal 3</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1" colspan="2">
+     <item row="4" column="1">
       <widget class="QDoubleSpinBox" name="doubleSpinBox_ch3_offset"/>
      </item>
-     <item row="3" column="3">
+     <item row="4" column="2">
       <widget class="QCheckBox" name="checkBox_ch3_alt">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="3" column="4">
+     <item row="4" column="3">
       <widget class="QCheckBox" name="checkBox_ch3_inv">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="6" column="0">
       <widget class="QCheckBox" name="checkBox_ch4">
        <property name="text">
         <string>Kanal 4</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1" colspan="2">
+     <item row="6" column="1">
       <widget class="QDoubleSpinBox" name="doubleSpinBox_ch4_offset"/>
      </item>
-     <item row="4" column="3">
+     <item row="6" column="2">
       <widget class="QCheckBox" name="checkBox_ch4_alt">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="4" column="4">
-      <widget class="QCheckBox" name="checkBox_ch4_inv">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
+     <item row="7" column="0" colspan="3">
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_range1">
+         <property name="text">
+          <string>Range 1/2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_range2">
+         <property name="text">
+          <string>Range 3/4</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QComboBox" name="comboBox_range2">
+         <property name="currentIndex">
+          <number>3</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>0.5x (1.6V)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1.0x (3.3V)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>2.0x (6.6V)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>10x (33V)</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="comboBox_range1">
+         <property name="currentIndex">
+          <number>3</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>0.5x (1.6V)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>1.0x (3.3V)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>2.0x (6.6V)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>10x (33V)</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
      </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_range1">
-       <property name="text">
-        <string>Range 1</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="2" colspan="2">
-      <widget class="QLabel" name="label_range2">
-       <property name="text">
-        <string>Range 2</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0" colspan="2">
-      <widget class="QComboBox" name="comboBox_range2">
-       <property name="currentIndex">
-        <number>3</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>0.5x (1.6V)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.0x (3.3V)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>2.0x (6.6V)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>10x (33V)</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="6" column="2" colspan="3">
-      <widget class="QComboBox" name="comboBox_range1">
-       <property name="currentIndex">
-        <number>3</number>
-       </property>
-       <item>
-        <property name="text">
-         <string>0.5x (1.6V)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.0x (3.3V)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>2.0x (6.6V)</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>10x (33V)</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <spacer name="verticalSpacer_2">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -266,13 +319,10 @@
        </property>
       </spacer>
      </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="label_inv">
-       <property name="toolTip">
-        <string>Invertiert die Spannung des jeweiligen Kanals</string>
-       </property>
+     <item row="6" column="3">
+      <widget class="QCheckBox" name="checkBox_ch4_inv">
        <property name="text">
-        <string>Invert</string>
+        <string/>
        </property>
       </widget>
      </item>

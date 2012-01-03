@@ -28,17 +28,24 @@ Plot::Plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
     grid->attach(this);
 
     curve[0] = new QwtPlotCurve(tr("Kanal 1"));
-    curve[0]->setData(com->getdata(0));
     curve[0]->attach(this);
     curve[1] = new QwtPlotCurve(tr("Kanal 2"));
-    curve[1]->setData(com->getdata(1));
     curve[1]->attach(this);
     curve[2] = new QwtPlotCurve(tr("Kanal 3"));
-    curve[2]->setData(com->getdata(2));
     curve[2]->attach(this);
     curve[3] = new QwtPlotCurve(tr("Kanal 4"));
-    curve[3]->setData(com->getdata(3));
     curve[3]->attach(this);
+
+    connect(com,SIGNAL(newDataset()),SLOT(setData()));
+}
+
+void Plot::setData()
+{
+    curve[0]->setData(com->getdata(0));
+    curve[1]->setData(com->getdata(1));
+    curve[2]->setData(com->getdata(2));
+    curve[3]->setData(com->getdata(3));
+    replot();
 }
 
 void Plot::updateViewportX(const int msecs)

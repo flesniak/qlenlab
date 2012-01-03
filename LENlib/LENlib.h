@@ -42,40 +42,40 @@ public:
     int     openport(char* port);
     int     closeport();
 
-    char*   getid();
+    const char*   getid() const ;
 
     int     setsinusfrequency(unsigned int frequency);
-    unsigned int getsinusfrequency();
+    unsigned int getsinusfrequency() const;
     
     int     setsquarefrequency(unsigned int frequency);
     int     setsquareratio(int ratio);
-    unsigned int getsquarefrequency();
-    int     getsquareratio();
+    unsigned int getsquarefrequency() const;
+    int     getsquareratio() const;
 
     int     setactivechannels(int channels);
     int     activatechannel(int channel, bool active);
     int     setvoltagedivision(int channel, int voltagedevision);
     int     setoffsetchannel(int channel, bool active);
     int     setoffset(int channels);
-    int     getvoltagedevision(int channel);
-    int     getoffset(int channel);
-    int     getchannelactive(int channel);
+    int     getvoltagedevision(int channel) const;
+    int     getoffset(int channel) const;
+    int     getchannelactive(int channel) const;
 
     int     setsamplerate(long unsigned int samplerate);
-    long unsigned int getsamplerate();
+    long unsigned int getsamplerate() const;
 
     int     measure();
     void    stopmeasure();
-    int     getvalue(int number, int channel);
-    int     getvaluecount();
-    unsigned char* getrawmeasurement();
+    int     getvalue(int number, int channel) const;
+    int     getvaluecount() const;
+    unsigned char* getrawmeasurement() const;
 
     void    freeme(bool checkrange);
 
 private:
     int     portsend(char* data, int length);
-    unsigned char flagstonum(bool* flagarray);
-    void    numtoflags(bool* flagarray, unsigned char number);
+    unsigned char flagstonum(bool* flagarray) const;
+    void    numtoflags(bool* flagarray, unsigned char number) const;
 
     int     hserial;
     bool    checkrange;

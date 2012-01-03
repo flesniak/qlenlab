@@ -50,20 +50,25 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 
     //various connects
     connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
-    connect(ui->action_start,SIGNAL(triggered()),SLOT(start()));
-    connect(ui->action_stop,SIGNAL(triggered()),SLOT(stop()));
 
     //connects for dockWidget_scope
+    connect(ui->comboBox_samplerate,SIGNAL(currentIndexChanged(int)),SLOT(submitSampleRate(int)));
     connect(ui->checkBox_ch1,SIGNAL(toggled(bool)),com,SLOT(setchannel1active(bool)));
     connect(ui->checkBox_ch2,SIGNAL(toggled(bool)),com,SLOT(setchannel2active(bool)));
     connect(ui->checkBox_ch3,SIGNAL(toggled(bool)),com,SLOT(setchannel3active(bool)));
     connect(ui->checkBox_ch4,SIGNAL(toggled(bool)),com,SLOT(setchannel4active(bool)));
+    connect(ui->checkBox_ch1_alt,SIGNAL(toggled(bool)),com,SLOT(setchannel1offset(bool)));
+    connect(ui->checkBox_ch2_alt,SIGNAL(toggled(bool)),com,SLOT(setchannel2offset(bool)));
+    connect(ui->checkBox_ch3_alt,SIGNAL(toggled(bool)),com,SLOT(setchannel3offset(bool)));
+    connect(ui->checkBox_ch4_alt,SIGNAL(toggled(bool)),com,SLOT(setchannel4offset(bool)));
+    connect(ui->comboBox_range1,SIGNAL(currentIndexChanged(int)),com,SLOT(setrange1(int)));
+    connect(ui->comboBox_range2,SIGNAL(currentIndexChanged(int)),com,SLOT(setrange2(int)));
 
     //connects for dockWidget_generator
     connect(ui->slider_sinus,SIGNAL(valueChanged(int)),SLOT(freqSliderSinChanged(int)));
     connect(ui->slider_sinus,SIGNAL(sliderReleased()),SLOT(submitSinusFreq()));
     connect(ui->slider_square,SIGNAL(valueChanged(int)),SLOT(freqSliderSqrChanged(int)));
-    connect(ui->slider_sinus,SIGNAL(sliderReleased()),SLOT(submitSquareFreq()));
+    connect(ui->slider_square,SIGNAL(sliderReleased()),SLOT(submitSquareFreq()));
     connect(ui->spinBox_sinus,SIGNAL(valueChanged(int)),SLOT(freqBoxSinChanged(int)));
     connect(ui->spinBox_square,SIGNAL(valueChanged(int)),SLOT(freqBoxSqrChanged(int)));
     connect(ui->comboBox_range_sinus,SIGNAL(currentIndexChanged(int)),SLOT(freqRangeSinChanged(int)));
@@ -91,6 +96,8 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     connect(ui->action_settings,SIGNAL(triggered()),SLOT(showSettings()));
     connect(ui->action_about,SIGNAL(triggered()),SLOT(about()));
     connect(ui->action_quit,SIGNAL(triggered()),SLOT(quit()));
+    connect(ui->action_start,SIGNAL(triggered()),SLOT(start()));
+    connect(ui->action_stop,SIGNAL(triggered()),SLOT(stop()));
 
     #ifdef USE_DEBUGGING_WINDOW
     debug = NULL;
@@ -107,11 +114,26 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     ui->action_scope->setChecked(ui->dockWidget_scope->isVisible());
     plot->updateViewportX(ui->comboBox_xaxis->currentText().toInt());
     plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());
+
+    initCom();
 }
 
 QLenLab::~QLenLab()
 {
     delete ui;
+}
+
+void QLenLab::initCom()
+{
+    qDebug() << "[qlenlab] init communicator";
+    com->setactivechannels(ui->checkBox_ch1->isChecked() ? ch1a : 0 + ui->checkBox_ch2->isChecked() ? ch1b : 0 + ui->checkBox_ch3->isChecked() ? ch2a : 0 + ui->checkBox_ch4->isChecked() ? ch2b : 0);
+    com->setoffset(ui->checkBox_ch1_alt->isChecked() ? ch1a : 0 + ui->checkBox_ch2_alt->isChecked() ? ch1b : 0 + ui->checkBox_ch3_alt->isChecked() ? ch2a : 0 + ui->checkBox_ch4_alt->isChecked() ? ch2b : 0);
+    submitSinusFreq();
+    submitSquareFreq();
+    submitSquareRatio();
+    submitSampleRate(ui->comboBox_samplerate->currentIndex());
+    com->setrange1(ui->comboBox_range1->currentIndex());
+    com->setrange2(ui->comboBox_range2->currentIndex());
 }
 
 void QLenLab::restoreSettings()
@@ -241,9 +263,9 @@ void QLenLab::freqBoxSinChanged(int value) {
             ui->slider_sinus->setValue(round(10.0*sqrt(value-(99.0/100))));
         else
             ui->slider_sinus->setValue(value);
+        submitSinusFreq();
         freqChanging.unlock();
     }
-    submitSinusFreq();
 }
 
 void QLenLab::freqBoxSqrChanged(int value) {
@@ -252,9 +274,9 @@ void QLenLab::freqBoxSqrChanged(int value) {
             ui->slider_square->setValue(round(10.0*sqrt(value-(99.0/100))));
         else
             ui->slider_square->setValue(value);
+        submitSquareFreq();
         freqChanging.unlock();
     }
-    submitSquareFreq();
 }
 
 void QLenLab::freqRangeSinChanged(int index)
@@ -320,6 +342,36 @@ void QLenLab::submitSquareFreq()
 void QLenLab::submitSquareRatio()
 {
     com->setsquareratio(ui->slider_square_ratio->value());
+}
+
+
+void QLenLab::submitSampleRate(int index)
+{
+    switch(index) {
+    case 0 : if( com->activechannelcount() <= 1 )
+                 com->setsamplerate(400000);
+             else
+                 ui->comboBox_samplerate->setCurrentIndex(1);
+             break;
+    case 1 : if( com->activechannelcount() <= 2 )
+                 com->setsamplerate(200000);
+             else
+                 ui->comboBox_samplerate->setCurrentIndex(2);
+             break;
+    case 2 : if( com->activechannelcount() <= 3 )
+                 com->setsamplerate(125000);
+             else
+                 ui->comboBox_samplerate->setCurrentIndex(3);
+             break;
+    case 3 : com->setsamplerate(100000);
+             break;
+    case 4 : com->setsamplerate(50000);
+             break;
+    case 5 : com->setsamplerate(10000);
+             break;
+    case 6 : com->setsamplerate(1000);
+             break;
+    }
 }
 
 void QLenLab::about()
