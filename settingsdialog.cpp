@@ -77,7 +77,7 @@ void settingsdialog::rescanDevices()
 void settingsdialog::connectSerial()
 {
     int index = ui->comboBox_serialport->currentIndex();
-    if( index > 0 && ( (com->lastTriedPort().toAscii().data() != ui->comboBox_serialport->currentText()) && !com->connected() ) ) //Only try to connect if we aren't already connected or change the device
+    if( index > 0 && ( (com->lastTriedPort() != ui->comboBox_serialport->currentText()) || !com->connected() ) ) //Only try to connect if we aren't already connected or change the device
     {
         com->closeport();
     //if( index > com->portList()->count() )

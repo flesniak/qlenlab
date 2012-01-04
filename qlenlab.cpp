@@ -172,7 +172,7 @@ void QLenLab::closeEvent(QCloseEvent *)
 
 void QLenLab::quit()
 {
-    com->closeport();
+    delete com;
     close();
 }
 

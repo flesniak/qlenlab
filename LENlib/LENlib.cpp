@@ -432,7 +432,6 @@ int lenboard::getvoltagedevision(int channel) const {
     return -1;
 }
 
-
 void lenboard::stopmeasure(){
     if(hserial < 0)
         return;

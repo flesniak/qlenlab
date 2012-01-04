@@ -1,5 +1,25 @@
+/************************************************************************
+ * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
+ *                                                                      *
+ * This file is part of the QLenLab project.                            *
+ *                                                                      *
+ * QLenLab is free software: you can redistribute it and/or modify      *
+ * it under the terms of the GNU General Public License as published by *
+ * the Free Software Foundation, either version 3 of the License, or    *
+ * (at your option) any later version.                                  *
+ *                                                                      *
+ * QLenLab is distributed in the hope that it will be useful,           *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
+ * GNU General Public License for more details.                         *
+ *                                                                      *
+ * You should have received a copy of the GNU General Public License    *
+ * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
+ ***********************************************************************/
+
 #include <QPalette>
 #include <QTimerEvent>
+#include <QPen>
 
 #include <qwt/qwt_plot_grid.h>
 #include <qwt/qwt_plot_canvas.h>
@@ -28,6 +48,7 @@ Plot::Plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
     grid->attach(this);
 
     curve[0] = new QwtPlotCurve(tr("Kanal 1"));
+    curve[0]->setPen(QPen(QColor::fromRgb(255,255,0)));
     curve[0]->attach(this);
     curve[1] = new QwtPlotCurve(tr("Kanal 2"));
     curve[1]->attach(this);
@@ -35,16 +56,16 @@ Plot::Plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
     curve[2]->attach(this);
     curve[3] = new QwtPlotCurve(tr("Kanal 4"));
     curve[3]->attach(this);
+    curve[0]->setData(com->getdata(0));
+    curve[1]->setData(com->getdata(1));
+    curve[2]->setData(com->getdata(2));
+    curve[3]->setData(com->getdata(3));
 
     connect(com,SIGNAL(newDataset()),SLOT(setData()));
 }
 
 void Plot::setData()
 {
-    curve[0]->setData(com->getdata(0));
-    curve[1]->setData(com->getdata(1));
-    curve[2]->setData(com->getdata(2));
-    curve[3]->setData(com->getdata(3));
     replot();
 }
 

@@ -1,8 +1,28 @@
+/************************************************************************
+ * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
+ *                                                                      *
+ * This file is part of the QLenLab project.                            *
+ *                                                                      *
+ * QLenLab is free software: you can redistribute it and/or modify      *
+ * it under the terms of the GNU General Public License as published by *
+ * the Free Software Foundation, either version 3 of the License, or    *
+ * (at your option) any later version.                                  *
+ *                                                                      *
+ * QLenLab is distributed in the hope that it will be useful,           *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
+ * GNU General Public License for more details.                         *
+ *                                                                      *
+ * You should have received a copy of the GNU General Public License    *
+ * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
+ ***********************************************************************/
+
 #include "communicator.h"
 #include "signaldata.h"
 
 #include <QPointF>
 #include <QDebug>
+#include <QDateTime>
 
 communicator::communicator(QObject *parent) : QThread(parent)
 {
@@ -25,32 +45,55 @@ communicator::communicator(QObject *parent) : QThread(parent)
     p_squareratio_changed = false;
 }
 
+communicator::~communicator()
+{
+    closeport();
+}
+
 void communicator::run()
 {
     qDebug() << "[communicator] measure loop started";
     p_stop = false;
     while( !p_stop )
     {
-        qDebug() << "[communicator] committing configuration";
         setParameters();
-        qDebug() << "[communicator] measure";
         measure();
-        qDebug() << "[communicator] measure finished, mapping data...";
-        if( getchannelactive(CH1A) )
+        p_data.channel1->clear();
+        p_data.channel2->clear();
+        p_data.channel3->clear();
+        p_data.channel4->clear();
+        if( getchannelactive(ch1a) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel1->append(QPointF(1.0*i*(1/getsamplerate()),getvalue(i,CH1A)));
-        if( getchannelactive(CH1B) )
+                p_data.channel1->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch1a)));
+        if( getchannelactive(ch1b) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel2->append(QPointF(1.0*i*(1/getsamplerate()),getvalue(i,CH1B)));
-        if( getchannelactive(CH2A) )
+                p_data.channel2->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch1b)));
+        if( getchannelactive(ch2a) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel3->append(QPointF(1.0*i*(1/getsamplerate()),getvalue(i,CH2A)));
-        if( getchannelactive(CH2B) )
+                p_data.channel3->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch2a)));
+        if( getchannelactive(ch2b) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel4->append(QPointF(1.0*i*(1/getsamplerate()),getvalue(i,CH2B)));
-        qDebug() << "[communicator] mapping data finished, redraw!";
+                p_data.channel4->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch2b)));
         emit newDataset();
+        qDebug() << QDateTime::currentDateTime() << "[communicator] measurement complete";
     }
+    qDebug() << "[communicator] measure loop stopped";
+}
+
+float communicator::getvalue(int number, channel c) const
+{
+    float value = lenboard::getvalue(number,(int)c);
+    if( getoffset((int)c) > 0 )
+        value -= 127; //127; 127.5; 128???
+    switch( getoffset((int)c) ) {
+    case 0 : value *= 0.5;
+             break;
+    case 2 : value *= 2;
+             break;
+    case 3 : value *= 10;
+    default : break;
+    }
+    return value;
 }
 
 void communicator::stop()
@@ -77,6 +120,7 @@ bool communicator::openport(char *port)
     lastTriedPort() = QString::fromAscii(port);
     p_connected = lenboard::openport(port) >= 0;
     emit connectionStateChanged(p_connected);
+    qDebug() << "[communicator] opening port" << (p_connected ? "successful" : "failed");
     return p_connected;
 }
 
@@ -102,10 +146,10 @@ void communicator::setParameters()
 {
     qDebug() << "[communicator] setting cached measure parameters";
     if( p_activechannels_changed )
-        if( lenboard::setactivechannels( (p_activechannels & 1) ? ch1a : 0 + (p_activechannels & 2) ? ch1b : 0 + (p_activechannels & 4) ? ch2a : 0 + (p_activechannels & 8) ? ch2b : 0) )
+        if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
             qDebug() << "[communicator] setting active channels failed";
     if( p_channeloffset_changed )
-        if( lenboard::setoffset( (p_activechannels >> 4 & 1) ? ch1a : 0 + (p_activechannels >> 4 & 2) ? ch1b : 0 + (p_activechannels >> 4 & 4) ? ch2a : 0 + (p_activechannels >> 4 & 8) ? ch2b : 0) )
+        if( lenboard::setoffset( p_activechannels >> 4 ) )
             qDebug() << "[communicator] setting channel offset failed";
     if( p_samplerate_changed )
         if( lenboard::setsamplerate(p_samplerate) )
@@ -120,7 +164,7 @@ void communicator::setParameters()
         if( lenboard::setsquareratio(p_squareratio) )
             qDebug() << "[communicator] setting square ratio failed";
     if( p_voltagedivision_changed )
-        if( lenboard::setvoltagedivision(CH1,p_voltagedivision & 3) || lenboard::setvoltagedivision(CH2,p_voltagedivision >> 2 & 3) )
+        if( lenboard::setvoltagedivision(CH1,p_voltagedivision & 3) | lenboard::setvoltagedivision(CH2,p_voltagedivision >> 2 & 3) )
             qDebug() << "[communicator] setting voltagedivision failed";
 
 }
@@ -150,7 +194,7 @@ bool communicator::setsquarefrequency(unsigned short frequency)
         return false;
 }
 
-bool communicator::setsquareratio(char ratio)
+bool communicator::setsquareratio(unsigned char ratio)
 {
     qDebug() << "[communicator] set square ratio" << (int)ratio;
     if( p_squareratio != ratio ) {
@@ -162,7 +206,7 @@ bool communicator::setsquareratio(char ratio)
         return false;
 }
 
-bool communicator::setactivechannels(char channels)
+bool communicator::setactivechannels(unsigned char channels)
 {
     qDebug() << "[communicator] set active channels" << (int)channels;
     if( p_activechannels != channels ) {
@@ -189,7 +233,7 @@ bool communicator::activatechannel(channel c, bool active)
         return false;
 }
 
-bool communicator::setvoltagedivision(channel c, int voltagedivision)
+bool communicator::setvoltagedivision(channel c, unsigned char voltagedivision)
 {
     qDebug() << "[communicator] set channel" << c << "voltagedivision" << voltagedivision;
     switch( c ) {
@@ -217,7 +261,7 @@ void communicator::setrange2(int index)
 bool communicator::setoffsetchannel(channel c, bool active)
 {
     qDebug() << "[communicator] set channel" << c << "offset" << active;
-    int c_i = c << 4;
+    unsigned char c_i = c << 4;
     if( ((p_activechannels & c_i) > 0) != active ) {
         if( active )
             p_activechannels |= c_i;
@@ -230,11 +274,11 @@ bool communicator::setoffsetchannel(channel c, bool active)
         return false;
 }
 
-bool communicator::setoffset(char channels)
+bool communicator::setoffset(unsigned char channels)
 {
     qDebug() << "[communicator] set active channel offset" << (int)channels;
     if( p_activechannels >> 4 != channels ) {
-        p_activechannels = 4*channels;
+        p_activechannels = channels << 4;
         p_activechannels_changed = true;
         return true;
     }
