@@ -1,0 +1,94 @@
+Schnittstelle: RS232
+
+Baud: 115200
+Datenbits: 8
+Parität: None
+Stopbits: 1
+
+
+Anmerkungen:
+"\n" = CR+LF (Microsoft) => "\x0D\x0A"
+Befehl an Controller: >
+Antwort vom Controller: <
+
+
+Initialisierung:
+> 69 64 0D 0A	"id\n"		// Der Controller verschluckt den ersten Befehl, antwort nach 2. Befehl
+< "LEN-Hardwaremodul v3.1\n"
+> "sig_squ 1000 50\n"> "sig_sin 1000\n"> "dso_oft 15\n"
+
+
+
+Befehle:
+
+> "sig_sin 1000\n"
+// Ausgangssignal Sinus steuern
+// sig_sin Frequenz[1-10000]
+< none
+
+> "sig_squ 1000 50\n"
+// Ausgangssignal Rechteck steuern
+// sig_squ Frequenz[1-10000] Tastverhältnis[1-99]
+// Beim Tastverhältnis steht 1 für kurze und 99 für lange Einschaltzeiten
+< none
+
+> "dso_arm\n"
+// Messung starten
+< Header+Messdaten
+// Header: 0xDEADBEEF 32bit:dso_cfg(Samplerate) 8bit:dso_cfg(Kanal-schlüsselzahl)
+// 	Ja: wirklich DEAD BEEF !! Nennt sich HexSpeak.
+// Messdaten bis ende 8bit/unsigned
+// Länge der gesamten Nachricht: 0x3E6C Byte = 15980 Byte
+// Bei mehreren Kanälen werden die Werte kontinuierlich nacheinander übertragen, beginnend
+// mit "Kanal I A" also nach dem Schema:
+// Header "Kanal I A" "Kanal I B" "Kanal II A" "Kanal II B" "Kanal I A" usw...
+
+> "dso_stop\n"
+// Messung stoppen
+< none
+
+> "dso_cfg 1 400000\n"
+// Messung konfigurieren
+// dso_cfg Kanäle[1...15] Samplerate[1000-400000]
+// Den Kanälen sind Werte zugewiesen, die dann aufaddiert angeben, welche Kanäle aktiv sind:
+// Kanal I A:  1
+// Kanal I B:  2
+// Kanal II A: 4
+// Kanal II B: 8
+// Beispiel: "Kanal I A" und "Kanal II A" sollen aktiv sein: 1+4 = 5 -> dso_cfg 5 [1000-400000]
+// Achtung: Samplerate bei:
+// 1 Kanal   max. 400000
+// 2 Kanälen max. 200000
+// 3 Kanälen max. 125000
+// 4 Kanälen max. 100000
+<
+
+> "dso_div 5\n"
+// Eingangsverstärker konfigurieren
+// dso_div Verstärkung[0...15]
+// Gesteuert werden beide Verstärker (Kanal I und II). Den Verstärkungsstufen sind dabei Werte zugeordnet,
+// addiert die einstellung ergeben:
+// Kanal: 	I		II
+// 0.5x		0		0
+//   1x		1		4
+//   4x		2		8
+//  10x		3		12
+// 
+// Beipiel: Einstellung: "Kanal I" 1x; "Kanal II" 10x : 1+12 = 13 -> dso_div 13
+< none
+
+> "dso_oft 15\n"
+// Flag für Eingangs-Offset (bei deaktiviertem Flag wird die Eingangsspannung nicht "nach oben"
+// verschoben, wodurch negative Anteile des Eingangssignals nicht gemessen werden können).
+// Den Kanälen sind Werte zugewiesen, die dann aufaddiert angeben, für welche Kanäle das Flag aktiv ist:
+// Kanal I A:  1
+// Kanal I B:  2
+// Kanal II A: 4
+// Kanal II B: 8
+// Beispiel: Für "Kanal I A" und "Kanal II A" soll der Offset aktiv sein: 1+4 = 5 -> dso_oft 5
+< none
+
+
+Typische Befehlsabfolgen:
+// Messung starten:
+> "dso_div 5\n"> "dso_oft 15\n"> "dso_cfg 1 200000\n"> "dso_arm\n"
