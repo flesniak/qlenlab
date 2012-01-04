@@ -37,8 +37,9 @@ HEADERS += qlenlab.h \
     communicator.h \
     meta.h \
     dockwidgets.h
-FORMS += qlenlab.ui \
+FORMS += \
     settingsdialog.ui
+
 
 
 

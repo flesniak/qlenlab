@@ -103,6 +103,22 @@ dockWidget_generator::dockWidget_generator(QWidget *parent, Qt::WindowFlags flag
 
 };
 
+void dockWidget_generator::restoreSettings()
+{
+    QSettings settings;
+    spinBox_sinus->setValue(settings.value("generator/sinus",1).toInt());
+    spinBox_square->setValue(settings.value("generator/square",1).toInt());
+    slider_squareratio->setValue(settings.value("generator/squareratio",50).toInt());
+}
+
+void dockWidget_generator::saveSettings()
+{
+    QSettings settings;
+    settings.setValue("generator/sinus",spinBox_sinus->value());
+    settings.setValue("generator/square",spinBox_square->value());
+    settings.setValue("generator/squareratio",slider_squareratio->value());
+}
+
 void dockWidget_generator::freqSliderSinChanged(int value) {
     if( freqChanging.tryLock() ) {
         if( comboBox_range_sinus->currentIndex() == 0 )
@@ -269,19 +285,43 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     setWidget(widget);
 }
 
+void dockWidget_viewport::restoreSettings()
+{
+    QSettings settings;
+    spinBox_xaxis->setValue(settings.value("viewport/xaxis",50).toInt());
+    double yaxis_lower = settings.value("viewport/yaxis_lower").toDouble();
+    double yaxis_upper = settings.value("viewport/yaxis_upper").toDouble();
+    if( yaxis_lower < yaxis_upper) {
+        spinBox_yaxis_upper->setValue(yaxis_upper);
+        spinBox_yaxis_lower->setValue(yaxis_lower);
+        submitViewportX();
+        submitViewportY();
+    }
+}
+
+void dockWidget_viewport::saveSettings()
+{
+    QSettings settings;
+    settings.setValue("viewport/xaxis",spinBox_xaxis->value());
+    settings.setValue("viewport/yaxis_lower",spinBox_yaxis_lower->value());
+    settings.setValue("viewport/yaxis_upper",spinBox_yaxis_upper->value());
+}
+
 void dockWidget_viewport::updateViewportXValue(QString value)
 {
-    spinBox_xaxis->setValue(value.toInt());
+    if( !value.isEmpty() )
+        spinBox_xaxis->setValue(value.toInt());
 }
 
 void dockWidget_viewport::submitViewportX()
 {
+    comboBox_xaxis->setCurrentIndex(comboBox_xaxis->findText(QString::number(spinBox_xaxis->value())));
     emit viewportXChanged(spinBox_xaxis->value());
 }
 
 void dockWidget_viewport::submitViewportY()
 {
-    double upper = spinBox_yaxis_upper->value();
+    const double upper = spinBox_yaxis_upper->value();
     spinBox_yaxis_lower->setMaximum(upper);
     emit viewportYChanged(spinBox_yaxis_lower->value(),upper);
 }
@@ -396,6 +436,54 @@ dockWidget_scope::dockWidget_scope(QWidget *parent, Qt::WindowFlags flags) : QDo
     setWidget(widget);
 
     comboBox_samplerate->setCurrentIndex(3);
+}
+
+void dockWidget_scope::restoreSettings()
+{
+    QSettings settings;
+    checkBox_ch1active->setChecked(settings.value("scope/ch1active",false).toBool());
+    checkBox_ch2active->setChecked(settings.value("scope/ch2active",false).toBool());
+    checkBox_ch3active->setChecked(settings.value("scope/ch3active",false).toBool());
+    checkBox_ch4active->setChecked(settings.value("scope/ch4active",false).toBool());
+    checkBox_ch1offset->setChecked(settings.value("scope/ch1alternate",false).toBool());
+    checkBox_ch2offset->setChecked(settings.value("scope/ch2alternate",false).toBool());
+    checkBox_ch3offset->setChecked(settings.value("scope/ch3alternate",false).toBool());
+    checkBox_ch4offset->setChecked(settings.value("scope/ch4alternate",false).toBool());
+    checkBox_ch1invert->setChecked(settings.value("scope/ch1invert",false).toBool());
+    checkBox_ch2invert->setChecked(settings.value("scope/ch2invert",false).toBool());
+    checkBox_ch3invert->setChecked(settings.value("scope/ch3invert",false).toBool());
+    checkBox_ch4invert->setChecked(settings.value("scope/ch4invert",false).toBool());
+    spinBox_ch1offset->setValue(settings.value("scope/ch1offset",0.0).toDouble());
+    spinBox_ch2offset->setValue(settings.value("scope/ch2offset",0.0).toDouble());
+    spinBox_ch3offset->setValue(settings.value("scope/ch3offset",0.0).toDouble());
+    spinBox_ch4offset->setValue(settings.value("scope/ch4offset",0.0).toDouble());
+    comboBox_samplerate->setCurrentIndex(settings.value("scope/samplerate_index",2).toInt());
+    comboBox_range1->setCurrentIndex(settings.value("scope/range1_index",3).toInt());
+    comboBox_range2->setCurrentIndex(settings.value("scope/range2_index",3).toInt());
+}
+
+void dockWidget_scope::saveSettings()
+{
+    QSettings settings;
+    settings.setValue("scope/ch1active",checkBox_ch1active->isChecked());
+    settings.setValue("scope/ch1alternate",checkBox_ch1offset->isChecked());
+    settings.setValue("scope/ch1invert",checkBox_ch1invert->isChecked());
+    settings.setValue("scope/ch1offset",spinBox_ch1offset->value());
+    settings.setValue("scope/ch2active",checkBox_ch2active->isChecked());
+    settings.setValue("scope/ch2alternate",checkBox_ch2offset->isChecked());
+    settings.setValue("scope/ch2invert",checkBox_ch2invert->isChecked());
+    settings.setValue("scope/ch2offset",spinBox_ch2offset->value());
+    settings.setValue("scope/ch3active",checkBox_ch3active->isChecked());
+    settings.setValue("scope/ch3alternate",checkBox_ch3offset->isChecked());
+    settings.setValue("scope/ch3invert",checkBox_ch3invert->isChecked());
+    settings.setValue("scope/ch3offset",spinBox_ch3offset->value());
+    settings.setValue("scope/ch4active",checkBox_ch4active->isChecked());
+    settings.setValue("scope/ch4alternate",checkBox_ch4offset->isChecked());
+    settings.setValue("scope/ch4invert",checkBox_ch4invert->isChecked());
+    settings.setValue("scope/ch4offset",spinBox_ch4offset->value());
+    settings.setValue("scope/samplerate_index",comboBox_samplerate->currentIndex());
+    settings.setValue("scope/range1_index",comboBox_range1->currentIndex());
+    settings.setValue("scope/range2_index",comboBox_range2->currentIndex());
 }
 
 void dockWidget_scope::updateSampleRateSpinBox(QString value)

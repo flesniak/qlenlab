@@ -43,6 +43,12 @@ communicator::communicator(QObject *parent) : QThread(parent)
     p_squarefrequency_changed = false;
     p_squareratio = -1;
     p_squareratio_changed = false;
+    p_invert = 0;
+
+    p_manualoffset[0]=0.0;
+    p_manualoffset[1]=0.0;
+    p_manualoffset[2]=0.0;
+    p_manualoffset[3]=0.0;
 }
 
 communicator::~communicator()
@@ -97,6 +103,9 @@ float communicator::getvalue(int number, channel c) const
     case 3 : value *= 10;
     default : break;
     }
+    value += getmanualoffset(c);
+    if( p_invert & c )
+        value *= -1;
     return value;
 }
 
@@ -288,6 +297,17 @@ bool communicator::setoffset(unsigned char channels)
         return false;
 }
 
+double communicator::getmanualoffset(channel c) const
+{
+    switch( c ) {
+    case ch1a : return p_manualoffset[0];
+    case ch1b : return p_manualoffset[1];
+    case ch2a : return p_manualoffset[2];
+    case ch2b : return p_manualoffset[3];
+    default   : return 0.0;
+    }
+}
+
 bool communicator::setsamplerate(unsigned int samplerate)
 {
     qDebug() << "[communicator] set sample rate" << samplerate;
@@ -338,4 +358,105 @@ bool communicator::setchannel3offset(bool active)
 bool communicator::setchannel4offset(bool active)
 {
     return setoffsetchannel(ch2b,active);
+}
+
+
+bool communicator::setmanualoffset1(double value)
+{
+    if( p_manualoffset[0] != value ) {
+        qDebug() << "[communicator] set manual offset 1" << value;
+        p_manualoffset[0] = value;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setmanualoffset2(double value)
+{
+    if( p_manualoffset[1] != value ) {
+        qDebug() << "[communicator] set manual offset 2" << value;
+        p_manualoffset[1] = value;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setmanualoffset3(double value)
+{
+    if( p_manualoffset[2] != value ) {
+        qDebug() << "[communicator] set manual offset 3" << value;
+        p_manualoffset[2] = value;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setmanualoffset4(double value)
+{
+    if( p_manualoffset[3] != value ) {
+        qDebug() << "[communicator] set manual offset 4" << value;
+        p_manualoffset[3] = value;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setchannel1invert(bool active)
+{
+    if( ((p_invert & 1) > 0) != active ) {
+        qDebug() << "[communicator] set channel 1 invert" << active;
+        if( active )
+            p_invert |= 1;
+        else
+            p_invert &= ~1;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setchannel2invert(bool active)
+{
+    if( ((p_invert & 2) > 0) != active ) {
+        qDebug() << "[communicator] set channel 2 invert" << active;
+        if( active )
+            p_invert |= 2;
+        else
+            p_invert &= ~2;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setchannel3invert(bool active)
+{
+    if( ((p_invert & 4) > 0) != active ) {
+        qDebug() << "[communicator] set channel 3 invert" << active;
+        if( active )
+            p_invert |= 4;
+        else
+            p_invert &= ~4;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool communicator::setchannel4invert(bool active)
+{
+    if( ((p_invert & 8) > 0) != active ) {
+        qDebug() << "[communicator] set channel 4 invert" << active;
+        if( active )
+            p_invert |= 8;
+        else
+            p_invert &= ~8;
+        return true;
+    }
+    else
+        return false;
 }

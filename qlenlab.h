@@ -32,6 +32,9 @@ class settingsdialog;
 class plot;
 class communicator;
 class signaldata;
+class dockWidget_scope;
+class dockWidget_viewport;
+class dockWidget_generator;
 
 namespace Ui {
     class QLenLab;
@@ -53,33 +56,23 @@ protected:
 
 private:
     void restoreSettings();
-    void initCom();
-    settingsdialog *settingsdlg;
+
+    dockWidget_scope *dw_scope;
+    dockWidget_viewport *dw_viewport;
+    dockWidget_generator *dw_generator;
+
     QLabel *label_connectionstatus;
     QTabWidget *tabWidget;
-    Ui::QLenLab *ui;
+    QAction *action_start;
+    QAction *action_stop;
+    settingsdialog *settingsdlg;
     plot *plotter;
-    communicator* com;
-    signaldata* data;
-    QMutex freqChanging;
+    communicator *com;
+    signaldata *data;
 
 private slots:
-    void viewportXChanged(QString);
-    void viewportYChanged();
-    void freqSliderSinChanged(int);
-    void freqBoxSinChanged(int);
-    void freqRangeSinChanged(int);
-    void submitSinusFreq();
-    void freqSliderSqrChanged(int);
-    void freqBoxSqrChanged(int);
-    void freqRangeSqrChanged(int);
-    void freqSliderSqrRatioChanged(int);
-    void submitSquareFreq();
-    void submitSquareRatio();
-    void submitSampleRate(int);
     void start();
     void stop();
-    void showDebug();
     void showSettings();
     void about();
     void quit();

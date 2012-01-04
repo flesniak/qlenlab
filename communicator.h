@@ -40,6 +40,7 @@ public:
     bool connected() { return p_connected; }
     signaldata* getdata(char channel);
     int activechannelcount() const;
+    double getmanualoffset(channel c) const;
 
 public slots:
     void stop();
@@ -64,6 +65,14 @@ public slots:
     bool setchannel2offset(bool active);
     bool setchannel3offset(bool active);
     bool setchannel4offset(bool active);
+    bool setmanualoffset1(double value);
+    bool setmanualoffset2(double value);
+    bool setmanualoffset3(double value);
+    bool setmanualoffset4(double value);
+    bool setchannel1invert(bool active);
+    bool setchannel2invert(bool active);
+    bool setchannel3invert(bool active);
+    bool setchannel4invert(bool active);
     void setrange1(int index);
     void setrange2(int index);
 
@@ -75,6 +84,7 @@ private:
 protected:
     void run();
     float getvalue(int number, channel c) const;
+    unsigned int channel2num(channel c);
     dataset p_data;
     bool p_connected;
     bool p_stop;
@@ -91,6 +101,9 @@ protected:
     bool p_squareratio_changed;
     unsigned char p_voltagedivision;
     bool p_voltagedivision_changed;
+    double p_manualoffset[4];
+    unsigned char p_invert;
+
 
 signals:
     void connectionStateChanged(bool);
