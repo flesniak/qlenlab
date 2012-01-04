@@ -27,17 +27,20 @@ SOURCES += main.cpp qlenlab.cpp \
     plot.cpp \
     signaldata.cpp \
     LENlib/LENlib.cpp \
-    communicator.cpp
+    communicator.cpp \
+    dockwidgets.cpp
 HEADERS += qlenlab.h \
     settingsdialog.h \
     plot.h \
     signaldata.h \
     LENlib/LENlib.h \
     communicator.h \
-    meta.h
+    meta.h \
+    dockwidgets.h
 FORMS += qlenlab.ui \
-    debugger.ui \
     settingsdialog.ui
+
+
 
 
 

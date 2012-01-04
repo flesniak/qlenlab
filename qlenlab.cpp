@@ -26,6 +26,7 @@
 #include "settingsdialog.h"
 #include "plot.h"
 #include "communicator.h"
+#include "dockwidgets.h"
 
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 {
@@ -36,6 +37,15 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
 
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
+
+    dockWidget_generator *dw_generator = new dockWidget_generator(this);
+    addDockWidget(Qt::LeftDockWidgetArea,dw_generator);
+
+    dockWidget_viewport *dw_viewport = new dockWidget_viewport(this);
+    addDockWidget(Qt::LeftDockWidgetArea,dw_viewport);
+
+    dockWidget_scope *dw_scope = new dockWidget_scope(this);
+    addDockWidget(Qt::LeftDockWidgetArea,dw_scope);
 
     com = new communicator(this);
     plotter = new plot(com,this);
@@ -378,7 +388,6 @@ void QLenLab::submitSquareRatio()
 {
     com->setsquareratio(ui->slider_square_ratio->value());
 }
-
 
 void QLenLab::submitSampleRate(int index)
 {
