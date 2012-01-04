@@ -20,8 +20,6 @@
 #ifndef QLENLAB_H
 #define QLENLAB_H
 
-//#define USE_DEBUGGING_WINDOW
-
 #include <QMainWindow>
 #include <QLabel>
 #include <QTabWidget>
@@ -31,7 +29,7 @@
 #include "meta.h"
 
 class settingsdialog;
-class Plot;
+class plot;
 class communicator;
 class signaldata;
 
@@ -60,13 +58,10 @@ private:
     QLabel *label_connectionstatus;
     QTabWidget *tabWidget;
     Ui::QLenLab *ui;
-    Plot *plot;
+    plot *plotter;
     communicator* com;
     signaldata* data;
     QMutex freqChanging;
-    #ifdef USE_DEBUGGING_WINDOW
-    debugger *debug;
-    #endif
 
 private slots:
     void viewportXChanged(QString);

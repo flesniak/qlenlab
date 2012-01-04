@@ -1,3 +1,9 @@
+*/*.[oa]
 *.[oa]
-moc_*.cxx
+*/moc_*.cpp
+moc_*.cpp
 qlenlab
+*/ui_*.h
+ui_*.h
+Makefile
+*.pro.user

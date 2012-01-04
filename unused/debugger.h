@@ -23,6 +23,14 @@
 #include <QDialog>
 #include <QMessageBox>
 
+#include <QDockWidget>
+
+class dockWidget_test : public QDockWidget
+{
+public:
+    dockWidget_test(QWidget *parent = 0);
+};
+
 namespace Ui {
     class debugger;
 }

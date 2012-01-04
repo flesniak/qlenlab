@@ -18,11 +18,11 @@
  ***********************************************************************/
 
 #include <QSettings>
+#include <QMessageBox>
 
 #include "qlenlab.h"
 #include "ui_qlenlab.h"
 #include "signaldata.h"
-#include "debugger.h"
 #include "settingsdialog.h"
 #include "plot.h"
 #include "communicator.h"
@@ -38,11 +38,11 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     setCentralWidget(tabWidget);
 
     com = new communicator(this);
-    plot = new Plot(com,this);
+    plotter = new plot(com,this);
     settingsdlg = new settingsdialog(com,this);
 
     label_connectionstatus = new QLabel(this);
-    tabWidget->addTab(plot,tr("Plot"));
+    tabWidget->addTab(plotter,tr("Plot"));
     ui->statusBar->addPermanentWidget(label_connectionstatus);
 
     ui->action_settings->setIcon(QIcon::fromTheme("configure"));
@@ -99,23 +99,16 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent), ui(new Ui::QLenLab)
     connect(ui->action_start,SIGNAL(triggered()),SLOT(start()));
     connect(ui->action_stop,SIGNAL(triggered()),SLOT(stop()));
 
-    #ifdef USE_DEBUGGING_WINDOW
-    debug = NULL;
-    connect(ui->action_debug,SIGNAL(triggered()),SLOT(showDebug()));
-    #else
-    ui->action_debug->setVisible(false);
-    #endif
-
     setConnectionStatus(false);
     statusBar()->clearMessage();
     restoreSettings();
 
     ui->action_viewport->setChecked(ui->dockWidget_viewport->isVisible());
     ui->action_scope->setChecked(ui->dockWidget_scope->isVisible());
-    plot->updateViewportX(ui->comboBox_xaxis->currentText().toInt());
-    plot->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());
+    plotter->updateViewportX(ui->comboBox_xaxis->currentText().toInt());
+    plotter->updateViewportY(ui->doubleSpinBox_yaxis_lower->value(),ui->doubleSpinBox_yaxis_upper->value());
 
-    initCom();
+    //initCom();
 }
 
 QLenLab::~QLenLab()
@@ -141,7 +134,7 @@ void QLenLab::restoreSettings()
     QSettings settings;
     restoreGeometry(settings.value("mainwindow/geometry").toByteArray());
     restoreState(settings.value("mainwindow/state").toByteArray(),1);
-    int xaxis = settings.value("viewport/xaxis").toInt();
+    int xaxis = settings.value("viewport/xaxis",50).toInt();
     if( xaxis != 0 ) {
         int index = ui->comboBox_xaxis->findText(QString::number(xaxis));
         if( index == -1 ) {
@@ -157,6 +150,28 @@ void QLenLab::restoreSettings()
         ui->doubleSpinBox_yaxis_lower->setValue(yaxis_lower);
         ui->doubleSpinBox_yaxis_upper->setValue(yaxis_upper);
     }
+    ui->checkBox_ch1->setChecked(settings.value("scope/ch1active",false).toBool());
+    ui->checkBox_ch2->setChecked(settings.value("scope/ch2active",false).toBool());
+    ui->checkBox_ch3->setChecked(settings.value("scope/ch3active",false).toBool());
+    ui->checkBox_ch4->setChecked(settings.value("scope/ch4active",false).toBool());
+    ui->checkBox_ch1_alt->setChecked(settings.value("scope/ch1alternate",false).toBool());
+    ui->checkBox_ch2_alt->setChecked(settings.value("scope/ch2alternate",false).toBool());
+    ui->checkBox_ch3_alt->setChecked(settings.value("scope/ch3alternate",false).toBool());
+    ui->checkBox_ch4_alt->setChecked(settings.value("scope/ch4alternate",false).toBool());
+    ui->checkBox_ch1_inv->setChecked(settings.value("scope/ch1invert",false).toBool());
+    ui->checkBox_ch2_inv->setChecked(settings.value("scope/ch2invert",false).toBool());
+    ui->checkBox_ch3_inv->setChecked(settings.value("scope/ch3invert",false).toBool());
+    ui->checkBox_ch4_inv->setChecked(settings.value("scope/ch4invert",false).toBool());
+    ui->doubleSpinBox_ch1_offset->setValue(settings.value("scope/ch1offset",0.0).toDouble());
+    ui->doubleSpinBox_ch2_offset->setValue(settings.value("scope/ch2offset",0.0).toDouble());
+    ui->doubleSpinBox_ch3_offset->setValue(settings.value("scope/ch3offset",0.0).toDouble());
+    ui->doubleSpinBox_ch4_offset->setValue(settings.value("scope/ch4offset",0.0).toDouble());
+    ui->comboBox_samplerate->setCurrentIndex(settings.value("scope/samplerate_index",2).toInt());
+    ui->comboBox_range1->setCurrentIndex(settings.value("scope/range1_index",3).toInt());
+    ui->comboBox_range2->setCurrentIndex(settings.value("scope/range2_index",3).toInt());
+    ui->spinBox_sinus->setValue(settings.value("generator/sinus",1).toInt());
+    ui->spinBox_square->setValue(settings.value("generator/square",1).toInt());
+    ui->slider_square_ratio->setValue(settings.value("generator/squareratio",50).toInt());
     settingsdlg->restoreSettings();
 }
 
@@ -168,6 +183,26 @@ void QLenLab::closeEvent(QCloseEvent *)
     settings.setValue("viewport/xaxis",ui->comboBox_xaxis->currentText().toInt());
     settings.setValue("viewport/yaxis_lower",ui->doubleSpinBox_yaxis_lower->value());
     settings.setValue("viewport/yaxis_upper",ui->doubleSpinBox_yaxis_upper->value());
+    settings.setValue("scope/ch1active",ui->checkBox_ch1->isChecked());
+    settings.setValue("scope/ch1alternate",ui->checkBox_ch1_alt->isChecked());
+    settings.setValue("scope/ch1invert",ui->checkBox_ch1_inv->isChecked());
+    settings.setValue("scope/ch1offset",ui->doubleSpinBox_ch1_offset->value());
+    settings.setValue("scope/ch2active",ui->checkBox_ch2->isChecked());
+    settings.setValue("scope/ch2alternate",ui->checkBox_ch2_alt->isChecked());
+    settings.setValue("scope/ch2invert",ui->checkBox_ch2_inv->isChecked());
+    settings.setValue("scope/ch2offset",ui->doubleSpinBox_ch2_offset->value());
+    settings.setValue("scope/ch3active",ui->checkBox_ch3->isChecked());
+    settings.setValue("scope/ch3alternate",ui->checkBox_ch3_alt->isChecked());
+    settings.setValue("scope/ch3invert",ui->checkBox_ch3_inv->isChecked());
+    settings.setValue("scope/ch3offset",ui->doubleSpinBox_ch3_offset->value());
+    settings.setValue("scope/ch4active",ui->checkBox_ch4->isChecked());
+    settings.setValue("scope/ch4alternate",ui->checkBox_ch4_alt->isChecked());
+    settings.setValue("scope/ch4invert",ui->checkBox_ch4_inv->isChecked());
+    settings.setValue("scope/ch4offset",ui->doubleSpinBox_ch4_offset->value());
+    settings.setValue("scope/samplerate_index",ui->comboBox_samplerate->currentIndex());
+    settings.setValue("generator/sinus",ui->spinBox_sinus->value());
+    settings.setValue("generator/square",ui->spinBox_square->value());
+    settings.setValue("generator/squareratio",ui->slider_square_ratio->value());
 }
 
 void QLenLab::quit()
@@ -195,7 +230,7 @@ void QLenLab::viewportXChanged(QString str)
     bool ok;
     int value = str.toInt(&ok);
     if( ok )
-        plot->updateViewportX(value);
+        plotter->updateViewportX(value);
 }
 
 void QLenLab::viewportYChanged()
@@ -204,7 +239,7 @@ void QLenLab::viewportYChanged()
     lower = ui->doubleSpinBox_yaxis_lower->value();
     upper = ui->doubleSpinBox_yaxis_upper->value();
     if( lower < upper )
-        plot->updateViewportY(lower, upper);
+        plotter->updateViewportY(lower, upper);
 }
 
 void QLenLab::showSettings()

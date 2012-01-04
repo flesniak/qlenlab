@@ -35,6 +35,27 @@ two parameters:
 6: sig_squ
 7: dso_cfg */
 
+#include <QSpinBox>
+#include <QLabel>
+#include <QGroupBox>
+
+dockWidget_test::dockWidget_test(QWidget *parent) : QDockWidget(parent)
+{
+    QWidget *testwidget = new QWidget;
+    QGroupBox *box = new QGroupBox(this);
+    box->setTitle("Textbox");
+    QSpinBox *testbox = new QSpinBox(box);
+    QLabel *testlabel = new QLabel("Testbox:",box);
+    QHBoxLayout *layout = new QHBoxLayout(box);
+    layout->addWidget(testlabel);
+    layout->addWidget(testbox);
+    QVBoxLayout *layout2 = new QVBoxLayout(testwidget);
+    QLabel *testlabel2 = new QLabel("Text2",testwidget);
+    layout2->addWidget(box);
+    layout2->addWidget(testlabel2);
+    setWidget(testwidget);
+}
+
 debugger::debugger(QWidget *parent) : QDialog(parent), ui(new Ui::debugger)
 {
     ui->setupUi(this);

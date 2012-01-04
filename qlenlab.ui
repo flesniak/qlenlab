@@ -41,7 +41,6 @@
     </property>
     <addaction name="action_start"/>
     <addaction name="action_stop"/>
-    <addaction name="action_debug"/>
    </widget>
    <widget class="QMenu" name="menu_interface">
     <property name="title">
@@ -153,7 +152,14 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch1_offset"/>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch1_offset">
+       <property name="minimum">
+        <double>-40.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>40.000000000000000</double>
+       </property>
+      </widget>
      </item>
      <item row="2" column="2">
       <widget class="QCheckBox" name="checkBox_ch1_alt">
@@ -177,7 +183,14 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch2_offset"/>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch2_offset">
+       <property name="minimum">
+        <double>-40.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>40.000000000000000</double>
+       </property>
+      </widget>
      </item>
      <item row="3" column="2">
       <widget class="QCheckBox" name="checkBox_ch2_alt">
@@ -201,7 +214,14 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch3_offset"/>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch3_offset">
+       <property name="minimum">
+        <double>-40.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>40.000000000000000</double>
+       </property>
+      </widget>
      </item>
      <item row="4" column="2">
       <widget class="QCheckBox" name="checkBox_ch3_alt">
@@ -225,7 +245,14 @@
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch4_offset"/>
+      <widget class="QDoubleSpinBox" name="doubleSpinBox_ch4_offset">
+       <property name="minimum">
+        <double>-40.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>40.000000000000000</double>
+       </property>
+      </widget>
      </item>
      <item row="6" column="2">
       <widget class="QCheckBox" name="checkBox_ch4_alt">
@@ -251,7 +278,7 @@
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QComboBox" name="comboBox_range2">
+        <widget class="QComboBox" name="comboBox_range1">
          <property name="currentIndex">
           <number>3</number>
          </property>
@@ -278,7 +305,7 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QComboBox" name="comboBox_range1">
+        <widget class="QComboBox" name="comboBox_range2">
          <property name="currentIndex">
           <number>3</number>
          </property>
@@ -349,6 +376,16 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QComboBox" name="comboBox_xaxis">
+          <item>
+           <property name="text">
+            <string>5</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>10</string>
+           </property>
+          </item>
           <item>
            <property name="text">
             <string>20</string>
@@ -745,11 +782,6 @@
    </property>
    <property name="text">
     <string>Stoppen</string>
-   </property>
-  </action>
-  <action name="action_debug">
-   <property name="text">
-    <string>Debuggen...</string>
    </property>
   </action>
   <action name="action_about">

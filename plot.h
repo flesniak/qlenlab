@@ -26,11 +26,11 @@
 
 class communicator;
 
-class Plot : public QwtPlot
+class plot : public QwtPlot
 {
     Q_OBJECT
 public:
-    explicit Plot(communicator* data, QWidget *parent = 0);
+    explicit plot(communicator* data, QWidget *parent = 0);
 
 private:
     QwtInterval interval;

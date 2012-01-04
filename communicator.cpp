@@ -47,6 +47,9 @@ communicator::communicator(QObject *parent) : QThread(parent)
 
 communicator::~communicator()
 {
+    if( isRunning() )
+        stop();
+    wait(17000/getsamplerate());
     closeport();
 }
 
@@ -75,7 +78,7 @@ void communicator::run()
             for(int i=0; i < getvaluecount(); i++)
                 p_data.channel4->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch2b)));
         emit newDataset();
-        qDebug() << QDateTime::currentDateTime() << "[communicator] measurement complete";
+        qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss") << "[communicator] measurement complete";
     }
     qDebug() << "[communicator] measure loop stopped";
 }
@@ -85,6 +88,7 @@ float communicator::getvalue(int number, channel c) const
     float value = lenboard::getvalue(number,(int)c);
     if( getoffset((int)c) > 0 )
         value -= 127; //127; 127.5; 128???
+    value *= 3.3/256;
     switch( getoffset((int)c) ) {
     case 0 : value *= 0.5;
              break;
@@ -144,7 +148,6 @@ int communicator::activechannelcount() const
 
 void communicator::setParameters()
 {
-    qDebug() << "[communicator] setting cached measure parameters";
     if( p_activechannels_changed )
         if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
             qDebug() << "[communicator] setting active channels failed";
@@ -175,7 +178,6 @@ bool communicator::setsinusfrequency(unsigned short frequency)
     if( p_sinusfrequency != frequency ) {
         p_sinusfrequency = frequency;
         p_sinusfrequency_changed = true;
-        return true;
         return true;
     }
     else

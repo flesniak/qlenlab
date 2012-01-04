@@ -23,14 +23,12 @@ CONFIG += qwt
 LIBS += -lstdc++ -lqwt
 
 SOURCES += main.cpp qlenlab.cpp \
-    debugger.cpp \
     settingsdialog.cpp \
     plot.cpp \
     signaldata.cpp \
     LENlib/LENlib.cpp \
     communicator.cpp
 HEADERS += qlenlab.h \
-    debugger.h \
     settingsdialog.h \
     plot.h \
     signaldata.h \
@@ -40,6 +38,8 @@ HEADERS += qlenlab.h \
 FORMS += qlenlab.ui \
     debugger.ui \
     settingsdialog.ui
+
+
 
 
 

@@ -29,7 +29,7 @@
 #include "communicator.h"
 #include "signaldata.h"
 
-Plot::Plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), com(com)
+plot::plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), com(com)
 {
     setAxisTitle(QwtPlot::xBottom, "Zeit [ms]");
     setAxisTitle(QwtPlot::yLeft, "Spannung [V]");
@@ -64,25 +64,25 @@ Plot::Plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
     connect(com,SIGNAL(newDataset()),SLOT(setData()));
 }
 
-void Plot::setData()
+void plot::setData()
 {
     replot();
 }
 
-void Plot::updateViewportX(const int msecs)
+void plot::updateViewportX(const int msecs)
 {
     interval.setMaxValue(interval.minValue()+msecs);
     setAxisScale(QwtPlot::xBottom, interval.minValue(), interval.maxValue());
     replot();
 }
 
-void Plot::updateViewportY(const double lower, const double upper)
+void plot::updateViewportY(const double lower, const double upper)
 {
     setAxisScale(QwtPlot::yLeft, lower, upper);
     replot();
 }
 
-void Plot::timerEvent(QTimerEvent *event)
+void plot::timerEvent(QTimerEvent *event)
 {
     if( event->timerId() == timerId ) {
         //update graph
@@ -91,12 +91,12 @@ void Plot::timerEvent(QTimerEvent *event)
     QwtPlot::timerEvent(event);
 }
 
-void Plot::start()
+void plot::start()
 {
     timerId = startTimer(50);
 }
 
-void Plot::stop()
+void plot::stop()
 {
     killTimer(timerId);
 }
