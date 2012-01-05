@@ -36,10 +36,6 @@ class dockWidget_scope;
 class dockWidget_viewport;
 class dockWidget_generator;
 
-namespace Ui {
-    class QLenLab;
-}
-
 class QLenLab : public QMainWindow
 {
     Q_OBJECT

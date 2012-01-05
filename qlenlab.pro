@@ -22,30 +22,6 @@ TARGET = qlenlab
 CONFIG += qwt
 LIBS += -lstdc++ -lqwt
 
-SOURCES += main.cpp qlenlab.cpp \
-    settingsdialog.cpp \
-    plot.cpp \
-    signaldata.cpp \
-    LENlib/LENlib.cpp \
-    communicator.cpp \
-    dockwidgets.cpp
-HEADERS += qlenlab.h \
-    settingsdialog.h \
-    plot.h \
-    signaldata.h \
-    LENlib/LENlib.h \
-    communicator.h \
-    meta.h \
-    dockwidgets.h
-FORMS += \
-    settingsdialog.ui
-
-
-
-
-
-
-
-
-
-
+SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp
+HEADERS += qlenlab.h settingsdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h
+FORMS += settingsdialog.ui
