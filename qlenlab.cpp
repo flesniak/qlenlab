@@ -73,7 +73,9 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
 
     //various connects
     connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
-    connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),plotter,SLOT(changeColor(meta::colorindex,QColor)));
+    connect(com,SIGNAL(measureStateChanged(bool)),SLOT(setMeasureStatus(bool)));
+    connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),plotter,SLOT(updateColor(meta::colorindex,QColor)));
+    connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),dw_scope,SLOT(updateColor(meta::colorindex,QColor)));
 
     //connects for dockWidget_scope
     connect(dw_scope,SIGNAL(sampleRateChanged(unsigned int)),com,SLOT(setsamplerate(unsigned int)));
@@ -161,20 +163,22 @@ void QLenLab::quit()
 void QLenLab::start()
 {
     com->start();
-    action_start->setEnabled(false);
-    action_stop->setEnabled(true);
 }
 
 void QLenLab::stop()
 {
     com->stop();
-    action_start->setEnabled(true);
-    action_stop->setEnabled(false);
 }
 
 void QLenLab::showSettings()
 {
     settingsdlg->exec();
+}
+
+void QLenLab::setMeasureStatus(bool measuring)
+{
+    action_start->setEnabled(!measuring);
+    action_stop->setEnabled(measuring);
 }
 
 void QLenLab::setConnectionStatus(bool connected)

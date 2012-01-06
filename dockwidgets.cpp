@@ -354,8 +354,10 @@ dockWidget_scope::dockWidget_scope(QWidget *parent, Qt::WindowFlags flags) : QDo
                                   << "50"
                                   << "10"
                                   << "1");
+    comboBox_samplerate->setCurrentIndex(3);
     spinBox_samplerate = new QSpinBox(widget);
     spinBox_samplerate->setRange(1,400);
+    spinBox_samplerate->setValue(100);
     spinBox_samplerate->setSuffix("kHz");
 
     checkBox_ch1active = new QCheckBox(tr("Kanal 1"),widget);
@@ -380,6 +382,10 @@ dockWidget_scope::dockWidget_scope(QWidget *parent, Qt::WindowFlags flags) : QDo
     checkBox_ch2offset = new QCheckBox(widget);
     checkBox_ch3offset = new QCheckBox(widget);
     checkBox_ch4offset = new QCheckBox(widget);
+    checkBox_ch1offset->setChecked(true);
+    checkBox_ch2offset->setChecked(true);
+    checkBox_ch3offset->setChecked(true);
+    checkBox_ch4offset->setChecked(true);
 
     checkBox_ch1invert = new QCheckBox(widget);
     checkBox_ch2invert = new QCheckBox(widget);
@@ -391,13 +397,13 @@ dockWidget_scope::dockWidget_scope(QWidget *parent, Qt::WindowFlags flags) : QDo
                                             << "1x (3.3V)"
                                             << "2x (6.6V)"
                                             << "10x (33V)");
-    comboBox_range1->setCurrentIndex(3);
+    comboBox_range1->setCurrentIndex(-1);
     comboBox_range2 = new QComboBox(this);
     comboBox_range2->addItems(QStringList() << "0.5x (1.6V)"
                                             << "1x (3.3V)"
                                             << "2x (6.6V)"
                                             << "10x (33V)");
-    comboBox_range2->setCurrentIndex(3);
+    comboBox_range2->setCurrentIndex(-1);
 
     QHBoxLayout *layout_samplerate = new QHBoxLayout;
     layout_samplerate->addWidget(label_samplerate_dummy);
@@ -462,7 +468,7 @@ void dockWidget_scope::restoreSettings()
     spinBox_ch2offset->setValue(settings.value("scope/ch2offset",0.0).toDouble());
     spinBox_ch3offset->setValue(settings.value("scope/ch3offset",0.0).toDouble());
     spinBox_ch4offset->setValue(settings.value("scope/ch4offset",0.0).toDouble());
-    comboBox_samplerate->setCurrentIndex(settings.value("scope/samplerate_index",3).toInt());
+    spinBox_samplerate->setValue(settings.value("scope/samplerate",100).toInt());
     comboBox_range1->setCurrentIndex(settings.value("scope/range1_index",3).toInt());
     comboBox_range2->setCurrentIndex(settings.value("scope/range2_index",3).toInt());
 }
@@ -486,7 +492,7 @@ void dockWidget_scope::saveSettings()
     settings.setValue("scope/ch4alternate",checkBox_ch4offset->isChecked());
     settings.setValue("scope/ch4invert",checkBox_ch4invert->isChecked());
     settings.setValue("scope/ch4offset",spinBox_ch4offset->value());
-    settings.setValue("scope/samplerate_index",comboBox_samplerate->currentIndex());
+    settings.setValue("scope/samplerat",spinBox_samplerate->value());
     settings.setValue("scope/range1_index",comboBox_range1->currentIndex());
     settings.setValue("scope/range2_index",comboBox_range2->currentIndex());
 }
@@ -528,4 +534,21 @@ void dockWidget_scope::submitSampleRate(int value)
     comboBox_samplerate->setCurrentIndex(comboBox_samplerate->findText(QString::number(value)));
     if( !checkSampleRate() )
         emit sampleRateChanged(value*1000);
+}
+
+void dockWidget_scope::updateColor(meta::colorindex ci, QColor color)
+{
+    QPalette pal;
+    pal.setColor(QPalette::WindowText,color);
+    switch( ci ) {
+    case meta::channel1 : checkBox_ch1active->setPalette(pal);
+                          break;
+    case meta::channel2 : checkBox_ch2active->setPalette(pal);
+                          break;
+    case meta::channel3 : checkBox_ch3active->setPalette(pal);
+                          break;
+    case meta::channel4 : checkBox_ch4active->setPalette(pal);
+                          break;
+    default             : break;
+    }
 }

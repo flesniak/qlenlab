@@ -69,7 +69,7 @@ void plot::setData()
     replot();
 }
 
-void plot::changeColor(meta::colorindex ci, QColor color)
+void plot::updateColor(meta::colorindex ci, QColor color)
 {
     switch( ci ) {
     case meta::background : canvas()->setPalette(QPalette(QPalette::Base,color));

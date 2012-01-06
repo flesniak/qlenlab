@@ -55,22 +55,23 @@ communicator::~communicator()
 {
     if( isRunning() )
         stop();
-    wait(17000/getsamplerate());
+    wait(17000000/getsamplerate());
     closeport();
-}
-
-inline bool bitishigh(unsigned char data, unsigned char pos)
-{
-    return ((data >> (pos-1)) & 1);
 }
 
 void communicator::run()
 {
     qDebug() << "[communicator] measure loop started";
+    emit measureStateChanged(true);
     p_stop = false;
     while( !p_stop )
     {
         setParameters();
+        unsigned char actives = ((p_activechannels & 1) ? 1 : 0) + ((p_activechannels & 2) ? 1 : 0) + ((p_activechannels & 4) ? 1 : 0) + ((p_activechannels & 8) ? 1 : 0);
+        if( actives == 0 ) {
+            stop();
+            break;
+        }
         measure();
         p_data.channel1->clear();
         p_data.channel2->clear();
@@ -84,7 +85,6 @@ void communicator::run()
         data[2]=p_data.channel3;
         data[3]=p_data.channel4;
         unsigned char channel = -1;
-        unsigned char actives = ((p_activechannels & 1) ? 1 : 0) + ((p_activechannels & 2) ? 1 : 0) + ((p_activechannels & 4) ? 1 : 0) + ((p_activechannels & 8) ? 1 : 0);
         for(int index = 0; index < getrawvaluecount(); index++) {
             do {
                 if( channel < 3 )
@@ -94,43 +94,10 @@ void communicator::run()
             } while( !activechannels[channel] );
             data[channel]->append(QPointF(1000.0/samplerate*(index/actives),calcvalue(channel,buffer[index])));
         }
-
-        /*if( getchannelactive(meta::ch1a) )
-            for(int i=0; i < getvaluecount(); i++)
-                p_data.channel1->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch1a)));
-        if( getchannelactive(meta::ch1b) )
-            for(int i=0; i < getvaluecount(); i++)
-                p_data.channel2->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch1b)));
-        if( getchannelactive(meta::ch2a) )
-            for(int i=0; i < getvaluecount(); i++)
-                p_data.channel3->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch2a)));
-        if( getchannelactive(meta::ch2b) )
-            for(int i=0; i < getvaluecount(); i++)
-                p_data.channel4->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch2b)));*/
         emit newDataset();
-        qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss") << "[communicator] measurement complete";
     }
+    emit measureStateChanged(false);
     qDebug() << "[communicator] measure loop stopped";
-}
-
-float communicator::getvalue(int number, meta::channel c) const
-{
-    float value = lenboard::getvalue(number,(int)c);
-    if( getoffset((int)c) > 0 )
-        value -= 127; //127; 127.5; 128???
-    value *= 3.3/256;
-    switch( getoffset((int)c) ) {
-    case 0 : value *= 0.5;
-             break;
-    case 2 : value *= 2;
-             break;
-    case 3 : value *= 10;
-    default : break;
-    }
-    value += getmanualoffset(c);
-    if( p_invert & c )
-        value *= -1;
-    return value;
 }
 
 float communicator::calcvalue(unsigned char channel, unsigned char raw)
@@ -157,7 +124,8 @@ void communicator::stop()
 {
     qDebug() << "[communicator] stop requested!";
     p_stop = true;
-    stopmeasure();
+    if( !wait(2000) )
+        stopmeasure();
 }
 
 signaldata* communicator::getdata(char channel)
@@ -305,10 +273,12 @@ bool communicator::setvoltagedivision(meta::channel c, unsigned char voltagedivi
 {
     qDebug() << "[communicator] set channel" << c << "voltagedivision" << voltagedivision;
     switch( c ) {
-    case meta::ch1 : p_voltagedivision &= voltagedivision;
+    case meta::ch1 : p_voltagedivision = (voltagedivision & 0b00000011) | (p_voltagedivision & 0b11111100);
+                     p_voltagedivision_changed = true;
                      return true;
                      break;
-    case meta::ch2 : p_voltagedivision &= voltagedivision*4;
+    case meta::ch2 : p_voltagedivision = ((voltagedivision*4) & 0b00001100) | (p_voltagedivision & 0b11110011);
+                     p_voltagedivision_changed = true;
                      return true;
                      break;
     default  : qDebug() << "[communicator] set voltage division: invalid channel specified";

@@ -26,6 +26,8 @@
 #include <QString>
 #include <QMutex>
 
+#include "meta.h"
+
 class settingsdialog;
 class plot;
 class communicator;
@@ -44,6 +46,7 @@ public:
 
 public slots:
     void setConnectionStatus(bool connected);
+    void setMeasureStatus(bool measuring);
 
 protected:
     void closeEvent(QCloseEvent *);

@@ -22,6 +22,8 @@
 
 #include <QtGui>
 
+#include "meta.h"
+
 class dockWidget_generator : public QDockWidget
 {
     Q_OBJECT
@@ -113,6 +115,9 @@ public:
     QCheckBox *checkBox_ch4invert;
     QComboBox *comboBox_range1;
     QComboBox *comboBox_range2;
+
+public slots:
+    void updateColor(meta::colorindex ci, QColor color);
 
 private:
     QMutex comboMutex;

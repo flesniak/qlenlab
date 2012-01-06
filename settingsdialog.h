@@ -70,7 +70,7 @@ private slots:
     void rescanDevices();
     void accept();
     void reject();
-    void updateConnectButton(int);
+    void updateConnectButton(int index = 1);
     void getColorBackground();
     void getColorGrid();
     void getColorChannel1();

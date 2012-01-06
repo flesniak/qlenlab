@@ -83,7 +83,6 @@ private:
 
 protected:
     void run();
-    float getvalue(int number, meta::channel c) const;
     float calcvalue(unsigned char channel, unsigned char raw);
     dataset p_data;
     bool p_connected;
@@ -106,6 +105,7 @@ protected:
 
 signals:
     void connectionStateChanged(bool);
+    void measureStateChanged(bool);
     void newDataset();
 };
 

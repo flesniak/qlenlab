@@ -120,11 +120,16 @@ void settingsdialog::restoreSettings()
         }
         else
             comboBox_serialport->setCurrentIndex(index);
-        if( checkBox_autoconnect->isChecked() )
-            connectSerial();
+        if( checkBox_autoconnect->isChecked() ) {
+            for(int i=1; i<4; i++) {
+                qDebug() << "[settings] connect try" << i;
+                connectSerial();
+                if( com->connected() )
+                    break;
+            }
+        }
     }
-    pushButton_disconnect->setEnabled(com->connected());
-    pushButton_connect->setEnabled(!com->connected());
+    updateConnectButton();
 
     channelColor[meta::channel1] = settings.value("plot/color1",QColor(255,255,0)).value<QColor>();
     channelColor[meta::channel2] = settings.value("plot/color2",QColor(0,0,255)).value<QColor>();
@@ -164,15 +169,13 @@ void settingsdialog::connectSerial()
         com->closeport();
         com->openport(comboBox_serialport->currentText().toAscii().data()); //This should work for both user-specified and detected ports.
     }
-    pushButton_disconnect->setEnabled(com->connected());
-    pushButton_connect->setEnabled(!com->connected());
+    updateConnectButton();
 }
 
 void settingsdialog::disconnectSerial()
 {
     com->closeport();
-    pushButton_disconnect->setEnabled(com->connected());
-    pushButton_connect->setEnabled(!com->connected());
+    updateConnectButton();
 }
 
 void settingsdialog::reject()
@@ -196,8 +199,9 @@ void settingsdialog::accept()
 
 void settingsdialog::updateConnectButton(int index)
 {
-    pushButton_connect->setEnabled(index != 0);
-    checkBox_autoconnect->setEnabled(index != 0);
+    pushButton_connect->setEnabled(!com->connected() && index > 0);
+    pushButton_disconnect->setEnabled(com->connected());
+    checkBox_autoconnect->setEnabled(index > 0);
 }
 
 QColor settingsdialog::getChannelColor(meta::channel c)
