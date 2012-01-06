@@ -40,7 +40,7 @@ public:
     bool connected() { return p_connected; }
     signaldata* getdata(char channel);
     int activechannelcount() const;
-    double getmanualoffset(channel c) const;
+    double getmanualoffset(meta::channel c) const;
 
 public slots:
     void stop();
@@ -50,9 +50,9 @@ public slots:
     bool setsquarefrequency(unsigned short frequency);
     bool setsquareratio(unsigned char ratio);
     bool setactivechannels(unsigned char channels);
-    bool activatechannel(channel c, bool active);
-    bool setvoltagedivision(channel c, unsigned char voltagedivision);
-    bool setoffsetchannel(channel c, bool active);
+    bool activatechannel(meta::channel c, bool active);
+    bool setvoltagedivision(meta::channel c, unsigned char voltagedivision);
+    bool setoffsetchannel(meta::channel c, bool active);
     bool setoffset(unsigned char channels);
     bool setsamplerate(unsigned int samplerate);
 
@@ -83,12 +83,12 @@ private:
 
 protected:
     void run();
-    float getvalue(int number, channel c) const;
-    unsigned int channel2num(channel c);
+    float getvalue(int number, meta::channel c) const;
+    float calcvalue(unsigned char channel, unsigned char raw);
     dataset p_data;
     bool p_connected;
     bool p_stop;
-    unsigned char p_activechannels; // 4 lower bytes = activechannels, 4 higher bytes = channeloffset
+    unsigned char p_activechannels; // 4 lower bits = activechannels, 4 higher bits = channeloffset
     bool p_activechannels_changed;
     bool p_channeloffset_changed;
     unsigned int p_samplerate;
@@ -103,7 +103,6 @@ protected:
     bool p_voltagedivision_changed;
     double p_manualoffset[4];
     unsigned char p_invert;
-
 
 signals:
     void connectionStateChanged(bool);

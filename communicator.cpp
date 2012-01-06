@@ -32,16 +32,16 @@ communicator::communicator(QObject *parent) : QThread(parent)
     p_data.channel3 = new signaldata;
     p_data.channel4 = new signaldata;
 
-    p_activechannels = -1;
+    p_activechannels = 0;
     p_activechannels_changed = false;
     p_channeloffset_changed = false;
-    p_samplerate = -1;
+    p_samplerate = 0;
     p_samplerate_changed = false;
-    p_sinusfrequency = -1;
+    p_sinusfrequency = 0;
     p_sinusfrequency_changed = false;
-    p_squarefrequency = -1;
+    p_squarefrequency = 0;
     p_squarefrequency_changed = false;
-    p_squareratio = -1;
+    p_squareratio = 0;
     p_squareratio_changed = false;
     p_invert = 0;
 
@@ -59,6 +59,11 @@ communicator::~communicator()
     closeport();
 }
 
+inline bool bitishigh(unsigned char data, unsigned char pos)
+{
+    return ((data >> (pos-1)) & 1);
+}
+
 void communicator::run()
 {
     qDebug() << "[communicator] measure loop started";
@@ -71,25 +76,44 @@ void communicator::run()
         p_data.channel2->clear();
         p_data.channel3->clear();
         p_data.channel4->clear();
-        if( getchannelactive(ch1a) )
+
+        unsigned char* buffer = getrawmeasurement();
+        signaldata *data[4];
+        data[0]=p_data.channel1;
+        data[1]=p_data.channel2;
+        data[2]=p_data.channel3;
+        data[3]=p_data.channel4;
+        unsigned char channel = -1;
+        unsigned char actives = ((p_activechannels & 1) ? 1 : 0) + ((p_activechannels & 2) ? 1 : 0) + ((p_activechannels & 4) ? 1 : 0) + ((p_activechannels & 8) ? 1 : 0);
+        for(int index = 0; index < getrawvaluecount(); index++) {
+            do {
+                if( channel < 3 )
+                    channel++;
+                else
+                    channel = 0;
+            } while( !activechannels[channel] );
+            data[channel]->append(QPointF(1000.0/samplerate*(index/actives),calcvalue(channel,buffer[index])));
+        }
+
+        /*if( getchannelactive(meta::ch1a) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel1->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch1a)));
-        if( getchannelactive(ch1b) )
+                p_data.channel1->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch1a)));
+        if( getchannelactive(meta::ch1b) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel2->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch1b)));
-        if( getchannelactive(ch2a) )
+                p_data.channel2->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch1b)));
+        if( getchannelactive(meta::ch2a) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel3->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch2a)));
-        if( getchannelactive(ch2b) )
+                p_data.channel3->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch2a)));
+        if( getchannelactive(meta::ch2b) )
             for(int i=0; i < getvaluecount(); i++)
-                p_data.channel4->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,ch2b)));
+                p_data.channel4->append(QPointF(1000.0/getsamplerate()*i,getvalue(i,meta::ch2b)));*/
         emit newDataset();
         qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss") << "[communicator] measurement complete";
     }
     qDebug() << "[communicator] measure loop stopped";
 }
 
-float communicator::getvalue(int number, channel c) const
+float communicator::getvalue(int number, meta::channel c) const
 {
     float value = lenboard::getvalue(number,(int)c);
     if( getoffset((int)c) > 0 )
@@ -105,6 +129,26 @@ float communicator::getvalue(int number, channel c) const
     }
     value += getmanualoffset(c);
     if( p_invert & c )
+        value *= -1;
+    return value;
+}
+
+float communicator::calcvalue(unsigned char channel, unsigned char raw)
+{
+    float value = raw;
+    if( offsetchannels[channel] )
+        value -= 127; //127; 127.5; 128???
+    value *= 3.3/256;
+    switch( vdivision[channel/2] ) {
+    case 0 : value *= 0.5;
+             break;
+    case 2 : value *= 2;
+             break;
+    case 3 : value *= 10;
+    default : break;
+    }
+    value += p_manualoffset[channel];
+    if( (p_invert >> channel) & 1 )
         value *= -1;
     return value;
 }
@@ -157,28 +201,41 @@ int communicator::activechannelcount() const
 
 void communicator::setParameters()
 {
-    if( p_activechannels_changed )
+    if( p_activechannels_changed ) {
         if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
             qDebug() << "[communicator] setting active channels failed";
-    if( p_channeloffset_changed )
+        p_activechannels_changed = false;
+    }
+    if( p_channeloffset_changed ) {
         if( lenboard::setoffset( p_activechannels >> 4 ) )
             qDebug() << "[communicator] setting channel offset failed";
-    if( p_samplerate_changed )
+        p_channeloffset_changed = false;
+    }
+    if( p_samplerate_changed ) {
         if( lenboard::setsamplerate(p_samplerate) )
             qDebug() << "[communicator] setting sample rate failed";
-    if( p_sinusfrequency_changed)
+        p_samplerate_changed = false;
+    }
+    if( p_sinusfrequency_changed) {
         if( lenboard::setsinusfrequency(p_sinusfrequency) )
             qDebug() << "[communicator] setting sinus frequency failed";
-    if( p_squarefrequency_changed)
+        p_sinusfrequency_changed = false;
+    }
+    if( p_squarefrequency_changed) {
         if( lenboard::setsquarefrequency(p_squarefrequency) )
             qDebug() << "[communicator] setting square frequency failed";
-    if( p_squareratio_changed)
+        p_squarefrequency_changed = false;
+    }
+    if( p_squareratio_changed) {
         if( lenboard::setsquareratio(p_squareratio) )
             qDebug() << "[communicator] setting square ratio failed";
-    if( p_voltagedivision_changed )
+        p_squareratio_changed = false;
+    }
+    if( p_voltagedivision_changed ) {
         if( lenboard::setvoltagedivision(CH1,p_voltagedivision & 3) | lenboard::setvoltagedivision(CH2,p_voltagedivision >> 2 & 3) )
             qDebug() << "[communicator] setting voltagedivision failed";
-
+        p_voltagedivision_changed = false;
+    }
 }
 
 bool communicator::setsinusfrequency(unsigned short frequency)
@@ -229,7 +286,7 @@ bool communicator::setactivechannels(unsigned char channels)
         return false;
 }
 
-bool communicator::activatechannel(channel c, bool active)
+bool communicator::activatechannel(meta::channel c, bool active)
 {
     qDebug() << "[communicator] set channel" << c << (active ? "active" : "inactive");
     if( ((p_activechannels & c) > 0) != active ) {
@@ -244,16 +301,16 @@ bool communicator::activatechannel(channel c, bool active)
         return false;
 }
 
-bool communicator::setvoltagedivision(channel c, unsigned char voltagedivision)
+bool communicator::setvoltagedivision(meta::channel c, unsigned char voltagedivision)
 {
     qDebug() << "[communicator] set channel" << c << "voltagedivision" << voltagedivision;
     switch( c ) {
-    case ch1 : p_voltagedivision &= voltagedivision;
-               return true;
-               break;
-    case ch2 : p_voltagedivision &= voltagedivision*4;
-               return true;
-               break;
+    case meta::ch1 : p_voltagedivision &= voltagedivision;
+                     return true;
+                     break;
+    case meta::ch2 : p_voltagedivision &= voltagedivision*4;
+                     return true;
+                     break;
     default  : qDebug() << "[communicator] set voltage division: invalid channel specified";
                return false;
     }
@@ -261,15 +318,15 @@ bool communicator::setvoltagedivision(channel c, unsigned char voltagedivision)
 
 void communicator::setrange1(int index)
 {
-    setvoltagedivision(ch1,index);
+    setvoltagedivision(meta::ch1,index);
 }
 
 void communicator::setrange2(int index)
 {
-    setvoltagedivision(ch2,index);
+    setvoltagedivision(meta::ch2,index);
 }
 
-bool communicator::setoffsetchannel(channel c, bool active)
+bool communicator::setoffsetchannel(meta::channel c, bool active)
 {
     qDebug() << "[communicator] set channel" << c << "offset" << active;
     unsigned char c_i = c << 4;
@@ -297,14 +354,14 @@ bool communicator::setoffset(unsigned char channels)
         return false;
 }
 
-double communicator::getmanualoffset(channel c) const
+double communicator::getmanualoffset(meta::channel c) const
 {
     switch( c ) {
-    case ch1a : return p_manualoffset[0];
-    case ch1b : return p_manualoffset[1];
-    case ch2a : return p_manualoffset[2];
-    case ch2b : return p_manualoffset[3];
-    default   : return 0.0;
+    case meta::ch1a : return p_manualoffset[0];
+    case meta::ch1b : return p_manualoffset[1];
+    case meta::ch2a : return p_manualoffset[2];
+    case meta::ch2b : return p_manualoffset[3];
+    default         : return 0.0;
     }
 }
 
@@ -322,42 +379,42 @@ bool communicator::setsamplerate(unsigned int samplerate)
 
 bool communicator::setchannel1active(bool active)
 {
-    return activatechannel(ch1a,active);
+    return activatechannel(meta::ch1a,active);
 }
 
 bool communicator::setchannel2active(bool active)
 {
-    return activatechannel(ch1b,active);
+    return activatechannel(meta::ch1b,active);
 }
 
 bool communicator::setchannel3active(bool active)
 {
-    return activatechannel(ch2a,active);
+    return activatechannel(meta::ch2a,active);
 }
 
 bool communicator::setchannel4active(bool active)
 {
-    return activatechannel(ch2b,active);
+    return activatechannel(meta::ch2b,active);
 }
 
 bool communicator::setchannel1offset(bool active)
 {
-    return setoffsetchannel(ch1a,active);
+    return setoffsetchannel(meta::ch1a,active);
 }
 
 bool communicator::setchannel2offset(bool active)
 {
-    return setoffsetchannel(ch1b,active);
+    return setoffsetchannel(meta::ch1b,active);
 }
 
 bool communicator::setchannel3offset(bool active)
 {
-    return setoffsetchannel(ch2a,active);
+    return setoffsetchannel(meta::ch2a,active);
 }
 
 bool communicator::setchannel4offset(bool active)
 {
-    return setoffsetchannel(ch2b,active);
+    return setoffsetchannel(meta::ch2b,active);
 }
 
 
