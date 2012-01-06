@@ -69,6 +69,7 @@ public:
     int     getvalue(int number, int channel) const;
     int     getvaluecount() const;
     unsigned char* getrawmeasurement() const;
+    int getrawvaluecount() const;
 
     void    freeme(bool checkrange);
 
@@ -83,14 +84,16 @@ private:
     unsigned int sinusfrequency;
     unsigned int squarefrequency;
     int     squareratio;
-    long unsigned int samplerate;
+
+protected:
     bool    activechannels[4];
-    int     vdivision[2];
     bool    offsetchannels[4];
+    long unsigned int samplerate;
+    int     vdivision[2];
 
     unsigned char measurement[16500];
     unsigned char* measuredvalues;
-    unsigned int measurementlenght;
+    unsigned int measurementlength;
 };
 
 class portlist{

@@ -26,8 +26,6 @@
 #include <QString>
 #include <QMutex>
 
-#include "meta.h"
-
 class settingsdialog;
 class plot;
 class communicator;

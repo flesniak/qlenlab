@@ -45,6 +45,7 @@ dockWidget_generator::dockWidget_generator(QWidget *parent, Qt::WindowFlags flag
 
     spinBox_square = new QSpinBox(widget_square);
     spinBox_square->setRange(1,10000);
+    spinBox_square->setSuffix("Hz");
 
     QLabel *label_square_ratio_dummy = new QLabel(tr("High-State"),widget_square);
     label_squareratio = new QLabel("50%",widget_square);
@@ -100,8 +101,7 @@ dockWidget_generator::dockWidget_generator(QWidget *parent, Qt::WindowFlags flag
     connect(slider_sinus,SIGNAL(sliderReleased()),SLOT(submitSinusFreq()));
     connect(slider_square,SIGNAL(sliderReleased()),SLOT(submitSquareFreq()));
     connect(slider_squareratio,SIGNAL(sliderReleased()),SLOT(submitSquareRatio()));
-
-};
+}
 
 void dockWidget_generator::restoreSettings()
 {
@@ -109,6 +109,9 @@ void dockWidget_generator::restoreSettings()
     spinBox_sinus->setValue(settings.value("generator/sinus",1).toInt());
     spinBox_square->setValue(settings.value("generator/square",1).toInt());
     slider_squareratio->setValue(settings.value("generator/squareratio",50).toInt());
+    submitSinusFreq();
+    submitSquareFreq();
+    submitSquareRatio();
 }
 
 void dockWidget_generator::saveSettings()
@@ -432,10 +435,12 @@ dockWidget_scope::dockWidget_scope(QWidget *parent, Qt::WindowFlags flags) : QDo
 
     connect(comboBox_samplerate,SIGNAL(currentIndexChanged(QString)),SLOT(updateSampleRateSpinBox(QString)));
     connect(spinBox_samplerate,SIGNAL(valueChanged(int)),SLOT(submitSampleRate(int)));
+    connect(checkBox_ch1active,SIGNAL(toggled(bool)),SLOT(checkSampleRate()));
+    connect(checkBox_ch2active,SIGNAL(toggled(bool)),SLOT(checkSampleRate()));
+    connect(checkBox_ch3active,SIGNAL(toggled(bool)),SLOT(checkSampleRate()));
+    connect(checkBox_ch4active,SIGNAL(toggled(bool)),SLOT(checkSampleRate()));
 
     setWidget(widget);
-
-    comboBox_samplerate->setCurrentIndex(3);
 }
 
 void dockWidget_scope::restoreSettings()
@@ -457,7 +462,7 @@ void dockWidget_scope::restoreSettings()
     spinBox_ch2offset->setValue(settings.value("scope/ch2offset",0.0).toDouble());
     spinBox_ch3offset->setValue(settings.value("scope/ch3offset",0.0).toDouble());
     spinBox_ch4offset->setValue(settings.value("scope/ch4offset",0.0).toDouble());
-    comboBox_samplerate->setCurrentIndex(settings.value("scope/samplerate_index",2).toInt());
+    comboBox_samplerate->setCurrentIndex(settings.value("scope/samplerate_index",3).toInt());
     comboBox_range1->setCurrentIndex(settings.value("scope/range1_index",3).toInt());
     comboBox_range2->setCurrentIndex(settings.value("scope/range2_index",3).toInt());
 }
@@ -492,21 +497,35 @@ void dockWidget_scope::updateSampleRateSpinBox(QString value)
         spinBox_samplerate->setValue(value.toInt());
 }
 
+bool dockWidget_scope::checkSampleRate()
+{
+    unsigned char actives = (checkBox_ch1active->isChecked() ? 1 : 0) + (checkBox_ch2active->isChecked() ? 1 : 0) + (checkBox_ch3active->isChecked() ? 1 : 0) + (checkBox_ch4active->isChecked() ? 1 : 0);
+    switch( actives ) {
+    case 4 : if( spinBox_samplerate->value() > 100 ) {
+                 spinBox_samplerate->setValue(100);
+                 //comboBox_samplerate->setCurrentIndex(3);
+                 return true;
+             }
+             break;
+    case 3 : if( spinBox_samplerate->value() > 125 ) {
+                 spinBox_samplerate->setValue(125);
+                 //comboBox_samplerate->setCurrentIndex(2);
+                 return true;
+             }
+             break;
+    case 2 : if( spinBox_samplerate->value() > 200 ) {
+                 spinBox_samplerate->setValue(200);
+                 //comboBox_samplerate->setCurrentIndex(1);
+                 return true;
+             }
+             break;
+    }
+    return false;
+}
+
 void dockWidget_scope::submitSampleRate(int value)
 {
-    unsigned char actives = checkBox_ch1active->isChecked() ? 1 : 0 + checkBox_ch2active->isChecked() ? 1 : 0 + checkBox_ch3active->isChecked() ? 1 : 0 + checkBox_ch4active->isChecked() ? 1 : 0;
-    switch( actives ) {
-    case 4 : if( spinBox_samplerate->value() > 100 )
-                 spinBox_samplerate->setValue(100);
-             break;
-    case 3 : if( spinBox_samplerate->value() > 125 )
-                 spinBox_samplerate->setValue(125);
-             break;
-    case 2 : if( spinBox_samplerate->value() > 200 )
-                 spinBox_samplerate->setValue(200);
-             break;
-    default : break;
-    }
     comboBox_samplerate->setCurrentIndex(comboBox_samplerate->findText(QString::number(value)));
-    emit sampleRateChanged(value);
+    if( !checkSampleRate() )
+        emit sampleRateChanged(value*1000);
 }

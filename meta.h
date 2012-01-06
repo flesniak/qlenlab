@@ -20,9 +20,13 @@
 #ifndef META_H
 #define META_H
 
-static const char version[] = "0.1alpha1";
+namespace meta {
+static const char version[] = "0.1";
 
 enum channel { ch1a = 1, ch1b = 2, ch2a = 4, ch2b = 8, ch1 = ch1a|ch1b, ch2 = ch2a|ch2b, ch12ab = ch1|ch2 };
+
+enum colorindex { background = 4, grid = 5, channel1 = 0, channel2 = 1, channel3 = 2, channel4 = 3 };
+}
 
 class signaldata;
 struct dataset {

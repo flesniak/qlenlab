@@ -20,11 +20,15 @@
 #ifndef PLOT_H
 #define PLOT_H
 
+#include "meta.h"
+
 #include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_interval.h>
 
 class communicator;
+class QColor;
+class QwtPlotCurve;
+class QwtPlotGrid;
 
 class plot : public QwtPlot
 {
@@ -35,17 +39,13 @@ public:
 private:
     QwtInterval interval;
     QwtPlotCurve* curve[4];
-    int timerId;
+    QwtPlotGrid *grid;
     communicator* com;
-
-protected:
-    void timerEvent(QTimerEvent *event);
 
 public slots:
     void updateViewportX(const int msecs);
     void updateViewportY(const double lower, const double upper);
-    void start();
-    void stop();
+    void changeColor(meta::colorindex ci, QColor color);
     void setData();
 };
 

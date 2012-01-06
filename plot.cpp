@@ -20,10 +20,12 @@
 #include <QPalette>
 #include <QTimerEvent>
 #include <QPen>
+#include <QColor>
 
 #include <qwt/qwt_plot_grid.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_plot_curve.h>
 
 #include "plot.h"
 #include "communicator.h"
@@ -39,8 +41,7 @@ plot::plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
     pal.setColor(QPalette::Window, Qt::black);
     canvas()->setPalette(pal);
 
-    QwtPlotGrid *grid = new QwtPlotGrid();
-    grid->setPen(QPen(Qt::white, 0.0, Qt::DotLine));
+    grid = new QwtPlotGrid();
     grid->enableX(true);
     grid->enableXMin(true);
     grid->enableY(true);
@@ -48,24 +49,42 @@ plot::plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
     grid->attach(this);
 
     curve[0] = new QwtPlotCurve(tr("Kanal 1"));
-    curve[0]->setPen(QPen(QColor::fromRgb(255,255,0)));
+    curve[0]->setData(com->getdata(0));
     curve[0]->attach(this);
     curve[1] = new QwtPlotCurve(tr("Kanal 2"));
+    curve[1]->setData(com->getdata(1));
     curve[1]->attach(this);
     curve[2] = new QwtPlotCurve(tr("Kanal 3"));
+    curve[2]->setData(com->getdata(2));
     curve[2]->attach(this);
     curve[3] = new QwtPlotCurve(tr("Kanal 4"));
-    curve[3]->attach(this);
-    curve[0]->setData(com->getdata(0));
-    curve[1]->setData(com->getdata(1));
-    curve[2]->setData(com->getdata(2));
     curve[3]->setData(com->getdata(3));
+    curve[3]->attach(this);
 
     connect(com,SIGNAL(newDataset()),SLOT(setData()));
 }
 
 void plot::setData()
 {
+    replot();
+}
+
+void plot::changeColor(meta::colorindex ci, QColor color)
+{
+    switch( ci ) {
+    case meta::background : canvas()->setPalette(QPalette(QPalette::Base,color));
+                            break;
+    case meta::grid       : grid->setPen(QPen(color, 0.0, Qt::DotLine));
+                            break;
+    case meta::channel1   : curve[0]->setPen(QPen(color));
+                            break;
+    case meta::channel2   : curve[1]->setPen(QPen(color));
+                            break;
+    case meta::channel3   : curve[2]->setPen(QPen(color));
+                            break;
+    case meta::channel4   : curve[3]->setPen(QPen(color));
+                            break;
+    }
     replot();
 }
 
@@ -80,23 +99,4 @@ void plot::updateViewportY(const double lower, const double upper)
 {
     setAxisScale(QwtPlot::yLeft, lower, upper);
     replot();
-}
-
-void plot::timerEvent(QTimerEvent *event)
-{
-    if( event->timerId() == timerId ) {
-        //update graph
-    }
-
-    QwtPlot::timerEvent(event);
-}
-
-void plot::start()
-{
-    timerId = startTimer(50);
-}
-
-void plot::stop()
-{
-    killTimer(timerId);
 }

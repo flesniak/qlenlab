@@ -20,15 +20,12 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
-#include <QDialog>
-#include <QString>
-#include <QSettings>
+#include <QtGui>
+
+#include "meta.h"
 
 class communicator;
-
-namespace Ui {
-    class settingsdialog;
-}
+class QPalette;
 
 class settingsdialog : public QDialog
 {
@@ -43,16 +40,46 @@ public slots:
     void connectSerial();
     void disconnectSerial();
     void restoreSettings();
+    QColor getChannelColor(meta::channel c);
 
 private:
-    Ui::settingsdialog *ui;
     communicator* com;
+
+    QComboBox *comboBox_serialport;
+    QPushButton *pushButton_connect;
+    QPushButton *pushButton_disconnect;
+    QCheckBox *checkBox_autoconnect;
+
+    QLabel *label_colorBackground;
+    QLabel *label_colorGrid;
+    QLabel *label_colorChannel1;
+    QLabel *label_colorChannel2;
+    QLabel *label_colorChannel3;
+    QLabel *label_colorChannel4;
+    QPushButton *pushButton_colorBackground;
+    QPushButton *pushButton_colorGrid;
+    QPushButton *pushButton_colorChannel1;
+    QPushButton *pushButton_colorChannel2;
+    QPushButton *pushButton_colorChannel3;
+    QPushButton *pushButton_colorChannel4;
+    QColor channelColor[6];
+
+    void updateColor(meta::colorindex ci, QColor color);
 
 private slots:
     void rescanDevices();
     void accept();
     void reject();
     void updateConnectButton(int);
+    void getColorBackground();
+    void getColorGrid();
+    void getColorChannel1();
+    void getColorChannel2();
+    void getColorChannel3();
+    void getColorChannel4();
+
+signals:
+    void colorChanged(meta::colorindex, QColor);
 };
 
 #endif // SETTINGSDIALOG_H

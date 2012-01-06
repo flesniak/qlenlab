@@ -54,7 +54,7 @@ lenboard::lenboard(){
     offsetchannels[2] = true;
     offsetchannels[3] = true;
     measuredvalues = NULL;
-    measurementlenght = 0;
+    measurementlength = 0;
     return;
 }
 
@@ -238,7 +238,6 @@ int lenboard::setsquareratio(int ratio){
 int lenboard::getsquareratio() const {
     return squareratio;
 }
-
 
 int lenboard::setsamplerate(unsigned long int sampless){
     if(hserial < 0)
@@ -479,7 +478,7 @@ int lenboard::measure(){
         if(measurement[8] != flagstonum(activechannels))
             return -2;
 
-        measurementlenght = pointer-9;
+        measurementlength = pointer-9;
         measuredvalues = measurement+9;
         return 0;
     }else{
@@ -495,8 +494,12 @@ unsigned char* lenboard::getrawmeasurement() const {
     return measuredvalues;
 }
 
+int lenboard::getrawvaluecount() const {
+    return measurementlength;
+}
+
 int lenboard::getvaluecount() const {
-    return measurementlenght/((activechannels[0] ? 1 : 0)+(activechannels[1] ? 1 : 0)+(activechannels[2] ? 1 : 0)+(activechannels[3] ? 1 : 0));
+    return measurementlength/((activechannels[0] ? 1 : 0)+(activechannels[1] ? 1 : 0)+(activechannels[2] ? 1 : 0)+(activechannels[3] ? 1 : 0));
 }
 
 int lenboard::getvalue(int count, int channel) const {
@@ -525,7 +528,7 @@ int lenboard::getvalue(int count, int channel) const {
     }
 
     unsigned int offset = count*((activechannels[0] ? 1 : 0)+(activechannels[1] ? 1 : 0)+(activechannels[2] ? 1 : 0)+(activechannels[3] ? 1 : 0))+chnum;
-    if(offset < measurementlenght)
+    if(offset < measurementlength)
         return measuredvalues[offset];
 
     return -1;

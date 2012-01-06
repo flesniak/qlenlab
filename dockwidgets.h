@@ -118,8 +118,9 @@ private:
     QMutex comboMutex;
 
 private slots:
-    void submitSampleRate(int value);
+    void submitSampleRate(int value = 0);
     void updateSampleRateSpinBox(QString value);
+    bool checkSampleRate();
 
 signals:
     void sampleRateChanged(unsigned int);

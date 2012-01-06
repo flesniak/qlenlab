@@ -18,24 +18,86 @@
  ***********************************************************************/
 
 #include "settingsdialog.h"
-#include "ui_settingsdialog.h"
 #include "communicator.h"
 
-settingsdialog::settingsdialog(communicator* com, QWidget *parent) : QDialog(parent), ui(new Ui::settingsdialog), com(com)
-{
-    ui->setupUi(this);
+#include <QPalette>
 
-    connect(ui->comboBox_serialport,SIGNAL(currentIndexChanged(int)),SLOT(updateConnectButton(int)));
-    connect(ui->pushButton_rescan,SIGNAL(clicked()),SLOT(rescanDevices()));
-    connect(ui->pushButton_connect,SIGNAL(clicked()),SLOT(connectSerial()));
-    connect(ui->pushButton_disconnect,SIGNAL(clicked()),SLOT(disconnectSerial()));
-    connect(ui->buttonBox,SIGNAL(accepted()),SLOT(accept()));
-    connect(ui->buttonBox,SIGNAL(rejected()),SLOT(reject()));
+settingsdialog::settingsdialog(communicator* com, QWidget *parent) : QDialog(parent), com(com)
+{
+    QGroupBox *box_serialport = new QGroupBox(this);
+    box_serialport->setTitle(tr("Serielle Schnittstelle"));
+
+    comboBox_serialport = new QComboBox(box_serialport);
+    comboBox_serialport->setEditable(true);
+    pushButton_connect = new QPushButton(tr("Verbinden"),box_serialport);
+    pushButton_disconnect = new QPushButton(tr("Verbindung trennen"),box_serialport);
+    QPushButton *pushButton_rescan = new QPushButton(tr("Geräte aktualisieren"),box_serialport);
+    checkBox_autoconnect = new QCheckBox(tr("Beim Start automatisch verbinden"),box_serialport);
+
+    QGridLayout *layout_serialport = new QGridLayout(box_serialport);
+    layout_serialport->addWidget(comboBox_serialport,0,0,1,2);
+    layout_serialport->addWidget(pushButton_rescan,1,0,1,2);
+    layout_serialport->addWidget(pushButton_connect,2,0);
+    layout_serialport->addWidget(pushButton_disconnect,2,1);
+    layout_serialport->addWidget(checkBox_autoconnect,3,0,1,2);
+
+    QGroupBox *box_colors = new QGroupBox(this);
+    box_colors->setTitle(tr("Farben im Plot"));
+
+    QLabel *label_colorBackground = new QLabel(tr("Hintergrund"),box_colors);
+    QLabel *label_colorGrid = new QLabel(tr("Raster"),box_colors);
+    QLabel *label_colorChannel1 = new QLabel(tr("Kanal 1"),box_colors);
+    QLabel *label_colorChannel2 = new QLabel(tr("Kanal 2"),box_colors);
+    QLabel *label_colorChannel3 = new QLabel(tr("Kanal 3"),box_colors);
+    QLabel *label_colorChannel4 = new QLabel(tr("Kanal 4"),box_colors);
+
+    pushButton_colorBackground = new QPushButton(box_colors);
+    pushButton_colorGrid = new QPushButton(box_colors);
+    pushButton_colorChannel1 = new QPushButton(box_colors);
+    pushButton_colorChannel2 = new QPushButton(box_colors);
+    pushButton_colorChannel3 = new QPushButton(box_colors);
+    pushButton_colorChannel4 = new QPushButton(box_colors);
+
+    QGridLayout *layout_colors = new QGridLayout(box_colors);
+    layout_colors->addWidget(label_colorBackground,0,0);
+    layout_colors->addWidget(pushButton_colorBackground,0,1);
+    layout_colors->addWidget(label_colorGrid,0,2);
+    layout_colors->addWidget(pushButton_colorGrid,0,3);
+    layout_colors->addWidget(label_colorChannel1,1,0);
+    layout_colors->addWidget(pushButton_colorChannel1,1,1);
+    layout_colors->addWidget(label_colorChannel2,1,2);
+    layout_colors->addWidget(pushButton_colorChannel2,1,3);
+    layout_colors->addWidget(label_colorChannel3,2,0);
+    layout_colors->addWidget(pushButton_colorChannel3,2,1);
+    layout_colors->addWidget(label_colorChannel4,2,2);
+    layout_colors->addWidget(pushButton_colorChannel4,2,3);
+
+    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok|QDialogButtonBox::Cancel,Qt::Horizontal,this);
+
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->addWidget(box_serialport);
+    layout->addWidget(box_colors);
+    layout->addWidget(buttonBox);
+
+    qRegisterMetaType<meta::colorindex>("meta::colorindex");
+
+    connect(comboBox_serialport,SIGNAL(currentIndexChanged(int)),SLOT(updateConnectButton(int)));
+    connect(pushButton_rescan,SIGNAL(clicked()),SLOT(rescanDevices()));
+    connect(pushButton_connect,SIGNAL(clicked()),SLOT(connectSerial()));
+    connect(pushButton_disconnect,SIGNAL(clicked()),SLOT(disconnectSerial()));
+    connect(buttonBox,SIGNAL(accepted()),SLOT(accept()));
+    connect(buttonBox,SIGNAL(rejected()),SLOT(reject()));
+
+    connect(pushButton_colorBackground,SIGNAL(clicked()),SLOT(getColorBackground()));
+    connect(pushButton_colorGrid,SIGNAL(clicked()),SLOT(getColorGrid()));
+    connect(pushButton_colorChannel1,SIGNAL(clicked()),SLOT(getColorChannel1()));
+    connect(pushButton_colorChannel2,SIGNAL(clicked()),SLOT(getColorChannel2()));
+    connect(pushButton_colorChannel3,SIGNAL(clicked()),SLOT(getColorChannel3()));
+    connect(pushButton_colorChannel4,SIGNAL(clicked()),SLOT(getColorChannel4()));
 }
 
 settingsdialog::~settingsdialog()
 {
-    delete ui;
 }
 
 int settingsdialog::exec()
@@ -46,52 +108,71 @@ int settingsdialog::exec()
 void settingsdialog::restoreSettings()
 {
     QSettings settings;
-    ui->checkBox_autoconnect->setChecked(settings.value("serial/autoconnect",0).toBool());
+    checkBox_autoconnect->setChecked(settings.value("serial/autoconnect",0).toBool());
     rescanDevices();
     QString device = settings.value("serial/port").toString();
     if( !device.isEmpty() )
     {
-        int index = ui->comboBox_serialport->findText(device);
+        int index =comboBox_serialport->findText(device);
         if( index == -1 ) {
-            ui->comboBox_serialport->addItem(device);
-            ui->comboBox_serialport->setCurrentIndex(ui->comboBox_serialport->count()-1);
+            comboBox_serialport->addItem(device);
+            comboBox_serialport->setCurrentIndex(comboBox_serialport->count()-1);
         }
         else
-            ui->comboBox_serialport->setCurrentIndex(index);
-        if( ui->checkBox_autoconnect->isChecked() )
+            comboBox_serialport->setCurrentIndex(index);
+        if( checkBox_autoconnect->isChecked() )
             connectSerial();
     }
-    ui->pushButton_disconnect->setEnabled(com->connected());
+    pushButton_disconnect->setEnabled(com->connected());
+    pushButton_connect->setEnabled(!com->connected());
+
+    channelColor[meta::channel1] = settings.value("plot/color1",QColor(255,255,0)).value<QColor>();
+    channelColor[meta::channel2] = settings.value("plot/color2",QColor(0,0,255)).value<QColor>();
+    channelColor[meta::channel3] = settings.value("plot/color3",QColor(255,0,0)).value<QColor>();
+    channelColor[meta::channel4] = settings.value("plot/color4",QColor(0,255,0)).value<QColor>();
+    channelColor[meta::background] = settings.value("plot/colorBackground",QColor(0,0,0)).value<QColor>();
+    channelColor[meta::grid] = settings.value("plot/colorGrid",QColor(255,255,255)).value<QColor>();
+    updateColor(meta::channel1,channelColor[meta::channel1]);
+    updateColor(meta::channel2,channelColor[meta::channel2]);
+    updateColor(meta::channel3,channelColor[meta::channel3]);
+    updateColor(meta::channel4,channelColor[meta::channel4]);
+    updateColor(meta::background,channelColor[meta::background]);
+    updateColor(meta::grid,channelColor[meta::grid]);
+    emit colorChanged(meta::channel1,channelColor[meta::channel1]);
+    emit colorChanged(meta::channel2,channelColor[meta::channel2]);
+    emit colorChanged(meta::channel3,channelColor[meta::channel3]);
+    emit colorChanged(meta::channel4,channelColor[meta::channel4]);
+    emit colorChanged(meta::background,channelColor[meta::background]);
+    emit colorChanged(meta::grid,channelColor[meta::grid]);
 }
 
 void settingsdialog::rescanDevices()
 {
-    ui->comboBox_serialport->clear();
-    ui->comboBox_serialport->addItem(tr("Deaktiviert (debugging)"));
+    comboBox_serialport->clear();
+    comboBox_serialport->addItem(tr("Deaktiviert"));
     com->portList()->refresh();
     char string[255];
     while(com->portList()->portwalk(string))
-        ui->comboBox_serialport->addItem(string);
+        comboBox_serialport->addItem(string);
 }
 
 void settingsdialog::connectSerial()
 {
-    int index = ui->comboBox_serialport->currentIndex();
-    if( index > 0 && ( (com->lastTriedPort() != ui->comboBox_serialport->currentText()) || !com->connected() ) ) //Only try to connect if we aren't already connected or change the device
+    int index = comboBox_serialport->currentIndex();
+    if( index > 0 && ( (com->lastTriedPort() != comboBox_serialport->currentText()) || !com->connected() ) ) //Only try to connect if we aren't already connected or change the device
     {
         com->closeport();
-    //if( index > com->portList()->count() )
-        com->openport(ui->comboBox_serialport->currentText().toAscii().data()); //This should work for both user-specified and detected ports.
-    //else
-    //    com->openport(com->portList()->portbynumber(index-1));
+        com->openport(comboBox_serialport->currentText().toAscii().data()); //This should work for both user-specified and detected ports.
     }
-    ui->pushButton_disconnect->setEnabled(com->connected());
+    pushButton_disconnect->setEnabled(com->connected());
+    pushButton_connect->setEnabled(!com->connected());
 }
 
 void settingsdialog::disconnectSerial()
 {
     com->closeport();
-    ui->pushButton_disconnect->setEnabled(com->connected());
+    pushButton_disconnect->setEnabled(com->connected());
+    pushButton_connect->setEnabled(!com->connected());
 }
 
 void settingsdialog::reject()
@@ -102,13 +183,102 @@ void settingsdialog::reject()
 void settingsdialog::accept()
 {
     QSettings settings;
-    settings.setValue("serial/port", !com->lastTriedPort().isEmpty() ? com->lastTriedPort() : ui->comboBox_serialport->currentText());
-    settings.setValue("serial/autoconnect",ui->checkBox_autoconnect->isEnabled() ? ui->checkBox_autoconnect->isChecked() : false);
+    settings.setValue("serial/port", !com->lastTriedPort().isEmpty() ? com->lastTriedPort() : comboBox_serialport->currentText());
+    settings.setValue("serial/autoconnect",checkBox_autoconnect->isEnabled() ? checkBox_autoconnect->isChecked() : false);
+    settings.setValue("plot/color1",channelColor[meta::channel1]);
+    settings.setValue("plot/color2",channelColor[meta::channel2]);
+    settings.setValue("plot/color3",channelColor[meta::channel3]);
+    settings.setValue("plot/color4",channelColor[meta::channel4]);
+    settings.setValue("plot/colorBackground",channelColor[meta::background]);
+    settings.setValue("plot/colorGrid",channelColor[meta::grid]);
     QDialog::accept();
 }
 
 void settingsdialog::updateConnectButton(int index)
 {
-    ui->pushButton_connect->setEnabled(index != 0);
-    ui->checkBox_autoconnect->setEnabled(index != 0);
+    pushButton_connect->setEnabled(index != 0);
+    checkBox_autoconnect->setEnabled(index != 0);
+}
+
+QColor settingsdialog::getChannelColor(meta::channel c)
+{
+    return channelColor[c];
+}
+
+void settingsdialog::getColorBackground()
+{
+    QColor newcolor = QColorDialog::getColor(channelColor[meta::background],this);
+    if( newcolor != channelColor[meta::background] ) {
+        channelColor[meta::background] = newcolor;
+        updateColor(meta::background, newcolor);
+        emit colorChanged(meta::background,newcolor);
+    }
+}
+
+void settingsdialog::getColorGrid()
+{
+    QColor newcolor = QColorDialog::getColor(channelColor[meta::grid],this);
+    if( newcolor != channelColor[meta::grid] ) {
+        channelColor[meta::grid] = newcolor;
+        updateColor(meta::grid, newcolor);
+        emit colorChanged(meta::grid, newcolor);
+    }
+}
+
+void settingsdialog::getColorChannel1()
+{
+    QColor newcolor = QColorDialog::getColor(channelColor[meta::channel1],this);
+    if( newcolor != channelColor[meta::channel1] ) {
+        channelColor[meta::channel1] = newcolor;
+        updateColor(meta::channel1, newcolor);
+        emit colorChanged(meta::channel1, newcolor);
+    }
+}
+
+void settingsdialog::getColorChannel2()
+{
+    QColor newcolor = QColorDialog::getColor(channelColor[meta::channel2],this);
+    if( newcolor != channelColor[meta::channel2] ) {
+        channelColor[meta::channel2] = newcolor;
+        updateColor(meta::channel2, newcolor);
+        emit colorChanged(meta::channel2, newcolor);
+    }
+}
+
+void settingsdialog::getColorChannel3()
+{
+    QColor newcolor = QColorDialog::getColor(channelColor[meta::channel3],this);
+    if( newcolor != channelColor[meta::channel3] ) {
+        channelColor[meta::channel3] = newcolor;
+        updateColor(meta::channel3, newcolor);
+        emit colorChanged(meta::channel3, newcolor);
+    }
+}
+
+void settingsdialog::getColorChannel4()
+{
+    QColor newcolor = QColorDialog::getColor(channelColor[meta::channel4],this);
+    if( newcolor != channelColor[meta::channel4] ) {
+        channelColor[meta::channel4] = newcolor;
+        updateColor(meta::channel4, newcolor);
+        emit colorChanged(meta::channel4, newcolor);
+    }
+}
+
+void settingsdialog::updateColor(meta::colorindex ci, QColor color)
+{
+    switch( ci ) {
+    case meta::background : pushButton_colorBackground->setPalette(QPalette(color));
+                            break;
+    case meta::grid       : pushButton_colorGrid->setPalette(QPalette(color));
+                            break;
+    case meta::channel1   : pushButton_colorChannel1->setPalette(QPalette(color));
+                            break;
+    case meta::channel2   : pushButton_colorChannel2->setPalette(QPalette(color));
+                            break;
+    case meta::channel3   : pushButton_colorChannel3->setPalette(QPalette(color));
+                            break;
+    case meta::channel4   : pushButton_colorChannel4->setPalette(QPalette(color));
+                            break;
+    }
 }

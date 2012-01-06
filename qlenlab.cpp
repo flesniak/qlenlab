@@ -29,7 +29,8 @@
 
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
 {
-    setWindowTitle(tr("QLenLab %1").arg(version));
+    setWindowTitle(tr("QLenLab %1").arg(meta::version));
+    resize(940,0);
 
     settingsdlg = NULL;
 
@@ -58,9 +59,13 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     QAction *action_quit = menu_lenlab->addAction(QIcon::fromTheme("application-exit"),tr("Beenden"));
     QMenu *menu_interface = menuBar()->addMenu(tr("Ansicht"));
     QAction *action_scope = menu_interface->addAction(tr("Oszilloskop"));
+    action_scope->setCheckable(true);
     QAction *action_viewport = menu_interface->addAction(tr("Ansicht"));
+    action_viewport->setCheckable(true);
     QAction *action_generator = menu_interface->addAction(tr("Frequenzgenerator"));
+    action_generator->setCheckable(true);
     QAction *action_trigger = menu_interface->addAction(tr("Trigger"));
+    action_trigger->setCheckable(true);
     action_trigger->setEnabled(false);
     QMenu *menu_measurement = menuBar()->addMenu(tr("Messung"));
     action_start = menu_measurement->addAction(tr("Starten"));
@@ -68,6 +73,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
 
     //various connects
     connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
+    connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),plotter,SLOT(changeColor(meta::colorindex,QColor)));
 
     //connects for dockWidget_scope
     connect(dw_scope,SIGNAL(sampleRateChanged(unsigned int)),com,SLOT(setsamplerate(unsigned int)));
@@ -193,9 +199,10 @@ void QLenLab::about()
                              tr("QLenLab ist ein Softwareprojekt, das die Ansteuerung der Hardware-Platine LENlab des Instituts für Biomedizinische Technik (IBT, http://ibt.kit.edu) "
                                 "am Karlsruhe Institute of Technology (KIT) "
                                 "ermöglichen soll.\n\nEs steht in keinerlei Zusammenhang mit den Entwicklern dieser Platform. Die Nutzung von QLenLab erfolgt auf eigene Gefahr, "
-                                "allgemein gilt:\n\nQLenLab is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
+                                "allgemein gilt:\n")+QString("\nQLenLab is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by "
                                 "the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n"
                                 "QLenLab is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. "
                                 "See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with QLenLab. "
-                                "If not, see <http://www.gnu.org/licenses/>.\n\nQLenLab is based in part on the work of the Qwt project (http://qwt.sf.net)."));
+                                "If not, see <http://www.gnu.org/licenses/>.\n\nQLenLab is based in part on the work of the Qwt project (http://qwt.sf.net)."
+                                "\n\nQLenLab is based in part on the work of the LENlib project."));
 }
