@@ -24,6 +24,8 @@
 
 settingsdialog::settingsdialog(communicator* com, QWidget *parent) : QDialog(parent), com(com)
 {
+    setWindowTitle(tr("Einstellungen"));
+
     QGroupBox *box_serialport = new QGroupBox(this);
     box_serialport->setTitle(tr("Serielle Schnittstelle"));
 
