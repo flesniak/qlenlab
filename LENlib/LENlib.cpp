@@ -229,7 +229,7 @@ int lenboard::setsquareratio(int ratio){
     squareratio = ratio;
 
     char query[50];
-    int length = sprintf(query, "sig_sin %d %d\x0D\x0A", squarefrequency, squareratio);
+    int length = sprintf(query, "sig_squ %d %d\x0D\x0A", squarefrequency, squareratio);
     portsend(query, length);
 
     return 0;
