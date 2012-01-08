@@ -35,6 +35,7 @@ class signaldata;
 class dockWidget_scope;
 class dockWidget_viewport;
 class dockWidget_generator;
+class dockWidget_trigger;
 
 class QLenLab : public QMainWindow
 {
@@ -57,6 +58,7 @@ private:
     dockWidget_scope *dw_scope;
     dockWidget_viewport *dw_viewport;
     dockWidget_generator *dw_generator;
+    dockWidget_trigger *dw_trigger;
 
     QLabel *label_connectionstatus;
     QTabWidget *tabWidget;

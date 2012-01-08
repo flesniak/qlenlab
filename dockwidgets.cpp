@@ -552,3 +552,28 @@ void dockWidget_scope::updateColor(meta::colorindex ci, QColor color)
     default             : break;
     }
 }
+
+
+dockWidget_trigger::dockWidget_trigger(QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags)
+{
+    setWindowTitle(tr("Trigger"));
+    setObjectName("dockWidget_trigger");
+
+    QWidget *widget = new QWidget(this);
+
+    //QLabel *label_triggervoltage = new QLabel(tr("Triggerspannung"));
+    spinBox_triggervoltage = new QDoubleSpinBox(widget);
+    spinBox_triggervoltage->setRange(-40,40);
+    spinBox_triggervoltage->setSuffix("V");
+
+    comboBox_edge = new QComboBox(widget);
+    comboBox_edge->addItems(QStringList() << tr("Flanke egal")
+                                          << tr("steigende Flanke")
+                                          << tr("fallende Flanke"));
+
+    QHBoxLayout *layout = new QHBoxLayout(widget);
+    layout->addWidget(spinBox_triggervoltage);
+    layout->addWidget(comboBox_edge);
+
+    setWidget(widget);
+}

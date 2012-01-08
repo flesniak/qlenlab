@@ -133,7 +133,13 @@ signals:
 
 class dockWidget_trigger : public QDockWidget
 {
+    Q_OBJECT
+public:
+    dockWidget_trigger(QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
+private:
+    QDoubleSpinBox *spinBox_triggervoltage;
+    QComboBox *comboBox_edge;
 };
 
 #endif // DOCKWIDGETS_H

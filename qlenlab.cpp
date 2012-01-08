@@ -39,6 +39,9 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     dw_scope = new dockWidget_scope(this);
     addDockWidget(Qt::LeftDockWidgetArea,dw_scope);
 
+    dw_trigger = new dockWidget_trigger(this);
+    addDockWidget(Qt::LeftDockWidgetArea,dw_trigger);
+
     dw_viewport = new dockWidget_viewport(this);
     addDockWidget(Qt::LeftDockWidgetArea,dw_viewport);
 
@@ -60,7 +63,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     QMenu *menu_interface = menuBar()->addMenu(tr("Ansicht"));
     QAction *action_scope = menu_interface->addAction(tr("Oszilloskop"));
     action_scope->setCheckable(true);
-    QAction *action_viewport = menu_interface->addAction(tr("Ansicht"));
+    QAction *action_viewport = menu_interface->addAction(tr("Anzeigeeinstellungen"));
     action_viewport->setCheckable(true);
     QAction *action_generator = menu_interface->addAction(tr("Frequenzgenerator"));
     action_generator->setCheckable(true);
