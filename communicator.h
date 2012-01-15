@@ -55,6 +55,7 @@ public slots:
     bool setoffsetchannel(meta::channel c, bool active);
     bool setoffset(unsigned char channels);
     bool setsamplerate(unsigned int samplerate);
+    void settriggermode(meta::triggermode mode, double value);
 
     //some stuff for easier signal/slot handling
     bool setchannel1active(bool active);
@@ -84,6 +85,7 @@ private:
 protected:
     void run();
     float calcvalue(unsigned char channel, unsigned char raw);
+    double getrangefactor(const unsigned char index) const;
     dataset p_data;
     bool p_connected;
     bool p_stop;
@@ -102,6 +104,8 @@ protected:
     bool p_voltagedivision_changed;
     double p_manualoffset[4];
     unsigned char p_invert;
+    meta::triggermode p_triggermode;
+    double p_triggervalue;
 
 signals:
     void connectionStateChanged(bool);

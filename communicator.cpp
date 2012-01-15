@@ -73,6 +73,7 @@ void communicator::run()
             break;
         }
         measure();
+
         p_data.channel1->clear();
         p_data.channel2->clear();
         p_data.channel3->clear();
@@ -94,6 +95,8 @@ void communicator::run()
             } while( !activechannels[channel] );
             data[channel]->append(QPointF(1000.0/samplerate*(index/actives),calcvalue(channel,buffer[index])));
         }
+        for(int index=0;index<4;index++)
+            data[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
         emit newDataset();
     }
     emit measureStateChanged(false);
@@ -106,18 +109,24 @@ float communicator::calcvalue(unsigned char channel, unsigned char raw)
     if( offsetchannels[channel] )
         value -= 127; //127; 127.5; 128???
     value *= 3.3/256;
-    switch( vdivision[channel/2] ) {
-    case 0 : value *= 0.5;
-             break;
-    case 2 : value *= 2;
-             break;
-    case 3 : value *= 10;
-    default : break;
-    }
+    value *= getrangefactor( vdivision[channel/2] );
     value += p_manualoffset[channel];
     if( (p_invert >> channel) & 1 )
         value *= -1;
     return value;
+}
+
+double communicator::getrangefactor(const unsigned char index) const
+{
+    switch( index ) {
+    case 0 : return(0.5);
+             break;
+    case 2 : return(2);
+             break;
+    case 3 : return(10);
+    default : return(1);
+              break;
+    }
 }
 
 void communicator::stop()
@@ -204,6 +213,12 @@ void communicator::setParameters()
             qDebug() << "[communicator] setting voltagedivision failed";
         p_voltagedivision_changed = false;
     }
+}
+
+void communicator::settriggermode(meta::triggermode mode, double value)
+{
+    p_triggermode = mode;
+    p_triggervalue = value;
 }
 
 bool communicator::setsinusfrequency(unsigned short frequency)

@@ -561,19 +561,50 @@ dockWidget_trigger::dockWidget_trigger(QWidget *parent, Qt::WindowFlags flags) :
 
     QWidget *widget = new QWidget(this);
 
-    //QLabel *label_triggervoltage = new QLabel(tr("Triggerspannung"));
     spinBox_triggervoltage = new QDoubleSpinBox(widget);
     spinBox_triggervoltage->setRange(-40,40);
     spinBox_triggervoltage->setSuffix("V");
+    spinBox_triggervoltage->setEnabled(false);
 
     comboBox_edge = new QComboBox(widget);
-    comboBox_edge->addItems(QStringList() << tr("Flanke egal")
+    comboBox_edge->addItems(QStringList() << tr("Deaktiviert")
+                                          << tr("Flanke egal")
                                           << tr("steigende Flanke")
                                           << tr("fallende Flanke"));
 
     QHBoxLayout *layout = new QHBoxLayout(widget);
-    layout->addWidget(spinBox_triggervoltage);
     layout->addWidget(comboBox_edge);
+    layout->addWidget(spinBox_triggervoltage);
 
     setWidget(widget);
+
+    qRegisterMetaType<meta::triggermode>("meta::triggermode");
+
+    connect(comboBox_edge,SIGNAL(currentIndexChanged(int)),SLOT(updateTriggerSpinBox(int)));
+    connect(spinBox_triggervoltage,SIGNAL(valueChanged(double)),SLOT(submitTriggerMode(double)));
+}
+
+void dockWidget_trigger::restoreSettings()
+{
+    QSettings settings;
+    comboBox_edge->setCurrentIndex(settings.value("trigger/mode",0).toInt());
+    spinBox_triggervoltage->setValue(settings.value("trigger/voltage",0.0).toDouble());
+}
+
+void dockWidget_trigger::saveSettings()
+{
+    QSettings settings;
+    settings.setValue("trigger/mode",comboBox_edge->currentIndex());
+    settings.setValue("trigger/voltage",spinBox_triggervoltage->value());
+}
+
+void dockWidget_trigger::updateTriggerSpinBox(int index)
+{
+    spinBox_triggervoltage->setEnabled(index != 0);
+    submitTriggerMode(spinBox_triggervoltage->value());
+}
+
+void dockWidget_trigger::submitTriggerMode(double value)
+{
+    emit triggerModeChanged((meta::triggermode)comboBox_edge->currentIndex(),value);
 }

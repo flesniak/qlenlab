@@ -111,6 +111,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(dw_viewport,SIGNAL(viewportYChanged(double,double)),plotter,SLOT(updateViewportY(double,double)));
 
     //connects for dockWidget_trigger
+    connect(dw_trigger,SIGNAL(triggerModeChanged(meta::triggermode,double)),com,SLOT(settriggermode(meta::triggermode,double)));
 
     //connect DockWidgets and corresponding menu actions
     connect(action_viewport,SIGNAL(triggered(bool)),dw_viewport,SLOT(setShown(bool)));
@@ -144,6 +145,7 @@ void QLenLab::restoreSettings()
     dw_scope->restoreSettings();
     dw_viewport->restoreSettings();
     dw_generator->restoreSettings();
+    dw_trigger->restoreSettings();
     settingsdlg->restoreSettings();
 }
 
@@ -155,6 +157,7 @@ void QLenLab::closeEvent(QCloseEvent *)
     dw_scope->saveSettings();
     dw_viewport->saveSettings();
     dw_generator->saveSettings();
+    dw_trigger->saveSettings();
 }
 
 void QLenLab::quit()

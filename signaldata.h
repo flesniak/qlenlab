@@ -22,6 +22,8 @@
 
 #include <qwt/qwt_series_data.h>
 
+#include "meta.h"
+
 class signaldata : public QwtSeriesData<QPointF>
 {
 public:
@@ -33,10 +35,12 @@ public:
 public slots:
     void append(const QPointF &pos);
     void clear();
+    bool setTrigger(meta::triggermode mode, double trigger, double tolerance = 0);
 
 private:
     QRectF cachedRect;
     QVector<QPointF> data;
+    int offset;
 };
 
 #endif // SIGNALDATA_H

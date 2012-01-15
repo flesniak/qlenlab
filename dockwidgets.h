@@ -136,10 +136,19 @@ class dockWidget_trigger : public QDockWidget
     Q_OBJECT
 public:
     dockWidget_trigger(QWidget *parent = 0, Qt::WindowFlags flags = 0);
+    void restoreSettings();
+    void saveSettings();
 
 private:
     QDoubleSpinBox *spinBox_triggervoltage;
     QComboBox *comboBox_edge;
+
+private slots:
+    void updateTriggerSpinBox(int index);
+    void submitTriggerMode(double value);
+
+signals:
+    void triggerModeChanged(meta::triggermode mode, double value);
 };
 
 #endif // DOCKWIDGETS_H

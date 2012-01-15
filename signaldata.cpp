@@ -21,21 +21,76 @@
 
 signaldata::signaldata() : cachedRect(0.0,0.0,0.0,0.0)
 {
+    offset = 0;
 }
 
 QPointF signaldata::sample(size_t i) const
 {
-    return data.value(i);
+    return QPointF(data.value(i).x(),data.value(i+offset).y());
 }
 
 size_t signaldata::size() const
 {
-    return data.size();
+    return data.size()-offset;
 }
 
 QRectF signaldata::boundingRect() const
 {
     return cachedRect;
+}
+
+bool signaldata::setTrigger(meta::triggermode mode, double trigger, double tolerance)
+{
+    offset = 0;
+    if( data.size() == 0 )
+        return false;
+    switch( mode ) {
+    case meta::both : {
+                      bool above = (data[offset].y() >= trigger);
+                      while( (data[offset].y() <= trigger) != above ) {
+                          offset++;
+                          if( offset >= data.size() ) {
+                              offset = 0;
+                              return false;
+                          }
+                      }
+                      return true;
+                      break;
+                      }
+    case meta::rising : while( data[offset].y() > trigger-tolerance ) {
+                            offset++;
+                            if( offset >= data.size() ) {
+                                offset = 0;
+                                return false;
+                            }
+                        }
+                        while( data[offset].y() < trigger-tolerance ) {
+                            offset++;
+                            if( offset >= data.size() ) {
+                                offset = 0;
+                                return false;
+                            }
+                        }
+                        return true;
+                        break;
+    case meta::falling : while( data[offset].y() < trigger+tolerance ) {
+                             offset++;
+                             if( offset >= data.size() ) {
+                                 offset = 0;
+                                 return false;
+                             }
+                         }
+                         while( data[offset].y() > trigger+tolerance ) {
+                             offset++;
+                             if( offset >= data.size() ) {
+                                 offset = 0;
+                                 return false;
+                             }
+                         }
+                         return true;
+                         break;
+    default :            return false;
+    }
 }
 
 void signaldata::append(const QPointF &pos)
