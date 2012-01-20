@@ -46,6 +46,7 @@ public slots:
     void updateViewportX(const int msecs);
     void updateViewportY(const double lower, const double upper);
     void updateColor(meta::colorindex ci, QColor color);
+    void setYAutoscale(bool on);
     void setData();
 };
 

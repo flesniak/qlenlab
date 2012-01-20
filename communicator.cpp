@@ -98,6 +98,7 @@ void communicator::run()
         for(int index=0;index<4;index++)
             data[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
         emit newDataset();
+        usleep(300);
     }
     emit measureStateChanged(false);
     qDebug() << "[communicator] measure loop stopped";

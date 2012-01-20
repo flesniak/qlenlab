@@ -33,8 +33,8 @@
 
 plot::plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), com(com)
 {
-    setAxisTitle(QwtPlot::xBottom, "Zeit [ms]");
-    setAxisTitle(QwtPlot::yLeft, "Spannung [V]");
+    setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
+    setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
     plotLayout()->setAlignCanvasToScales(true);
 
     QPalette pal = canvas()->palette();
@@ -66,6 +66,13 @@ plot::plot(communicator* com, QWidget *parent) : QwtPlot(parent), interval(0.0, 
 
 void plot::setData()
 {
+    replot();
+}
+
+void plot::setYAutoscale(bool on)
+{
+    qDebug() << "[plot] set y autoscale" << on;
+    setAxisAutoScale(QwtPlot::yLeft,on);
     replot();
 }
 

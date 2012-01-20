@@ -109,6 +109,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     //connects for dockWidget_viewport
     connect(dw_viewport,SIGNAL(viewportXChanged(int)),plotter,SLOT(updateViewportX(int)));
     connect(dw_viewport,SIGNAL(viewportYChanged(double,double)),plotter,SLOT(updateViewportY(double,double)));
+    connect(dw_viewport,SIGNAL(autoscaleYChanged(bool)),plotter,SLOT(setYAutoscale(bool)));
 
     //connects for dockWidget_trigger
     connect(dw_trigger,SIGNAL(triggerModeChanged(meta::triggermode,double)),com,SLOT(settriggermode(meta::triggermode,double)));

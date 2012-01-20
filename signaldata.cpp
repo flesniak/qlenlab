@@ -64,6 +64,7 @@ bool signaldata::setTrigger(meta::triggermode mode, double trigger, double toler
                                 return false;
                             }
                         }
+                        offset += 10; //Generic offset to prevent triggering on imprecise falling edges
                         while( data[offset].y() < trigger-tolerance ) {
                             offset++;
                             if( offset >= data.size() ) {
@@ -80,6 +81,7 @@ bool signaldata::setTrigger(meta::triggermode mode, double trigger, double toler
                                  return false;
                              }
                          }
+                         offset += 10; //Generic offset to prevent triggering on imprecise rising edges
                          while( data[offset].y() > trigger+tolerance ) {
                              offset++;
                              if( offset >= data.size() ) {

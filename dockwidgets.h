@@ -32,6 +32,7 @@ public:
     void restoreSettings();
     void saveSettings();
 
+private:
     QSlider *slider_sinus;
     QSlider *slider_square;
     QSlider *slider_squareratio;
@@ -40,8 +41,6 @@ public:
     QLabel *label_squareratio;
     QComboBox *comboBox_range_sinus;
     QComboBox *comboBox_range_square;
-
-private:
     QMutex freqChanging;
 
 private slots:
@@ -71,6 +70,7 @@ public:
     void restoreSettings();
     void saveSettings();
 
+private:
     QComboBox *comboBox_xaxis;
     QSpinBox *spinBox_xaxis;
     QDoubleSpinBox *spinBox_yaxis_lower;
@@ -81,10 +81,12 @@ private slots:
     void updateViewportXValue(QString value);
     void submitViewportX();
     void submitViewportY();
+    void submitYAutoscale(bool on);
 
 signals:
     void viewportXChanged(const int);
     void viewportYChanged(const double, const double);
+    void autoscaleYChanged(bool);
 };
 
 class dockWidget_scope : public QDockWidget

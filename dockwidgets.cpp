@@ -265,7 +265,6 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     label_yaxis_dummy->setAlignment(Qt::AlignCenter);
 
     checkBox_autoscale = new QCheckBox(tr("Autoscale"),groupBox_yaxis);
-    checkBox_autoscale->setEnabled(false);
 
     QHBoxLayout *layout_yaxis_1 = new QHBoxLayout;
     layout_yaxis_1->addWidget(spinBox_yaxis_lower);
@@ -284,6 +283,7 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     connect(spinBox_xaxis,SIGNAL(valueChanged(int)),SLOT(submitViewportX()));
     connect(spinBox_yaxis_lower,SIGNAL(valueChanged(double)),SLOT(submitViewportY()));
     connect(spinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(submitViewportY()));
+    connect(checkBox_autoscale,SIGNAL(toggled(bool)),SLOT(submitYAutoscale(bool)));
 
     setWidget(widget);
 }
@@ -300,6 +300,7 @@ void dockWidget_viewport::restoreSettings()
         submitViewportX();
         submitViewportY();
     }
+    checkBox_autoscale->setChecked(settings.value("viewport/yaxis_autoscale",false).toBool());
 }
 
 void dockWidget_viewport::saveSettings()
@@ -316,6 +317,16 @@ void dockWidget_viewport::updateViewportXValue(QString value)
         spinBox_xaxis->setValue(value.toInt());
 }
 
+void dockWidget_viewport::submitYAutoscale(bool on)
+{
+    if( on )
+        emit autoscaleYChanged(on);
+    else {
+        submitViewportX();
+        submitViewportY();
+    }
+}
+
 void dockWidget_viewport::submitViewportX()
 {
     comboBox_xaxis->setCurrentIndex(comboBox_xaxis->findText(QString::number(spinBox_xaxis->value())));
@@ -324,6 +335,7 @@ void dockWidget_viewport::submitViewportX()
 
 void dockWidget_viewport::submitViewportY()
 {
+    checkBox_autoscale->setChecked(false);
     const double upper = spinBox_yaxis_upper->value();
     spinBox_yaxis_lower->setMaximum(upper);
     emit viewportYChanged(spinBox_yaxis_lower->value(),upper);
