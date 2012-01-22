@@ -1,21 +1,21 @@
-/************************************************************************
- * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
- *                                                                      *
- * This file is part of the QLenLab project.                            *
- *                                                                      *
- * QLenLab is free software: you can redistribute it and/or modify      *
- * it under the terms of the GNU General Public License as published by *
- * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
- *                                                                      *
- * QLenLab is distributed in the hope that it will be useful,           *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
- * GNU General Public License for more details.                         *
- *                                                                      *
- * You should have received a copy of the GNU General Public License    *
- * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
- ***********************************************************************/
+/***************************************************************************
+ * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                                                                         *
+ * This file is part of the QLenLab project.                               *
+ *                                                                         *
+ * QLenLab is free software: you can redistribute it and/or modify it      *
+ * under the terms of the GNU General Public License as published by the   *
+ * Free Software Foundation, either version 3 of the License, or (at your  *
+ * option) any later version.                                              *
+ *                                                                         *
+ * QLenLab is distributed in the hope that it will be useful, but WITHOUT  *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or   *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License    *
+ * for more details.                                                       *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License along *
+ * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
+ **************************************************************************/
 
 #include <QSettings>
 #include <QMessageBox>
@@ -26,6 +26,7 @@
 #include "plot.h"
 #include "communicator.h"
 #include "dockwidgets.h"
+#include "storage.h"
 
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
 {
@@ -33,6 +34,11 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     resize(940,0);
 
     settingsdlg = NULL;
+
+    p_storage = new storage;
+    com = new communicator(p_storage,this);
+    plotter = new plot(p_storage,this);
+    settingsdlg = new settingsdialog(com,this);
 
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
@@ -48,9 +54,8 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     dw_generator = new dockWidget_generator(this);
     addDockWidget(Qt::LeftDockWidgetArea,dw_generator);
 
-    com = new communicator(this);
-    plotter = new plot(com,this);
-    settingsdlg = new settingsdialog(com,this);
+    dw_dataview = new dockWidget_dataview(p_storage,this);
+    addDockWidget(Qt::LeftDockWidgetArea,dw_dataview);
 
     label_connectionstatus = new QLabel(this);
     tabWidget->addTab(plotter,tr("Plot"));
@@ -69,7 +74,8 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     action_generator->setCheckable(true);
     QAction *action_trigger = menu_interface->addAction(tr("Trigger"));
     action_trigger->setCheckable(true);
-    action_trigger->setEnabled(false);
+    QAction *action_dataview = menu_interface->addAction(tr("Datenspeicher"));
+    action_dataview->setCheckable(true);
     QMenu *menu_measurement = menuBar()->addMenu(tr("Messung"));
     action_start = menu_measurement->addAction(tr("Starten"));
     action_stop = menu_measurement->addAction(tr("Stoppen"));
@@ -77,6 +83,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     //various connects
     connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
     connect(com,SIGNAL(measureStateChanged(bool)),SLOT(setMeasureStatus(bool)));
+    connect(com,SIGNAL(newDatasetComplete()),plotter,SLOT(showDataset()));
     connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),plotter,SLOT(updateColor(meta::colorindex,QColor)));
     connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),dw_scope,SLOT(updateColor(meta::colorindex,QColor)));
 
@@ -114,13 +121,21 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     //connects for dockWidget_trigger
     connect(dw_trigger,SIGNAL(triggerModeChanged(meta::triggermode,double)),com,SLOT(settriggermode(meta::triggermode,double)));
 
+    //connects for dockWidget_dataview
+    connect(dw_dataview,SIGNAL(maximumDatasetsChanged(int)),p_storage,SLOT(setMaximumDatasets(int)));
+    connect(dw_dataview,SIGNAL(showDataset(int)),plotter,SLOT(showDataset(int)));
+
     //connect DockWidgets and corresponding menu actions
     connect(action_viewport,SIGNAL(triggered(bool)),dw_viewport,SLOT(setShown(bool)));
     connect(action_scope,SIGNAL(triggered(bool)),dw_scope,SLOT(setShown(bool)));
     connect(action_generator,SIGNAL(triggered(bool)),dw_generator,SLOT(setShown(bool)));
+    connect(action_trigger,SIGNAL(triggered(bool)),dw_trigger,SLOT(setShown(bool)));
+    connect(action_dataview,SIGNAL(triggered(bool)),dw_dataview,SLOT(setShown(bool)));
     connect(dw_viewport,SIGNAL(visibilityChanged(bool)),action_viewport,SLOT(setChecked(bool)));
     connect(dw_scope,SIGNAL(visibilityChanged(bool)),action_scope,SLOT(setChecked(bool)));
     connect(dw_generator,SIGNAL(visibilityChanged(bool)),action_generator,SLOT(setChecked(bool)));
+    connect(dw_trigger,SIGNAL(visibilityChanged(bool)),action_trigger,SLOT(setChecked(bool)));
+    connect(dw_dataview,SIGNAL(visibilityChanged(bool)),action_dataview,SLOT(setChecked(bool)));
 
     //connect other menu actions
     connect(action_settings,SIGNAL(triggered()),SLOT(showSettings()));
@@ -147,6 +162,7 @@ void QLenLab::restoreSettings()
     dw_viewport->restoreSettings();
     dw_generator->restoreSettings();
     dw_trigger->restoreSettings();
+    dw_dataview->restoreSettings();
     settingsdlg->restoreSettings();
 }
 
@@ -159,11 +175,14 @@ void QLenLab::closeEvent(QCloseEvent *)
     dw_viewport->saveSettings();
     dw_generator->saveSettings();
     dw_trigger->saveSettings();
+    dw_dataview->saveSettings();
+    delete plotter;
+    delete com;
+    delete p_storage;
 }
 
 void QLenLab::quit()
 {
-    delete com;
     close();
 }
 

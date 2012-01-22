@@ -1,21 +1,21 @@
-/************************************************************************
- * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
- *                                                                      *
- * This file is part of the QLenLab project.                            *
- *                                                                      *
- * QLenLab is free software: you can redistribute it and/or modify      *
- * it under the terms of the GNU General Public License as published by *
- * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
- *                                                                      *
- * QLenLab is distributed in the hope that it will be useful,           *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
- * GNU General Public License for more details.                         *
- *                                                                      *
- * You should have received a copy of the GNU General Public License    *
- * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
- ***********************************************************************/
+/***************************************************************************
+ * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                                                                         *
+ * This file is part of the QLenLab project.                               *
+ *                                                                         *
+ * QLenLab is free software: you can redistribute it and/or modify it      *
+ * under the terms of the GNU General Public License as published by the   *
+ * Free Software Foundation, either version 3 of the License, or (at your  *
+ * option) any later version.                                              *
+ *                                                                         *
+ * QLenLab is distributed in the hope that it will be useful, but WITHOUT  *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or   *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License    *
+ * for more details.                                                       *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License along *
+ * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
+ **************************************************************************/
 
 #ifndef DOCKWIDGETS_H
 #define DOCKWIDGETS_H
@@ -151,6 +151,28 @@ private slots:
 
 signals:
     void triggerModeChanged(meta::triggermode mode, double value);
+};
+
+class storage;
+class dockWidget_dataview : public QDockWidget
+{
+    Q_OBJECT
+public:
+    dockWidget_dataview(storage *datastorage, QWidget *parent = 0, Qt::WindowFlags flags = 0);
+    void restoreSettings();
+    void saveSettings();
+
+private:
+    QSpinBox *spinBox_maxDatasets;
+    storage *p_storage;
+    QListView *listView_datasets;
+
+private slots:
+    void submitShowDataset(QModelIndex index);
+
+signals:
+    void showDataset(int);
+    void maximumDatasetsChanged(int);
 };
 
 #endif // DOCKWIDGETS_H

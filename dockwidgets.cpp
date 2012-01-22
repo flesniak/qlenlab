@@ -1,23 +1,24 @@
-/************************************************************************
- * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
- *                                                                      *
- * This file is part of the QLenLab project.                            *
- *                                                                      *
- * QLenLab is free software: you can redistribute it and/or modify      *
- * it under the terms of the GNU General Public License as published by *
- * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
- *                                                                      *
- * QLenLab is distributed in the hope that it will be useful,           *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
- * GNU General Public License for more details.                         *
- *                                                                      *
- * You should have received a copy of the GNU General Public License    *
- * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
- ***********************************************************************/
+/***************************************************************************
+ * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                                                                         *
+ * This file is part of the QLenLab project.                               *
+ *                                                                         *
+ * QLenLab is free software: you can redistribute it and/or modify it      *
+ * under the terms of the GNU General Public License as published by the   *
+ * Free Software Foundation, either version 3 of the License, or (at your  *
+ * option) any later version.                                              *
+ *                                                                         *
+ * QLenLab is distributed in the hope that it will be useful, but WITHOUT  *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or   *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License    *
+ * for more details.                                                       *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License along *
+ * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
+ **************************************************************************/
 
 #include "dockwidgets.h"
+#include "storage.h"
 
 // ########## DOCKWIDGET GENERATOR #########
 
@@ -619,4 +620,47 @@ void dockWidget_trigger::updateTriggerSpinBox(int index)
 void dockWidget_trigger::submitTriggerMode(double value)
 {
     emit triggerModeChanged((meta::triggermode)comboBox_edge->currentIndex(),value);
+}
+
+dockWidget_dataview::dockWidget_dataview(storage *datastorage, QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags), p_storage(datastorage)
+{
+    setWindowTitle(tr("Datenspeicher"));
+    setObjectName("dockWidget_dataview");
+
+    QWidget *widget = new QWidget(this);
+    spinBox_maxDatasets = new QSpinBox(widget);
+    spinBox_maxDatasets->setRange(1,1000);
+    QLabel *label_maxDatasets = new QLabel(tr("Höchstzahl Messbilder"),widget);
+    listView_datasets = new QListView(widget);
+    listView_datasets->setModel(p_storage);
+
+    QHBoxLayout *layout_maxDatasets = new QHBoxLayout;
+    layout_maxDatasets->addWidget(label_maxDatasets);
+    layout_maxDatasets->addWidget(spinBox_maxDatasets);
+
+    QVBoxLayout *layout = new QVBoxLayout(widget);
+    layout->addWidget(listView_datasets);
+    layout->addLayout(layout_maxDatasets);
+
+    connect(listView_datasets,SIGNAL(clicked(QModelIndex)),SLOT(submitShowDataset(QModelIndex)));
+    connect(spinBox_maxDatasets,SIGNAL(valueChanged(int)),SIGNAL(maximumDatasetsChanged(int)));
+
+    setWidget(widget);
+}
+
+void dockWidget_dataview::restoreSettings()
+{
+    QSettings settings;
+    spinBox_maxDatasets->setValue(settings.value("dataview/maxdatasets",1).toInt());
+}
+
+void dockWidget_dataview::saveSettings()
+{
+    QSettings settings;
+    settings.setValue("dataview/maxdatasets",spinBox_maxDatasets->value());
+}
+
+void dockWidget_dataview::submitShowDataset(QModelIndex index)
+{
+    emit showDataset(index.row());
 }

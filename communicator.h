@@ -1,21 +1,21 @@
-/************************************************************************
- * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
- *                                                                      *
- * This file is part of the QLenLab project.                            *
- *                                                                      *
- * QLenLab is free software: you can redistribute it and/or modify      *
- * it under the terms of the GNU General Public License as published by *
- * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
- *                                                                      *
- * QLenLab is distributed in the hope that it will be useful,           *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
- * GNU General Public License for more details.                         *
- *                                                                      *
- * You should have received a copy of the GNU General Public License    *
- * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
- ***********************************************************************/
+/***************************************************************************
+ * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                                                                         *
+ * This file is part of the QLenLab project.                               *
+ *                                                                         *
+ * QLenLab is free software: you can redistribute it and/or modify it      *
+ * under the terms of the GNU General Public License as published by the   *
+ * Free Software Foundation, either version 3 of the License, or (at your  *
+ * option) any later version.                                              *
+ *                                                                         *
+ * QLenLab is distributed in the hope that it will be useful, but WITHOUT  *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or   *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License    *
+ * for more details.                                                       *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License along *
+ * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
+ **************************************************************************/
 
 #ifndef COMMUNICATOR_H
 #define COMMUNICATOR_H
@@ -26,19 +26,19 @@
 #include "meta.h"
 
 class signaldata;
+class storage;
 
 class communicator : public QThread, public lenboard
 {
     Q_OBJECT
 public:
-    communicator(QObject *parent = 0);
+    communicator(storage *datastorage, QObject *parent = 0);
     ~communicator();
     portlist* portList() { return p_portlist; }
     QString& lastTriedPort() { return p_lastTriedPort; }
     bool openport(char *port);
     bool closeport();
     bool connected() { return p_connected; }
-    signaldata* getdata(char channel);
     int activechannelcount() const;
     double getmanualoffset(meta::channel c) const;
 
@@ -86,7 +86,7 @@ protected:
     void run();
     float calcvalue(unsigned char channel, unsigned char raw);
     double getrangefactor(const unsigned char index) const;
-    dataset p_data;
+    storage *p_storage;
     bool p_connected;
     bool p_stop;
     unsigned char p_activechannels; // 4 lower bits = activechannels, 4 higher bits = channeloffset
@@ -110,7 +110,7 @@ protected:
 signals:
     void connectionStateChanged(bool);
     void measureStateChanged(bool);
-    void newDataset();
+    void newDatasetComplete();
 };
 
 #endif // COMMUNICATOR_H

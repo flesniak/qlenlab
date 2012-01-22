@@ -17,28 +17,40 @@
  * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
  **************************************************************************/
 
-#ifndef SIGNALDATA_H
-#define SIGNALDATA_H
+#ifndef STORAGE_H
+#define STORAGE_H
 
-#include <qwt/qwt_series_data.h>
+#include <QList>
+#include <QAbstractListModel>
 
 #include "meta.h"
 
-class signaldata : public QwtSeriesData<QPointF>
+class signaldata;
+class QVariant;
+
+class storage : public QAbstractListModel
 {
+    Q_OBJECT
 public:
-    signaldata();
-    signaldata(const signaldata &d);
-    QPointF sample(size_t i) const;
-    size_t size() const;
-    QRectF boundingRect() const;
-    void append(const QPointF &pos);
-    void clear();
-    bool setTrigger(meta::triggermode mode, double trigger, double tolerance = 0);
+    storage(QObject *parent = 0);
+    signaldata* getPlotData(meta::channel channel, int index = -1);
+    dataset getDataset(unsigned int index);
+    unsigned int maximumDatasets() const;
+    void appendDataset(dataset &newdataset);
+    bool deleteDataset(unsigned int index);
+
+    int rowCount(const QModelIndex &parent) const;
+    QVariant data(const QModelIndex &index, int role) const;
+    Qt::ItemFlags flags(const QModelIndex &index) const;
+
+public slots:
+    void setMaximumDatasets(int maximum);
 
 private:
-    QVector<QPointF> p_data;
-    int offset;
+    QList<dataset> datasets;
+    signaldata *p_emptySignaldata;
+    unsigned int p_maximumDatasets;
+    void deleteSpares();
 };
 
-#endif // SIGNALDATA_H
+#endif // STORAGE_H

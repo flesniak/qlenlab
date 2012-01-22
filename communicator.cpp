@@ -1,36 +1,33 @@
-/************************************************************************
- * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
- *                                                                      *
- * This file is part of the QLenLab project.                            *
- *                                                                      *
- * QLenLab is free software: you can redistribute it and/or modify      *
- * it under the terms of the GNU General Public License as published by *
- * the Free Software Foundation, either version 3 of the License, or    *
- * (at your option) any later version.                                  *
- *                                                                      *
- * QLenLab is distributed in the hope that it will be useful,           *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the         *
- * GNU General Public License for more details.                         *
- *                                                                      *
- * You should have received a copy of the GNU General Public License    *
- * along with QLenLab. If not, see <http://www.gnu.org/licenses/>.      *
- ***********************************************************************/
+/***************************************************************************
+ * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                                                                         *
+ * This file is part of the QLenLab project.                               *
+ *                                                                         *
+ * QLenLab is free software: you can redistribute it and/or modify it      *
+ * under the terms of the GNU General Public License as published by the   *
+ * Free Software Foundation, either version 3 of the License, or (at your  *
+ * option) any later version.                                              *
+ *                                                                         *
+ * QLenLab is distributed in the hope that it will be useful, but WITHOUT  *
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or   *
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License    *
+ * for more details.                                                       *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License along *
+ * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
+ **************************************************************************/
 
 #include "communicator.h"
 #include "signaldata.h"
+#include "storage.h"
 
 #include <QPointF>
 #include <QDebug>
 #include <QDateTime>
 
-communicator::communicator(QObject *parent) : QThread(parent)
+communicator::communicator(storage *datastorage, QObject *parent) : QThread(parent), p_storage(datastorage)
 {
     p_portlist = new portlist();
-    p_data.channel1 = new signaldata;
-    p_data.channel2 = new signaldata;
-    p_data.channel3 = new signaldata;
-    p_data.channel4 = new signaldata;
 
     p_activechannels = 0;
     p_activechannels_changed = false;
@@ -74,17 +71,13 @@ void communicator::run()
         }
         measure();
 
-        p_data.channel1->clear();
-        p_data.channel2->clear();
-        p_data.channel3->clear();
-        p_data.channel4->clear();
 
         unsigned char* buffer = getrawmeasurement();
         signaldata *data[4];
-        data[0]=p_data.channel1;
-        data[1]=p_data.channel2;
-        data[2]=p_data.channel3;
-        data[3]=p_data.channel4;
+        data[0] = (p_activechannels & 1) ? new signaldata : 0;
+        data[1] = (p_activechannels & 2) ? new signaldata : 0;
+        data[2] = (p_activechannels & 4) ? new signaldata : 0;
+        data[3] = (p_activechannels & 8) ? new signaldata : 0;
         unsigned char channel = -1;
         for(int index = 0; index < getrawvaluecount(); index++) {
             do {
@@ -96,9 +89,16 @@ void communicator::run()
             data[channel]->append(QPointF(1000.0/samplerate*(index/actives),calcvalue(channel,buffer[index])));
         }
         for(int index=0;index<4;index++)
-            data[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
-        emit newDataset();
-        usleep(300);
+            if( p_activechannels >> index & 1 )
+                data[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
+        dataset newset;
+        newset.timestamp = new QTime(QTime::currentTime());
+        newset.channel1 = data[0];
+        newset.channel2 = data[1];
+        newset.channel3 = data[2];
+        newset.channel4 = data[3];
+        p_storage->appendDataset(newset);
+        emit newDatasetComplete();
     }
     emit measureStateChanged(false);
     qDebug() << "[communicator] measure loop stopped";
@@ -136,17 +136,6 @@ void communicator::stop()
     p_stop = true;
     if( !wait(2000) )
         stopmeasure();
-}
-
-signaldata* communicator::getdata(char channel)
-{
-    switch(channel) {
-    case 0 : return p_data.channel1;
-    case 1 : return p_data.channel2;
-    case 2 : return p_data.channel3;
-    case 3 : return p_data.channel4;
-    default : return 0;
-    }
 }
 
 bool communicator::openport(char *port)
