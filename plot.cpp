@@ -31,7 +31,7 @@
 #include "storage.h"
 #include "signaldata.h"
 
-plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), p_storage(datastorage), p_autoscaleGrid(0.0), p_autoscale(false)
+plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0)
 {
     setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
     setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
