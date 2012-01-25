@@ -31,7 +31,7 @@
 #include "storage.h"
 #include "signaldata.h"
 
-plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), p_storage(datastorage)
+plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), p_storage(datastorage), p_autoscaleGrid(0.0), p_autoscale(false)
 {
     setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
     setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
@@ -48,34 +48,63 @@ plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.
     grid->enableYMin(false);
     grid->attach(this);
 
+    p_data[0] = new datawrapper;
+    p_data[1] = new datawrapper;
+    p_data[2] = new datawrapper;
+    p_data[3] = new datawrapper;
+
     curve[0] = new QwtPlotCurve(tr("Kanal 1"));
+    curve[0]->setData(p_data[0]);
     curve[0]->attach(this);
     curve[1] = new QwtPlotCurve(tr("Kanal 2"));
+    curve[1]->setData(p_data[1]);
     curve[1]->attach(this);
     curve[2] = new QwtPlotCurve(tr("Kanal 3"));
+    curve[2]->setData(p_data[2]);
     curve[2]->attach(this);
     curve[3] = new QwtPlotCurve(tr("Kanal 4"));
+    curve[3]->setData(p_data[3]);
     curve[3]->attach(this);
 }
 
-void plot::showDataset(int index)
+void plot::showDataset(const int index)
 {
-    qDebug() << "[plot] curve 0 pointer" << p_storage->getPlotData(meta::ch1a,index);
-    qDebug() << "[plot] curve 0 data size" << p_storage->getPlotData(meta::ch1a,index)->size();
-    qDebug() << "[plot] curve 0 pointer unref 1" << p_storage->getPlotData(meta::ch1a,index)->sample(1);
-    qDebug() << "[plot] curve 0 pointer unref last" << p_storage->getPlotData(meta::ch1a,index)->sample(p_storage->getPlotData(meta::ch1a,index)->size()-1);
-    //curve[0]->setData(p_storage->getPlotData(meta::ch1a,index));
-    /*curve[1]->setData(p_storage->getPlotData(meta::ch1b,index));
-    curve[2]->setData(p_storage->getPlotData(meta::ch2a,index));
-    curve[3]->setData(p_storage->getPlotData(meta::ch2b,index));*/
+    p_storage->setPlotData(p_data[0],meta::ch1a,index);
+    p_storage->setPlotData(p_data[1],meta::ch1b,index);
+    p_storage->setPlotData(p_data[2],meta::ch2a,index);
+    p_storage->setPlotData(p_data[3],meta::ch2b,index);
+    if( p_autoscale )
+        autoscale();
+    replot();
+}
+
+void plot::setYAutoscaleGrid(const double grid)
+{
+    p_autoscaleGrid = grid;
     replot();
 }
 
 void plot::setYAutoscale(bool on)
 {
-    qDebug() << "[plot] set y autoscale" << on;
-    setAxisAutoScale(QwtPlot::yLeft,on);
+    p_autoscale = on;
     replot();
+}
+
+void plot::autoscale()
+{
+    double lower = 0, upper = 0;
+    for(int i=0;i<4;i++) {
+         QRectF rect = p_data[i]->boundingRect();
+         if( rect.bottom() < lower )
+             lower = rect.bottom();
+         if( rect.top() > upper )
+             upper = rect.top();
+         if( p_autoscaleGrid > 0 ) {
+             lower = floor(lower/p_autoscaleGrid)*p_autoscaleGrid;
+             upper = ceil(upper/p_autoscaleGrid)*p_autoscaleGrid;
+         }
+    }
+    setAxisScale(QwtPlot::yLeft, lower, upper);
 }
 
 void plot::updateColor(meta::colorindex ci, QColor color)
@@ -106,6 +135,7 @@ void plot::updateViewportX(const int msecs)
 
 void plot::updateViewportY(const double lower, const double upper)
 {
+    p_autoscale = false;
     setAxisScale(QwtPlot::yLeft, lower, upper);
     replot();
 }

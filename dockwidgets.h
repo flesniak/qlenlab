@@ -76,6 +76,7 @@ private:
     QDoubleSpinBox *spinBox_yaxis_lower;
     QDoubleSpinBox *spinBox_yaxis_upper;
     QCheckBox *checkBox_autoscale;
+    QDoubleSpinBox *spinBox_autoscaleGrid;
 
 private slots:
     void updateViewportXValue(QString value);
@@ -87,6 +88,7 @@ signals:
     void viewportXChanged(const int);
     void viewportYChanged(const double, const double);
     void autoscaleYChanged(bool);
+    void autoscaleYGridChanged(double);
 };
 
 class dockWidget_scope : public QDockWidget

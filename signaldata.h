@@ -24,21 +24,44 @@
 
 #include "meta.h"
 
-class signaldata : public QwtSeriesData<QPointF>
+class datawrapper;
+class signaldata
 {
 public:
-    signaldata();
-    signaldata(const signaldata &d);
+    signaldata(datawrapper *parent = 0);
+    ~signaldata();
+    void append(const double voltage);
+    bool setTrigger(const meta::triggermode mode, const double trigger, const double tolerance = 0);
+    void setParent(datawrapper *parent = 0);
+    void setTimeInterval(const double interval);
+    void clear();
+    int size();
+
+    friend class datawrapper;
+
+private:
+    QVector<double> p_data;
+    int p_offset;
+    double p_interval;
+    datawrapper* p_parent;
+    QRectF p_boundingRect;
+};
+
+class datawrapper : public QwtSeriesData<QPointF>
+{
+public:
+    datawrapper();
+    void setData(signaldata* data);
+    void unsetData();
+    signaldata* currentData() const;
+
     QPointF sample(size_t i) const;
     size_t size() const;
     QRectF boundingRect() const;
-    void append(const QPointF &pos);
-    void clear();
-    bool setTrigger(meta::triggermode mode, double trigger, double tolerance = 0);
 
 private:
-    QVector<QPointF> p_data;
-    int offset;
+    signaldata* p_data;
+    signaldata* p_nulldata;
 };
 
 #endif // SIGNALDATA_H

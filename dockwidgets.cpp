@@ -266,15 +266,26 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     label_yaxis_dummy->setAlignment(Qt::AlignCenter);
 
     checkBox_autoscale = new QCheckBox(tr("Autoscale"),groupBox_yaxis);
+    spinBox_autoscaleGrid = new QDoubleSpinBox(groupBox_yaxis);
+    QLabel *label_autoscaleGrid = new QLabel(tr("Intervall"),groupBox_yaxis);
+    label_autoscaleGrid->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    spinBox_autoscaleGrid->setRange(0.0,10.0);
+    spinBox_autoscaleGrid->setSingleStep(0.5);
+    spinBox_autoscaleGrid->setEnabled(false);
 
     QHBoxLayout *layout_yaxis_1 = new QHBoxLayout;
     layout_yaxis_1->addWidget(spinBox_yaxis_lower);
     layout_yaxis_1->addWidget(label_yaxis_dummy);
     layout_yaxis_1->addWidget(spinBox_yaxis_upper);
 
+    QHBoxLayout *layout_yaxis_2 = new QHBoxLayout;
+    layout_yaxis_2->addWidget(checkBox_autoscale);
+    layout_yaxis_2->addWidget(label_autoscaleGrid);
+    layout_yaxis_2->addWidget(spinBox_autoscaleGrid);
+
     QVBoxLayout *layout_yaxis = new QVBoxLayout(groupBox_yaxis);
     layout_yaxis->addLayout(layout_yaxis_1);
-    layout_yaxis->addWidget(checkBox_autoscale);
+    layout_yaxis->addLayout(layout_yaxis_2);
 
     QVBoxLayout *layout = new QVBoxLayout(widget);
     layout->addWidget(groupBox_xaxis);
@@ -285,6 +296,8 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     connect(spinBox_yaxis_lower,SIGNAL(valueChanged(double)),SLOT(submitViewportY()));
     connect(spinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(submitViewportY()));
     connect(checkBox_autoscale,SIGNAL(toggled(bool)),SLOT(submitYAutoscale(bool)));
+    connect(checkBox_autoscale,SIGNAL(toggled(bool)),spinBox_autoscaleGrid,SLOT(setEnabled(bool)));
+    connect(spinBox_autoscaleGrid,SIGNAL(valueChanged(double)),SIGNAL(autoscaleYGridChanged(double)));
 
     setWidget(widget);
 }
@@ -302,6 +315,7 @@ void dockWidget_viewport::restoreSettings()
         submitViewportY();
     }
     checkBox_autoscale->setChecked(settings.value("viewport/yaxis_autoscale",false).toBool());
+    spinBox_autoscaleGrid->setValue(settings.value("viewport/yaxis_autoscalegrid",0.0).toDouble());
 }
 
 void dockWidget_viewport::saveSettings()
@@ -310,6 +324,8 @@ void dockWidget_viewport::saveSettings()
     settings.setValue("viewport/xaxis",spinBox_xaxis->value());
     settings.setValue("viewport/yaxis_lower",spinBox_yaxis_lower->value());
     settings.setValue("viewport/yaxis_upper",spinBox_yaxis_upper->value());
+    settings.setValue("viewport/yaxis_autoscale",checkBox_autoscale->isChecked());
+    settings.setValue("viewport/yaxis_autoscalegrid",spinBox_autoscaleGrid->value());
 }
 
 void dockWidget_viewport::updateViewportXValue(QString value)

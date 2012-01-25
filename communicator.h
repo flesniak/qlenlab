@@ -84,7 +84,7 @@ private:
 
 protected:
     void run();
-    float calcvalue(unsigned char channel, unsigned char raw);
+    double calcvalue(unsigned char channel, unsigned char raw);
     double getrangefactor(const unsigned char index) const;
     storage *p_storage;
     bool p_connected;
@@ -106,6 +106,7 @@ protected:
     unsigned char p_invert;
     meta::triggermode p_triggermode;
     double p_triggervalue;
+    bool p_firstrun;
 
 signals:
     void connectionStateChanged(bool);

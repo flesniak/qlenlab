@@ -29,7 +29,7 @@ communicator::communicator(storage *datastorage, QObject *parent) : QThread(pare
 {
     p_portlist = new portlist();
 
-    p_activechannels = 0;
+    p_activechannels = 0xF0;
     p_activechannels_changed = false;
     p_channeloffset_changed = false;
     p_samplerate = 0;
@@ -41,6 +41,7 @@ communicator::communicator(storage *datastorage, QObject *parent) : QThread(pare
     p_squareratio = 0;
     p_squareratio_changed = false;
     p_invert = 0;
+    p_firstrun = true;
 
     p_manualoffset[0]=0.0;
     p_manualoffset[1]=0.0;
@@ -71,14 +72,18 @@ void communicator::run()
         }
         measure();
 
-
         unsigned char* buffer = getrawmeasurement();
-        signaldata *data[4];
-        data[0] = (p_activechannels & 1) ? new signaldata : 0;
-        data[1] = (p_activechannels & 2) ? new signaldata : 0;
-        data[2] = (p_activechannels & 4) ? new signaldata : 0;
-        data[3] = (p_activechannels & 8) ? new signaldata : 0;
-        unsigned char channel = -1;
+        dataset newset;
+        newset.timestamp = new QTime(QTime::currentTime());
+        newset.channel[0] = new signaldata;
+        newset.channel[1] = new signaldata;
+        newset.channel[2] = new signaldata;
+        newset.channel[3] = new signaldata;
+        unsigned char channel;
+        if( activechannels[0] && activechannels[1] && !activechannels[2] && !activechannels[3] ) //override presumable controller bug swapping curves 1a/1b when enabled unique
+            channel = 0;
+        else
+            channel = -1;
         for(int index = 0; index < getrawvaluecount(); index++) {
             do {
                 if( channel < 3 )
@@ -86,17 +91,18 @@ void communicator::run()
                 else
                     channel = 0;
             } while( !activechannels[channel] );
-            data[channel]->append(QPointF(1000.0/samplerate*(index/actives),calcvalue(channel,buffer[index])));
+            newset.channel[channel]->append(calcvalue(channel,buffer[index]));
         }
-        for(int index=0;index<4;index++)
-            if( p_activechannels >> index & 1 )
-                data[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
-        dataset newset;
-        newset.timestamp = new QTime(QTime::currentTime());
-        newset.channel1 = data[0];
-        newset.channel2 = data[1];
-        newset.channel3 = data[2];
-        newset.channel4 = data[3];
+        for(int index=0;index<4;index++) {
+            if( newset.channel[index]->size() != 0 ) {
+                newset.channel[index]->setTimeInterval(1000.0/samplerate);
+                newset.channel[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
+            }
+            else {
+                delete newset.channel[index];
+                newset.channel[index] = 0;
+            }
+        }
         p_storage->appendDataset(newset);
         emit newDatasetComplete();
     }
@@ -104,9 +110,9 @@ void communicator::run()
     qDebug() << "[communicator] measure loop stopped";
 }
 
-float communicator::calcvalue(unsigned char channel, unsigned char raw)
+double communicator::calcvalue(unsigned char channel, unsigned char raw)
 {
-    float value = raw;
+    double value = raw;
     if( offsetchannels[channel] )
         value -= 127; //127; 127.5; 128???
     value *= 3.3/256;
@@ -169,9 +175,17 @@ int communicator::activechannelcount() const
 void communicator::setParameters()
 {
     if( p_activechannels_changed ) {
-        if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
-            qDebug() << "[communicator] setting active channels failed";
-        p_activechannels_changed = false;
+        if( p_firstrun && ((p_activechannels & 0x0F) == 3) ) {
+            qDebug() << "[communicator] measuring once to override presumable controller bug";
+            if( lenboard::setactivechannels( 1 ) )
+                qDebug() << "[communicator] setting active channels failed";
+            p_activechannels_changed = true;
+        }
+        else {
+            if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
+                qDebug() << "[communicator] setting active channels failed";
+            p_activechannels_changed = false;
+        }
     }
     if( p_channeloffset_changed ) {
         if( lenboard::setoffset( p_activechannels >> 4 ) )
@@ -203,6 +217,7 @@ void communicator::setParameters()
             qDebug() << "[communicator] setting voltagedivision failed";
         p_voltagedivision_changed = false;
     }
+    p_firstrun = false;
 }
 
 void communicator::settriggermode(meta::triggermode mode, double value)
@@ -311,6 +326,7 @@ bool communicator::setoffsetchannel(meta::channel c, bool active)
         else
             p_activechannels &= ~c_i;
         p_channeloffset_changed = true;
+        qDebug() << "[communicator] set channel" << c << "offset" << active << "changed!";
         return true;
     }
     else
@@ -391,7 +407,6 @@ bool communicator::setchannel4offset(bool active)
 {
     return setoffsetchannel(meta::ch2b,active);
 }
-
 
 bool communicator::setmanualoffset1(double value)
 {

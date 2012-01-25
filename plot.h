@@ -26,6 +26,7 @@
 #include <qwt/qwt_interval.h>
 
 class storage;
+class datawrapper;
 class QColor;
 class QwtPlotCurve;
 class QwtPlotGrid;
@@ -39,15 +40,21 @@ public:
 private:
     QwtInterval interval;
     QwtPlotCurve* curve[4];
-    QwtPlotGrid *grid;
-    storage *p_storage;
+    QwtPlotGrid* grid;
+    storage* p_storage;
+    datawrapper* p_data[4];
+    bool p_autoscale;
+    double p_autoscaleGrid;
+
+    void autoscale();
 
 public slots:
     void updateViewportX(const int msecs);
     void updateViewportY(const double lower, const double upper);
     void updateColor(meta::colorindex ci, QColor color);
     void setYAutoscale(bool on);
-    void showDataset(int index = -1);
+    void setYAutoscaleGrid(const double grid = 0);
+    void showDataset(const int index = -1);
 };
 
 #endif // PLOT_H

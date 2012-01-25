@@ -26,40 +26,27 @@
 storage::storage(QObject *parent) : QAbstractListModel(parent)
 {
     p_maximumDatasets = 1;
-    p_emptySignaldata = new signaldata;
+    //p_datasetInterval = 1;
 }
 
-signaldata* storage::getPlotData(meta::channel channel, int index)
+storage::~storage()
+{
+    while( datasets.size() > 0 )
+        deleteDataset(0);
+}
+
+void storage::setPlotData(datawrapper *wrapper, meta::channel channel, int index)
 {
     if( index == -1 )
         index = datasets.size()-1;
-    switch(channel) {
-    case meta::ch1a : { signaldata *ch1data = datasets.at(index).channel1;
-                      if( ch1data != 0 )
-                          return ch1data;
-                      else
-                          return p_emptySignaldata;
-                      break; }
-    case meta::ch1b : { signaldata *ch2data = datasets.at(index).channel2;
-                      if( ch2data != 0 )
-                          return ch2data;
-                      else
-                          return p_emptySignaldata;
-                      break; }
-    case meta::ch2a : { signaldata *ch3data = datasets.at(index).channel3;
-                      if( ch3data != 0 )
-                          return ch3data;
-                      else
-                          return p_emptySignaldata;
-                      break; }
-    case meta::ch2b : { signaldata *ch4data = datasets.at(index).channel4;
-                      if( ch4data != 0 )
-                          return ch4data;
-                      else
-                          return p_emptySignaldata;
-                      break; }
-    default : return p_emptySignaldata;
+
+    signaldata *data = datasets.at(index).channel[chan2num(channel)];
+    if( data != 0 ) {
+        data->setParent(wrapper);
+        wrapper->setData(data);
     }
+    else
+        wrapper->unsetData();
 }
 
 dataset storage::getDataset(unsigned int index)
@@ -87,10 +74,13 @@ void storage::appendDataset(dataset &newdataset)
 
 bool storage::deleteDataset(unsigned int index)
 {
-    qDebug() << "[storage] delete dataset" << index;
     if( index < (unsigned int)datasets.size() ) {
-        //Don't we have to clean up?
-        datasets.removeAt(index);
+        dataset todelete = datasets.takeAt(index);
+        delete todelete.timestamp;
+        delete todelete.channel[0];
+        delete todelete.channel[1];
+        delete todelete.channel[2];
+        delete todelete.channel[3];
         return true;
     }
     else
@@ -114,7 +104,7 @@ QVariant storage::data(const QModelIndex &index, int role) const
     if( index.column() != 0 )
         return QVariant();
     if( role == Qt::DisplayRole && index.row() < datasets.size() )
-        return "Nr. "+QString::number(index.row()+1)+" ("+datasets.at(index.row()).timestamp->toString("hh:mm:ss")+")";
+        return "Nr. "+QString::number(index.row()+1)+" ("+datasets.at(index.row()).timestamp->toString("hh:mm:ss.zzz")+")";
     return QVariant();
 }
 
@@ -123,3 +113,14 @@ Qt::ItemFlags storage::flags(const QModelIndex &index) const
     Q_UNUSED(index);
     return Qt::ItemIsEnabled;
 }
+
+/*unsigned int storage::datasetInterval() const
+{
+    return p_datasetInterval;
+}
+
+void storage::setDatasetInterval(int interval)
+{
+    if( interval > 0 )
+        p_datasetInterval = interval;
+}*/

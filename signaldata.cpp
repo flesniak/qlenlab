@@ -19,81 +19,111 @@
 
 #include "signaldata.h"
 
-signaldata::signaldata()
+// ########## DATAWRAPPER ##########
+
+datawrapper::datawrapper()
 {
-    d_boundingRect = QRectF(0.0,-1.0,0.0,-1.0);
-    offset = 0;
+    p_nulldata = new signaldata;
+    p_data = p_nulldata;
 }
 
-signaldata::signaldata(const signaldata &d)
+QPointF datawrapper::sample(size_t i) const
 {
-    d_boundingRect = d.boundingRect();
-    offset = d.offset;
-    p_data = QVector<QPointF>(d.p_data);
+    return QPointF(i*p_data->p_interval,p_data->p_data.value(i+p_data->p_offset));
 }
 
-QPointF signaldata::sample(size_t i) const
+size_t datawrapper::size() const
 {
-    return QPointF(p_data.value(i).x(),p_data.value(i+offset).y());
+    return p_data->p_data.size()-p_data->p_offset;
 }
 
-size_t signaldata::size() const
+QRectF datawrapper::boundingRect() const
 {
-    return p_data.size()-offset;
+    return p_data->p_boundingRect;
 }
 
-QRectF signaldata::boundingRect() const
+void datawrapper::setData(signaldata *data)
 {
-    return d_boundingRect;
+    p_data = data;
 }
 
-bool signaldata::setTrigger(meta::triggermode mode, double trigger, double tolerance)
+signaldata* datawrapper::currentData() const
 {
-    offset = 0;
+    return p_data;
+}
+
+void datawrapper::unsetData()
+{
+    p_data = p_nulldata;
+}
+
+// ########## SIGNALDATA ##########
+
+signaldata::signaldata(datawrapper *parent) : p_parent(parent), p_boundingRect(0.0,0.0,0.0,0.0)
+{
+    p_offset = 0;
+    p_interval = 0;
+}
+
+signaldata::~signaldata()
+{
+    if( p_parent != 0 )
+        if( p_parent->currentData() == this )
+            p_parent->unsetData();
+}
+
+void signaldata::setParent(datawrapper *parent)
+{
+    p_parent = parent;
+}
+
+bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, const double tolerance)
+{
+    p_offset = 0;
     if( p_data.size() == 0 )
         return false;
     switch( mode ) {
     case meta::both : {
-                      bool above = (p_data[offset].y() >= trigger);
-                      while( (p_data[offset].y() <= trigger) != above ) {
-                          offset++;
-                          if( offset >= p_data.size() ) {
-                              offset = 0;
+                      bool above = (p_data[p_offset] >= trigger);
+                      while( (p_data[p_offset] <= trigger) != above ) {
+                          p_offset++;
+                          if( p_offset >= p_data.size() ) {
+                              p_offset = 0;
                               return false;
                           }
                       }
                       return true;
                       break;
                       }
-    case meta::rising : while( p_data[offset].y() > trigger-tolerance ) {
-                            offset++;
-                            if( offset >= p_data.size() ) {
-                                offset = 0;
+    case meta::rising : while( p_data[p_offset] > trigger-tolerance ) {
+                            p_offset++;
+                            if( p_offset >= p_data.size() ) {
+                                p_offset = 0;
                                 return false;
                             }
                         }
-                        offset += 10; //Generic offset to prevent triggering on imprecise falling edges
-                        while( p_data[offset].y() < trigger-tolerance ) {
-                            offset++;
-                            if( offset >= p_data.size() ) {
-                                offset = 0;
+                        p_offset += 10; //Generic p_offset to prevent triggering on imprecise falling edges
+                        while( p_data[p_offset] < trigger-tolerance ) {
+                            p_offset++;
+                            if( p_offset >= p_data.size() ) {
+                                p_offset = 0;
                                 return false;
                             }
                         }
                         return true;
                         break;
-    case meta::falling : while( p_data[offset].y() < trigger+tolerance ) {
-                             offset++;
-                             if( offset >= p_data.size() ) {
-                                 offset = 0;
+    case meta::falling : while( p_data[p_offset] < trigger+tolerance ) {
+                             p_offset++;
+                             if( p_offset >= p_data.size() ) {
+                                 p_offset = 0;
                                  return false;
                              }
                          }
-                         offset += 10; //Generic offset to prevent triggering on imprecise rising edges
-                         while( p_data[offset].y() > trigger+tolerance ) {
-                             offset++;
-                             if( offset >= p_data.size() ) {
-                                 offset = 0;
+                         p_offset += 10; //Generic p_offset to prevent triggering on imprecise rising edges
+                         while( p_data[p_offset] > trigger+tolerance ) {
+                             p_offset++;
+                             if( p_offset >= p_data.size() ) {
+                                 p_offset = 0;
                                  return false;
                              }
                          }
@@ -103,24 +133,29 @@ bool signaldata::setTrigger(meta::triggermode mode, double trigger, double toler
     }
 }
 
-void signaldata::append(const QPointF &pos)
+void signaldata::setTimeInterval(const double interval)
 {
-    p_data.append(pos);
-    if( !d_boundingRect.contains(pos) ) {
-        if( pos.x() > d_boundingRect.right() )
-            d_boundingRect.setRight(pos.x());
-        if( pos.x() < d_boundingRect.left() )
-            d_boundingRect.setLeft(pos.x());
-        if( pos.y() > d_boundingRect.top() )
-            d_boundingRect.setTop(pos.y());
-        if( pos.y() < d_boundingRect.bottom() )
-            d_boundingRect.setBottom(pos.y());
-    }
+    p_interval = interval;
+}
+
+void signaldata::append(const double voltage)
+{
+    p_data.append(voltage);
+    if( voltage > p_boundingRect.top() )
+        p_boundingRect.setTop(voltage);
+    if( voltage < p_boundingRect.bottom() )
+        p_boundingRect.setBottom(voltage);
+}
+
+int signaldata::size()
+{
+    return p_data.size();
 }
 
 void signaldata::clear()
 {
     p_data.clear();
-    d_boundingRect = QRectF(0.0,-1.0,0.0,-1.0);
-    offset = 0;
+    p_boundingRect = QRectF(0.0,0.0,0.0,0.0);
+    p_offset = 0;
+    p_interval = 0;
 }

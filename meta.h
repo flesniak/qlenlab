@@ -21,7 +21,7 @@
 #define META_H
 
 namespace meta {
-static const char version[] = "0.1";
+static const char version[] = "0.2";
 
 enum channel { ch1a = 1, ch1b = 2, ch2a = 4, ch2b = 8, ch1 = ch1a|ch1b, ch2 = ch2a|ch2b, ch12ab = ch1|ch2 };
 
@@ -34,10 +34,17 @@ class signaldata;
 class QTime;
 struct dataset {
     QTime *timestamp;
-    signaldata* channel1;
-    signaldata* channel2;
-    signaldata* channel3;
-    signaldata* channel4;
+    signaldata* channel[4];
 };
+
+inline unsigned int chan2num(meta::channel chan)
+{
+    unsigned int num = 0, ichan = (unsigned int)chan;
+    while( !(ichan & 1) ) {
+        num++;
+        ichan >>= 1;
+    }
+    return num;
+}
 
 #endif // META_H
