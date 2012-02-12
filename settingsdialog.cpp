@@ -25,6 +25,7 @@
 settingsdialog::settingsdialog(communicator* com, QWidget *parent) : QDialog(parent), com(com)
 {
     setWindowTitle(tr("Einstellungen"));
+    p_connectTries = -1;
 
     QGroupBox *box_serialport = new QGroupBox(this);
     box_serialport->setTitle(tr("Serielle Schnittstelle"));
@@ -83,7 +84,7 @@ settingsdialog::settingsdialog(communicator* com, QWidget *parent) : QDialog(par
 
     qRegisterMetaType<meta::colorindex>("meta::colorindex");
 
-    connect(comboBox_serialport,SIGNAL(currentIndexChanged(int)),SLOT(updateConnectButton(int)));
+    connect(comboBox_serialport,SIGNAL(currentIndexChanged(int)),SLOT(updateButtons()));
     connect(pushButton_rescan,SIGNAL(clicked()),SLOT(rescanDevices()));
     connect(pushButton_connect,SIGNAL(clicked()),SLOT(connectSerial()));
     connect(pushButton_disconnect,SIGNAL(clicked()),SLOT(disconnectSerial()));
@@ -96,6 +97,8 @@ settingsdialog::settingsdialog(communicator* com, QWidget *parent) : QDialog(par
     connect(pushButton_colorChannel2,SIGNAL(clicked()),SLOT(getColorChannel2()));
     connect(pushButton_colorChannel3,SIGNAL(clicked()),SLOT(getColorChannel3()));
     connect(pushButton_colorChannel4,SIGNAL(clicked()),SLOT(getColorChannel4()));
+
+    connect(com,SIGNAL(connectionStateChanged(meta::connectstate)),SLOT(updateButtons()));
 }
 
 settingsdialog::~settingsdialog()
@@ -110,29 +113,6 @@ int settingsdialog::exec()
 void settingsdialog::restoreSettings()
 {
     QSettings settings;
-    checkBox_autoconnect->setChecked(settings.value("serial/autoconnect",0).toBool());
-    rescanDevices();
-    QString device = settings.value("serial/port").toString();
-    if( !device.isEmpty() )
-    {
-        int index =comboBox_serialport->findText(device);
-        if( index == -1 ) {
-            comboBox_serialport->addItem(device);
-            comboBox_serialport->setCurrentIndex(comboBox_serialport->count()-1);
-        }
-        else
-            comboBox_serialport->setCurrentIndex(index);
-        if( checkBox_autoconnect->isChecked() ) {
-            for(int i=1; i<4; i++) {
-                qDebug() << "[settings] connect try" << i;
-                connectSerial();
-                if( com->connected() )
-                    break;
-            }
-        }
-    }
-    updateConnectButton();
-
     channelColor[meta::channel1] = settings.value("plot/color1",QColor(255,255,0)).value<QColor>();
     channelColor[meta::channel2] = settings.value("plot/color2",QColor(0,0,255)).value<QColor>();
     channelColor[meta::channel3] = settings.value("plot/color3",QColor(255,0,0)).value<QColor>();
@@ -151,6 +131,22 @@ void settingsdialog::restoreSettings()
     emit colorChanged(meta::channel4,channelColor[meta::channel4]);
     emit colorChanged(meta::background,channelColor[meta::background]);
     emit colorChanged(meta::grid,channelColor[meta::grid]);
+
+    checkBox_autoconnect->setChecked(settings.value("serial/autoconnect",0).toBool());
+    rescanDevices();
+    QString device = settings.value("serial/port").toString();
+    if( !device.isEmpty() ) {
+        int index = comboBox_serialport->findText(device);
+        if( index == -1 ) {
+            comboBox_serialport->addItem(device);
+            comboBox_serialport->setCurrentIndex(comboBox_serialport->count()-1);
+        }
+        else
+            comboBox_serialport->setCurrentIndex(index);
+        if( checkBox_autoconnect->isChecked() )
+            p_connectTries = 0;
+    }
+    updateButtons();
 }
 
 void settingsdialog::rescanDevices()
@@ -166,18 +162,40 @@ void settingsdialog::rescanDevices()
 void settingsdialog::connectSerial()
 {
     int index = comboBox_serialport->currentIndex();
-    if( index > 0 && ( (com->lastTriedPort() != comboBox_serialport->currentText()) || !com->connected() ) ) //Only try to connect if we aren't already connected or change the device
-    {
-        com->closeport();
-        com->openport(comboBox_serialport->currentText().toAscii().data()); //This should work for both user-specified and detected ports.
-    }
-    updateConnectButton();
+    if( index > 0 && (com->connectState() < 2 || com->port() != comboBox_serialport->currentText()) )
+        if( com->setRunMode(meta::connect) ) {
+            com->setPort(comboBox_serialport->currentText()); //This should work for both user-specified and detected ports.
+            com->start();
+        }
 }
 
 void settingsdialog::disconnectSerial()
 {
     com->closeport();
-    updateConnectButton();
+}
+
+void settingsdialog::updateButtons()
+{
+    switch( com->connectState() ) {
+    case meta::connected    : pushButton_connect->setEnabled(false);
+                              pushButton_disconnect->setEnabled(true);
+                              p_connectTries = -1;
+                              break;
+    case meta::connecting   : pushButton_connect->setEnabled(false);
+                              pushButton_disconnect->setEnabled(false);
+                              break;
+    default                 : pushButton_connect->setEnabled(comboBox_serialport->currentIndex() > 0);
+                              pushButton_disconnect->setEnabled(false);
+                              if( p_connectTries > -1 ) {
+                                  p_connectTries++;
+                                  qDebug() << "[settingsdialog] connect try" << QString::number(p_connectTries);
+                                  if( p_connectTries > 1 ) //two connect tries
+                                      p_connectTries = -1;
+                                  connectSerial();
+                              }
+                              break;
+    }
+    checkBox_autoconnect->setEnabled(comboBox_serialport->currentIndex() > 0);
 }
 
 void settingsdialog::reject()
@@ -188,7 +206,7 @@ void settingsdialog::reject()
 void settingsdialog::accept()
 {
     QSettings settings;
-    settings.setValue("serial/port", !com->lastTriedPort().isEmpty() ? com->lastTriedPort() : comboBox_serialport->currentText());
+    settings.setValue("serial/port", !com->port().isEmpty() ? com->port() : comboBox_serialport->currentText());
     settings.setValue("serial/autoconnect",checkBox_autoconnect->isEnabled() ? checkBox_autoconnect->isChecked() : false);
     settings.setValue("plot/color1",channelColor[meta::channel1]);
     settings.setValue("plot/color2",channelColor[meta::channel2]);
@@ -197,13 +215,6 @@ void settingsdialog::accept()
     settings.setValue("plot/colorBackground",channelColor[meta::background]);
     settings.setValue("plot/colorGrid",channelColor[meta::grid]);
     QDialog::accept();
-}
-
-void settingsdialog::updateConnectButton(int index)
-{
-    pushButton_connect->setEnabled(!com->connected() && index > 0);
-    pushButton_disconnect->setEnabled(com->connected());
-    checkBox_autoconnect->setEnabled(index > 0);
 }
 
 QColor settingsdialog::getChannelColor(meta::channel c)

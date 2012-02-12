@@ -37,9 +37,9 @@ plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.
     setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
     plotLayout()->setAlignCanvasToScales(true);
 
-    QPalette pal = canvas()->palette();
+    /*QPalette pal = canvas()->palette();
     pal.setColor(QPalette::Window, Qt::black);
-    canvas()->setPalette(pal);
+    canvas()->setPalette(pal);*/
 
     grid = new QwtPlotGrid();
     grid->enableX(true);
@@ -110,7 +110,8 @@ void plot::autoscale()
 void plot::updateColor(meta::colorindex ci, QColor color)
 {
     switch( ci ) {
-    case meta::background : canvas()->setPalette(QPalette(QPalette::Base,color));
+    case meta::background : //canvas()->setPalette(QPalette(QPalette::Base,color));
+                            setCanvasBackground(color);
                             break;
     case meta::grid       : grid->setPen(QPen(color, 0.0, Qt::DotLine));
                             break;

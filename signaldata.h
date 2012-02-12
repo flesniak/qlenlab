@@ -64,4 +64,20 @@ private:
     signaldata* p_nulldata;
 };
 
+class bodedata : public QwtSeriesData<QPointF>
+{
+public:
+    bodedata();
+    void append(QPointF point);
+    void setFreqs(unsigned int freqStart, unsigned int freqEnd);
+    QPointF sample(size_t i) const;
+    size_t size() const;
+    QRectF boundingRect() const;
+
+private:
+    QVector<QPointF> p_data;
+    unsigned int p_freqStart, p_freqEnd;
+    double p_min, p_max;
+};
+
 #endif // SIGNALDATA_H

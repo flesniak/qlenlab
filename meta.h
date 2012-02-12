@@ -21,13 +21,17 @@
 #define META_H
 
 namespace meta {
-static const char version[] = "0.2";
+static const char version[] = "0.3";
 
 enum channel { ch1a = 1, ch1b = 2, ch2a = 4, ch2b = 8, ch1 = ch1a|ch1b, ch2 = ch2a|ch2b, ch12ab = ch1|ch2 };
 
 enum colorindex { background = 4, grid = 5, channel1 = 0, channel2 = 1, channel3 = 2, channel4 = 3 };
 
 enum triggermode { deactivated = 0, both = 1, rising = 2, falling = 3 };
+
+enum runmode { none, measure, bode, connect };
+
+enum connectstate { disconnected = 0, connectfail = 1, connecting = 2, connected = 3 };
 }
 
 class signaldata;
@@ -35,6 +39,15 @@ class QTime;
 struct dataset {
     QTime *timestamp;
     signaldata* channel[4];
+};
+
+struct bodestate {
+    unsigned int progress;
+    unsigned int frequency;
+    double inputAmplitude;
+    double outputAmplitude;
+    double amplification;
+    unsigned int samplerate;
 };
 
 inline unsigned int chan2num(meta::channel chan)

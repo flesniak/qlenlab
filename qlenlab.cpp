@@ -27,6 +27,7 @@
 #include "communicator.h"
 #include "dockwidgets.h"
 #include "storage.h"
+#include "bodeplot.h"
 
 QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
 {
@@ -39,9 +40,17 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     com = new communicator(p_storage,this);
     plotter = new plot(p_storage,this);
     settingsdlg = new settingsdialog(com,this);
+    label_connectionstatus = new QLabel(this);
 
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
+    tabWidget->addTab(plotter,tr("Plot"));
+    tabWidget->setTabsClosable(true);
+    QWidget *master_tab_button = tabWidget->findChild<QTabBar *>()->tabButton(0,QTabBar::RightSide);
+    master_tab_button->resize(0,0);
+    master_tab_button->hide();
+    statusBar()->addPermanentWidget(label_connectionstatus);
+
     dw_scope = new dockWidget_scope(this);
     addDockWidget(Qt::LeftDockWidgetArea,dw_scope);
 
@@ -56,10 +65,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
 
     dw_dataview = new dockWidget_dataview(p_storage,this);
     addDockWidget(Qt::LeftDockWidgetArea,dw_dataview);
-
-    label_connectionstatus = new QLabel(this);
-    tabWidget->addTab(plotter,tr("Plot"));
-    statusBar()->addPermanentWidget(label_connectionstatus);
+    dw_dataview->setVisible(false);
 
     QMenu *menu_lenlab = menuBar()->addMenu(tr("QLenLab"));
     QAction *action_settings = menu_lenlab->addAction(QIcon::fromTheme("configure"),tr("Einstellungen"));
@@ -79,13 +85,15 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     QMenu *menu_measurement = menuBar()->addMenu(tr("Messung"));
     action_start = menu_measurement->addAction(tr("Starten"));
     action_stop = menu_measurement->addAction(tr("Stoppen"));
+    action_bode = menu_measurement->addAction(tr("Bode-Diagramm erstellen"));
 
     //various connects
-    connect(com,SIGNAL(connectionStateChanged(bool)),SLOT(setConnectionStatus(bool)));
+    connect(com,SIGNAL(connectionStateChanged(meta::connectstate)),SLOT(setConnectionStatus(meta::connectstate)));
     connect(com,SIGNAL(measureStateChanged(bool)),SLOT(setMeasureStatus(bool)));
-    connect(com,SIGNAL(newDatasetComplete()),plotter,SLOT(showDataset()));
+    connect(com,SIGNAL(displayNewDataset()),plotter,SLOT(showDataset()));
     connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),plotter,SLOT(updateColor(meta::colorindex,QColor)));
     connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),dw_scope,SLOT(updateColor(meta::colorindex,QColor)));
+    connect(tabWidget,SIGNAL(tabCloseRequested(int)),SLOT(closeTab(int)));
 
     //connects for dockWidget_scope
     connect(dw_scope,SIGNAL(sampleRateChanged(unsigned int)),com,SLOT(setsamplerate(unsigned int)));
@@ -144,8 +152,9 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(action_quit,SIGNAL(triggered()),SLOT(quit()));
     connect(action_start,SIGNAL(triggered()),SLOT(start()));
     connect(action_stop,SIGNAL(triggered()),SLOT(stop()));
+    connect(action_bode,SIGNAL(triggered()),SLOT(initBode()));
 
-    setConnectionStatus(false);
+    setConnectionStatus(meta::disconnected);
     statusBar()->clearMessage();
     restoreSettings();
 }
@@ -190,7 +199,8 @@ void QLenLab::quit()
 
 void QLenLab::start()
 {
-    com->start();
+    if( com->setRunMode(meta::measure) )
+        com->start();
 }
 
 void QLenLab::stop()
@@ -198,30 +208,60 @@ void QLenLab::stop()
     com->stop();
 }
 
+void QLenLab::initBode()
+{
+    bodeplot* bode = new bodeplot(com,this);
+    tabWidget->addTab(bode,bode->windowTitle());
+    //tabWidget->setCurrentWidget(bode);
+    bode->exec();
+}
+
 void QLenLab::showSettings()
 {
     settingsdlg->exec();
+}
+
+void QLenLab::closeTab(int index)
+{
+    QWidget *w = tabWidget->widget(index);
+    tabWidget->removeTab(index);
+    delete w;
 }
 
 void QLenLab::setMeasureStatus(bool measuring)
 {
     action_start->setEnabled(!measuring);
     action_stop->setEnabled(measuring);
+    action_bode->setEnabled(!measuring);
 }
 
-void QLenLab::setConnectionStatus(bool connected)
+void QLenLab::setConnectionStatus(meta::connectstate state)
 {
-    if( connected ) {
-        label_connectionstatus->setText("<font color='green'><b>"+tr("Verbunden")+"</b></font>");
-        statusBar()->showMessage(tr("Verbunden mit: ")+com->getid(),5000);
-        action_start->setEnabled(true);
-        action_stop->setEnabled(false);
-    }
-    else {
-        label_connectionstatus->setText("<font color='red'><b>"+tr("Nicht verbunden")+"</b></font>");
-        statusBar()->showMessage(tr("Keine Verbindung zur Karte über Schnittstelle \"")+com->lastTriedPort()+"\"",5000);
-        action_start->setEnabled(false);
-        action_stop->setEnabled(false);
+    switch( state ) {
+    case meta::connected    : label_connectionstatus->setText("<font color='green'><b>"+tr("Verbunden")+"</b></font>");
+                              statusBar()->showMessage(tr("Verbunden mit: ")+com->getid(),5000);
+                              action_start->setEnabled(true);
+                              action_stop->setEnabled(false);
+                              action_bode->setEnabled(true);
+                              break;
+    case meta::connectfail  : label_connectionstatus->setText("<font color='red'><b>"+tr("Nicht verbunden")+"</b></font>");
+                              statusBar()->showMessage(tr("Keine Verbindung zur Karte über Schnittstelle \"")+com->port()+"\"",5000);
+                              action_start->setEnabled(false);
+                              action_stop->setEnabled(false);
+                              action_bode->setEnabled(false);
+                              break;
+    case meta::disconnected : label_connectionstatus->setText("<font color='red'><b>"+tr("Nicht verbunden")+"</b></font>");
+                              statusBar()->showMessage(tr("Verbindung getrennt"),5000);
+                              action_start->setEnabled(false);
+                              action_stop->setEnabled(false);
+                              action_bode->setEnabled(false);
+                              break;
+    case meta::connecting   : label_connectionstatus->setText("<font color='red'><b>"+tr("Nicht verbunden")+"</b></font>");
+                              statusBar()->showMessage(tr("Verbindungsaufbau über Schnittstelle \"")+com->port()+"\"",5000);
+                              action_start->setEnabled(false);
+                              action_stop->setEnabled(false);
+                              action_bode->setEnabled(false);
+                              break;
     }
 }
 

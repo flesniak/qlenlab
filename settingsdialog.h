@@ -64,19 +64,21 @@ private:
     QPushButton *pushButton_colorChannel4;
     QColor channelColor[6];
 
+    char p_connectTries;
+
     void updateColor(meta::colorindex ci, QColor color);
 
 private slots:
     void rescanDevices();
     void accept();
     void reject();
-    void updateConnectButton(int index = 1);
     void getColorBackground();
     void getColorGrid();
     void getColorChannel1();
     void getColorChannel2();
     void getColorChannel3();
     void getColorChannel4();
+    void updateButtons();
 
 signals:
     void colorChanged(meta::colorindex, QColor);

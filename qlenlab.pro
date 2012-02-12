@@ -23,9 +23,13 @@ CONFIG += qwt
 LIBS += -lstdc++ -lqwt
 
 SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp \
-    storage.cpp
+    storage.cpp \
+    bodeplot.cpp
 HEADERS += qlenlab.h settingsdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h \
-    storage.h
+    storage.h \
+    bodeplot.h
 FORMS +=
+
+
 
 

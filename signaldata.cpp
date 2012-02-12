@@ -39,6 +39,7 @@ size_t datawrapper::size() const
 
 QRectF datawrapper::boundingRect() const
 {
+    qDebug() << "[datawrapper] boundingRect" << p_data->p_boundingRect;
     return p_data->p_boundingRect;
 }
 
@@ -102,7 +103,7 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                                 return false;
                             }
                         }
-                        p_offset += 10; //Generic p_offset to prevent triggering on imprecise falling edges
+                        p_offset += 5; //Generic p_offset to prevent triggering on imprecise falling edges
                         while( p_data[p_offset] < trigger-tolerance ) {
                             p_offset++;
                             if( p_offset >= p_data.size() ) {
@@ -119,7 +120,7 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                                  return false;
                              }
                          }
-                         p_offset += 10; //Generic p_offset to prevent triggering on imprecise rising edges
+                         p_offset += 5; //Generic p_offset to prevent triggering on imprecise rising edges
                          while( p_data[p_offset] > trigger+tolerance ) {
                              p_offset++;
                              if( p_offset >= p_data.size() ) {
@@ -158,4 +159,45 @@ void signaldata::clear()
     p_boundingRect = QRectF(0.0,0.0,0.0,0.0);
     p_offset = 0;
     p_interval = 0;
+}
+
+// ########## BODEDATA ##########
+bodedata::bodedata()
+{
+    d_boundingRect = QRectF(0,-1,0,-1);
+    p_freqStart = 0;
+    p_freqEnd = 0;
+    p_min = 0;
+    p_max = 0;
+}
+
+void bodedata::append(QPointF point)
+{
+    p_data.append(point);
+    if( point.y() > p_max )
+        p_max = point.y();
+    if( point.y() < p_min )
+        p_min = point.y();
+}
+
+QPointF bodedata::sample(size_t i) const
+{
+    return p_data.at(i);
+}
+
+size_t bodedata::size() const
+{
+    return p_data.size();
+}
+
+QRectF bodedata::boundingRect() const
+{
+    d_boundingRect.setCoords(p_freqStart,p_max,p_freqEnd,p_min);
+    return d_boundingRect;
+}
+
+void bodedata::setFreqs(unsigned int freqStart, unsigned int freqEnd)
+{
+    p_freqStart = freqStart;
+    p_freqEnd = freqEnd;
 }

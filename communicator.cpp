@@ -29,6 +29,9 @@ communicator::communicator(storage *datastorage, QObject *parent) : QThread(pare
 {
     p_portlist = new portlist();
 
+    p_runmode = meta::none;
+    p_connectstate = meta::disconnected;
+
     p_activechannels = 0xF0;
     p_activechannels_changed = false;
     p_channeloffset_changed = false;
@@ -43,10 +46,18 @@ communicator::communicator(storage *datastorage, QObject *parent) : QThread(pare
     p_invert = 0;
     p_firstrun = true;
 
+    p_bodetarget = 0;
+    p_startFreq = 0;
+    p_endFreq = 0;
+    p_decadePoints = 0;
+
     p_manualoffset[0]=0.0;
     p_manualoffset[1]=0.0;
     p_manualoffset[2]=0.0;
     p_manualoffset[3]=0.0;
+
+    qRegisterMetaType<meta::connectstate>("meta::connectstate");
+    qRegisterMetaType<bodestate>("bodestate");
 }
 
 communicator::~communicator()
@@ -57,9 +68,54 @@ communicator::~communicator()
     closeport();
 }
 
+bool communicator::setRunMode(meta::runmode mode)
+{
+    if( isRunning() )
+        return false;
+    else {
+        p_runmode = mode;
+        return true;
+    }
+}
+
+meta::runmode communicator::runMode() const
+{
+    return p_runmode;
+}
+
 void communicator::run()
 {
-    qDebug() << "[communicator] measure loop started";
+    qDebug() << "[communicator] thread started, mode" << p_runmode;
+    switch( p_runmode ) {
+    case meta::measure : doMeasure();
+                         break;
+    case meta::connect : doConnect();
+                         break;
+    case meta::bode    : doBodeDiagram();
+    default            : break;
+    }
+}
+
+void communicator::doConnect()
+{
+    if( !p_port.isEmpty() ) {
+        if( p_connectstate == meta::connected )
+            closeport();
+        if( p_connectstate == meta::connected ) {
+            qDebug() << "[communicator] unable to disconnect, not connecting!";
+            return;
+        }
+        qDebug() << "[communicator] opening port" << p_port;
+        setConnectState(meta::connecting);
+        if( lenboard::openport(p_port.toAscii().data()) >= 0 )
+            setConnectState(meta::connected);
+        else
+            setConnectState(meta::connectfail);
+    }
+}
+
+void communicator::doMeasure()
+{
     emit measureStateChanged(true);
     p_stop = false;
     while( !p_stop )
@@ -79,7 +135,7 @@ void communicator::run()
         newset.channel[1] = new signaldata;
         newset.channel[2] = new signaldata;
         newset.channel[3] = new signaldata;
-        unsigned char channel;
+        char channel;
         if( activechannels[0] && activechannels[1] && !activechannels[2] && !activechannels[3] ) //override presumable controller bug swapping curves 1a/1b when enabled unique
             channel = 0;
         else
@@ -90,8 +146,8 @@ void communicator::run()
                     channel++;
                 else
                     channel = 0;
-            } while( !activechannels[channel] );
-            newset.channel[channel]->append(calcvalue(channel,buffer[index]));
+            } while( !activechannels[(unsigned char)channel] );
+            newset.channel[(unsigned char)channel]->append(calcvalue(channel,buffer[index]));
         }
         for(int index=0;index<4;index++) {
             if( newset.channel[index]->size() != 0 ) {
@@ -104,10 +160,145 @@ void communicator::run()
             }
         }
         p_storage->appendDataset(newset);
-        emit newDatasetComplete();
+        emit displayNewDataset();
     }
     emit measureStateChanged(false);
     qDebug() << "[communicator] measure loop stopped";
+}
+
+void communicator::doBodeDiagram()
+{
+    if( p_bodetarget == 0 ) {
+        qDebug() << "[communicator] no bode target specified";
+        return;
+    }
+    if( p_startFreq == 0 || p_endFreq == 0 || p_endFreq < p_startFreq ) {
+        qDebug() << "[communicator] bode frequencies invalid";
+        return;
+    }
+    if( p_decadePoints == 0 ) {
+        qDebug() << "[communicator] zero decade points";
+        return;
+    }
+    unsigned char portMask = p_bodeio[0]+p_bodeio[1];
+    if( portMask <= 1 || portMask >= 11 || portMask == 3 ) {
+        qDebug() << "[communicator] invalid channel mapping" << QString::number(portMask,2);
+        return;
+    }
+
+    emit measureStateChanged(true);
+    qDebug() << "[communicator] measure state true";
+    bool finished = false;
+    p_stop = false;
+    const unsigned char periodsPerMeasure = 30;
+    p_activechannels = portMask | 0xF0;
+    p_activechannels_changed = true;
+    p_voltagedivision = 0x0F;
+    p_voltagedivision_changed = true;
+    p_sinusfrequency = p_startFreq;
+    double realSinus = p_sinusfrequency+0.1;
+    p_bodetarget->setFreqs(p_startFreq,p_endFreq);
+    qDebug() << "[communicator] main parameters set";
+
+    while ( !finished && !p_stop )
+    {
+        //Calculate next sinus frequency
+        while( round(realSinus) <= p_sinusfrequency )
+            realSinus *= pow(10,1.0/p_decadePoints);
+        p_sinusfrequency = round(realSinus);
+        p_sinusfrequency_changed = true;
+        if( p_sinusfrequency > p_endFreq ) {
+            finished = true;
+            break;
+        }
+        p_samplerate = ceil(16500.0*p_sinusfrequency/periodsPerMeasure/1000)*1000;
+        if( p_samplerate > 200000 )
+            p_samplerate = 200000;
+        p_samplerate_changed = true;
+        setParameters();
+        qDebug() << "[communicator] measuring with: p_sinusfrequency" << p_sinusfrequency;
+        qDebug() << "[communicator] measuring with: p_samplerate" << p_samplerate;
+
+#define DEBUGBODE
+#ifdef DEBUGBODE
+        dataset newset;
+        newset.timestamp = new QTime(QTime::currentTime());
+        newset.channel[0] = new signaldata;
+        newset.channel[1] = new signaldata;
+        newset.channel[2] = new signaldata;
+        newset.channel[3] = new signaldata;
+        newset.channel[0]->setTimeInterval(1000.0/samplerate);
+        newset.channel[2]->setTimeInterval(1000.0/samplerate);
+#endif
+
+        measure();
+        unsigned char* buffer = getrawmeasurement();
+        bool channel = true; //true=output, false=input
+        double inmax = 0, inmin = 0, outmax = 0, outmin = 0;
+        for(int index = 0; index < getrawvaluecount(); index++) {
+            channel = !channel;
+            double value = calcvalue(channel?chan2num(p_bodeio[1]):chan2num(p_bodeio[0]),buffer[index]);
+            //qDebug() << "[communicator] measured value" << value << "ch" << channel;
+            if( channel ) {
+                if( value > outmax )
+                    outmax = value;
+                if( value < outmin )
+                    outmin = value;
+            }
+            else {
+                if( value > inmax )
+                    inmax = value;
+                if( value < inmin )
+                    inmin = value;
+            }
+#ifdef DEBUGBODE
+            newset.channel[channel?2:0]->append(value);
+#endif
+            if( p_stop )
+                break;
+        }
+        bodestate state;
+        state.frequency = p_sinusfrequency;
+        state.inputAmplitude = inmax-inmin;
+        state.outputAmplitude = outmax-outmin;
+        state.amplification = 20*log(fabs(state.outputAmplitude/state.inputAmplitude));
+        state.samplerate = p_samplerate;
+        state.progress = round(100.0*realSinus/(p_endFreq-p_startFreq));
+        p_bodetarget->append(QPointF(p_sinusfrequency,state.amplification));
+        emit bodeStateUpdate(state);
+
+#ifdef DEBUGBODE
+        p_storage->appendDataset(newset);
+        emit displayNewDataset();
+#endif
+
+        qDebug() << "[communicator] new bodestate: state.inputAmplitude" << state.inputAmplitude;
+        qDebug() << "[communicator] new bodestate: state.outputAmplitude" << state.outputAmplitude;
+        qDebug() << "[communicator] new bodestate: state.amplification" << state.amplification;
+    }
+    emit measureStateChanged(false);
+    qDebug() << "[communicator] bode complete";
+}
+
+void communicator::setBodeParameters(bodedata *target, unsigned short startFreq, unsigned short endFreq, unsigned short decadePoints, meta::channel input, meta::channel output)
+{
+    qDebug() << "[communincator] bode parameter: target" << target;
+    qDebug() << "[communincator] bode parameter: startFreq" << startFreq;
+    qDebug() << "[communincator] bode parameter: endFreq" << endFreq;
+    qDebug() << "[communincator] bode parameter: decadePoints" << decadePoints;
+    qDebug() << "[communincator] bode parameter: input" << input;
+    qDebug() << "[communincator] bode parameter: output" << output;
+    p_bodetarget = target;
+    p_startFreq = startFreq;
+    p_endFreq = endFreq;
+    p_decadePoints = decadePoints;
+    p_bodeio[0] = input;
+    p_bodeio[1] = output;
+}
+
+bodedata* communicator::bodeTarget() const
+{
+    return p_bodetarget;
 }
 
 double communicator::calcvalue(unsigned char channel, unsigned char raw)
@@ -117,6 +308,7 @@ double communicator::calcvalue(unsigned char channel, unsigned char raw)
         value -= 127; //127; 127.5; 128???
     value *= 3.3/256;
     value *= getrangefactor( vdivision[channel/2] );
+    //qDebug() << "[communicator] calcvalue channel" << QString::number(channel,2) << "rangefactor" << getrangefactor( vdivision[channel/2] );
     value += p_manualoffset[channel];
     if( (p_invert >> channel) & 1 )
         value *= -1;
@@ -136,30 +328,25 @@ double communicator::getrangefactor(const unsigned char index) const
     }
 }
 
+meta::connectstate communicator::connectState() const
+{
+    return p_connectstate;
+}
+
+void communicator::setPort(QString port)
+{
+    p_port = port;
+}
+
 void communicator::stop()
 {
     qDebug() << "[communicator] stop requested!";
     p_stop = true;
-    if( !wait(2000) )
-        stopmeasure();
-}
-
-bool communicator::openport(char *port)
-{
-    qDebug() << "[communicator] opening port" << port;
-    lastTriedPort() = QString::fromAscii(port);
-    p_connected = lenboard::openport(port) >= 0;
-    emit connectionStateChanged(p_connected);
-    qDebug() << "[communicator] opening port" << (p_connected ? "successful" : "failed");
-    return p_connected;
-}
-
-bool communicator::closeport()
-{
-    qDebug() << "[communicator] closing port...";
-    p_connected = false;
-    emit connectionStateChanged(p_connected);
-    return lenboard::closeport() >= 0;
+    stopmeasure();
+    if( !wait(2000) ) {
+        qDebug() << "[communicator] thread not stopping, terminating!";
+        terminate();
+    }
 }
 
 int communicator::activechannelcount() const
@@ -172,20 +359,46 @@ int communicator::activechannelcount() const
     return v;
 }
 
+bool communicator::closeport() //don't supply threaded disconnect to ensure disconnecting is done on quitting
+{
+    qDebug() << "[communicator] closing port...";
+    if( isRunning() )
+        stop();
+    if( lenboard::closeport() >= 0 ) {
+        setConnectState(meta::disconnected);
+        return true;
+    }
+    else
+        return false;
+}
+
+void communicator::setConnectState(meta::connectstate state)
+{
+    if( state != p_connectstate ) {
+        p_connectstate = state;
+        emit connectionStateChanged(state);
+    }
+}
+
+QString& communicator::port()
+{
+    return p_port;
+}
+
 void communicator::setParameters()
 {
     if( p_activechannels_changed ) {
-        if( p_firstrun && ((p_activechannels & 0x0F) == 3) ) {
+        /*if( p_firstrun && ((p_activechannels & 0x0F) == 3) ) {
             qDebug() << "[communicator] measuring once to override presumable controller bug";
             if( lenboard::setactivechannels( 1 ) )
                 qDebug() << "[communicator] setting active channels failed";
             p_activechannels_changed = true;
         }
-        else {
+        else {*/
             if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
                 qDebug() << "[communicator] setting active channels failed";
             p_activechannels_changed = false;
-        }
+        //}
     }
     if( p_channeloffset_changed ) {
         if( lenboard::setoffset( p_activechannels >> 4 ) )

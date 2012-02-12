@@ -27,6 +27,7 @@
 
 class signaldata;
 class storage;
+class bodedata;
 
 class communicator : public QThread, public lenboard
 {
@@ -35,10 +36,14 @@ public:
     communicator(storage *datastorage, QObject *parent = 0);
     ~communicator();
     portlist* portList() { return p_portlist; }
-    QString& lastTriedPort() { return p_lastTriedPort; }
-    bool openport(char *port);
     bool closeport();
-    bool connected() { return p_connected; }
+    meta::runmode runMode() const;
+    bool setRunMode(meta::runmode mode);
+    meta::connectstate connectState() const;
+    void setPort(QString port);
+    bodedata* bodeTarget() const;
+    void setBodeParameters(bodedata* target, unsigned short startFreq, unsigned short endFreq, unsigned short decadePoints, meta::channel input, meta::channel output);
+    QString& port();
     int activechannelcount() const;
     double getmanualoffset(meta::channel c) const;
 
@@ -79,15 +84,23 @@ public slots:
 
 private:
     portlist* p_portlist;
-    QString p_lastTriedPort;
+    QString p_port;
     void setParameters();
+    void setConnectState(meta::connectstate state);
 
 protected:
     void run();
+    void doMeasure();
+    void doConnect();
+    void doBodeDiagram();
     double calcvalue(unsigned char channel, unsigned char raw);
     double getrangefactor(const unsigned char index) const;
+
+    meta::runmode p_runmode;
+    meta::connectstate p_connectstate;
+    meta::triggermode p_triggermode;
     storage *p_storage;
-    bool p_connected;
+    bodedata *p_bodetarget;
     bool p_stop;
     unsigned char p_activechannels; // 4 lower bits = activechannels, 4 higher bits = channeloffset
     bool p_activechannels_changed;
@@ -104,14 +117,18 @@ protected:
     bool p_voltagedivision_changed;
     double p_manualoffset[4];
     unsigned char p_invert;
-    meta::triggermode p_triggermode;
     double p_triggervalue;
     bool p_firstrun;
+    unsigned short p_startFreq;
+    unsigned short p_endFreq;
+    unsigned short p_decadePoints;
+    meta::channel p_bodeio[2];
 
 signals:
-    void connectionStateChanged(bool);
+    void connectionStateChanged(meta::connectstate);
     void measureStateChanged(bool);
-    void newDatasetComplete();
+    void displayNewDataset();
+    void bodeStateUpdate(bodestate);
 };
 
 #endif // COMMUNICATOR_H

@@ -48,7 +48,7 @@ public:
     ~QLenLab();
 
 public slots:
-    void setConnectionStatus(bool connected);
+    void setConnectionStatus(meta::connectstate state);
     void setMeasureStatus(bool measuring);
 
 protected:
@@ -62,16 +62,17 @@ private:
     dockWidget_generator *dw_generator;
     dockWidget_trigger *dw_trigger;
     dockWidget_dataview *dw_dataview;
-
-    QLabel *label_connectionstatus;
-    QTabWidget *tabWidget;
-    QAction *action_start;
-    QAction *action_stop;
     settingsdialog *settingsdlg;
     plot *plotter;
     communicator *com;
     signaldata *data;
     storage *p_storage;
+
+    QTabWidget *tabWidget;
+    QLabel *label_connectionstatus;
+    QAction *action_start;
+    QAction *action_stop;
+    QAction *action_bode;
 
 private slots:
     void start();
@@ -79,6 +80,8 @@ private slots:
     void showSettings();
     void about();
     void quit();
+    void initBode();
+    void closeTab(int index);
 };
 
 #endif // QLENLAB_H
