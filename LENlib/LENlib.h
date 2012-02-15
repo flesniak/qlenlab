@@ -1,5 +1,6 @@
 /************************************************************************
  * Copyright (C) 2011 Lars Wolff <lars.wolff@student.kit.edu>           *
+ * Copyright (C) 2012 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
  *                                                                      *
  *   LENlib.h     07.12.2011                                            *
  *                                                                      *

@@ -1,5 +1,6 @@
 /************************************************************************
  * Copyright (C) 2011 Lars Wolff <lars.wolff@student.kit.edu>           *
+ * Copyright (C) 2012 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
  *                                                                      *
  *   LENlib.cpp     07.12.2011                                          *
  *                                                                      *
@@ -244,6 +245,8 @@ int lenboard::setsamplerate(unsigned long int sampless){
         return -5;
     if(sampless > 400000 && checkrange)
         return -1;
+    if( sampless == 70000 || sampless == 132000 || sampless == 136000 ) //work around strange controller bug (?) channels swap on these samplerates
+        sampless += 1000;
 
     samplerate = sampless;
 
@@ -495,7 +498,10 @@ unsigned char* lenboard::getrawmeasurement() const {
 }
 
 int lenboard::getrawvaluecount() const {
-    return measurementlength;
+    if( vdivision[0] == 3 || vdivision[1] == 3 )
+        return measurementlength-4;
+    else
+        return measurementlength;
 }
 
 int lenboard::getvaluecount() const {
@@ -535,8 +541,6 @@ int lenboard::getvalue(int count, int channel) const {
 }
 
 
-
-
 portlist::portlist(){
     listcount = 0;
     listpos = 0;
@@ -544,7 +548,6 @@ portlist::portlist(){
     return;
 }
 
-#if defined(OS_MAC)
 int portlist::refresh(){
     DIR *pdir = NULL;
     pdir = opendir("/dev");
@@ -554,31 +557,18 @@ int portlist::refresh(){
 
     listcount = 0;
     while((pentry = readdir(pdir))){
-        if((pentry->d_name)[0] == 'c' && (pentry->d_name)[1] == 'u' && (pentry->d_name)[2] == '.' && listcount < 30){
+        #if defined(OS_MAC)
+        if((pentry->d_name)[0] == 'c' && (pentry->d_name)[1] == 'u' && (pentry->d_name)[2] == '.' && listcount < 30)
+        #elif defined(OS_LINUX)
+        if((pentry->d_name)[0] == 't' && (pentry->d_name)[1] == 't' && (pentry->d_name)[2] == 'y' && (pentry->d_name)[3] >= 'A' && (pentry->d_name)[3] <= 'Z' && listcount < 30)
+        #endif
+        {
             strcpy(list[listcount], (pentry->d_name));
             listcount++;
         }
     }
     return 0;
 }
-#elif defined(OS_LINUX)
-int portlist::refresh(){
-    DIR *pdir = NULL;
-    pdir = opendir("/dev");
-    struct dirent *pentry = NULL;
-    if(pdir == NULL)
-        return -1;
-
-    listcount = 0;
-    while((pentry = readdir(pdir))){
-        if((pentry->d_name)[0] == 't' && (pentry->d_name)[1] == 't' && (pentry->d_name)[2] == 'y' && (pentry->d_name)[3] >= 'A' && (pentry->d_name)[3] <= 'Z' && listcount < 30){
-            strcpy(list[listcount], (pentry->d_name));
-            listcount++;
-        }
-    }
-    return 0;
-}
-#endif
 
 int portlist::count(){
     return listcount;
