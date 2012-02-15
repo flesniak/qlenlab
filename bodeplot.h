@@ -56,6 +56,9 @@ class bodedialog : public QDialog
 public:
     explicit bodedialog(bodeplot *parent = 0);
 
+protected:
+    void closeEvent(QCloseEvent *);
+
 public slots:
     void updateStatus(bodestate state);
     void finished(bool stillmeasuring);

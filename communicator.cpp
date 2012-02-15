@@ -135,19 +135,19 @@ void communicator::doMeasure()
         newset.channel[1] = new signaldata;
         newset.channel[2] = new signaldata;
         newset.channel[3] = new signaldata;
-        char channel;
+        unsigned char channel;
         if( activechannels[0] && activechannels[1] && !activechannels[2] && !activechannels[3] ) //override presumable controller bug swapping curves 1a/1b when enabled unique
             channel = 0;
         else
-            channel = -1;
+            channel = -1; //results in 255, is okay anyway
         for(int index = 0; index < getrawvaluecount(); index++) {
             do {
                 if( channel < 3 )
                     channel++;
                 else
                     channel = 0;
-            } while( !activechannels[(unsigned char)channel] );
-            newset.channel[(unsigned char)channel]->append(calcvalue(channel,buffer[index]));
+            } while( !activechannels[channel] );
+            newset.channel[channel]->append(calcvalue(channel,buffer[index]));
         }
         for(int index=0;index<4;index++) {
             if( newset.channel[index]->size() != 0 ) {
@@ -189,12 +189,12 @@ void communicator::doBodeDiagram()
     emit measureStateChanged(true);
     qDebug() << "[communicator] measure state true";
     bool finished = false;
+    char doAgainCount = 0; //do not increase p_startFreq immediately
     p_stop = false;
     const unsigned char periodsPerMeasure = 30;
     p_activechannels = portMask | 0xF0;
     p_activechannels_changed = true;
-    p_voltagedivision = 0x0F;
-    p_voltagedivision_changed = true;
+    unsigned char invdiv = 3, outvdiv = 3;
     p_sinusfrequency = p_startFreq;
     double realSinus = p_sinusfrequency+0.1;
     p_bodetarget->setFreqs(p_startFreq,p_endFreq);
@@ -202,20 +202,28 @@ void communicator::doBodeDiagram()
 
     while ( !finished && !p_stop )
     {
-        //Calculate next sinus frequency
-        while( round(realSinus) <= p_sinusfrequency )
-            realSinus *= pow(10,1.0/p_decadePoints);
-        p_sinusfrequency = round(realSinus);
-        p_sinusfrequency_changed = true;
-        if( p_sinusfrequency > p_endFreq ) {
-            finished = true;
-            break;
+        p_voltagedivision = (invdiv << 2*(chan2num(p_bodeio[0])/2)) | (outvdiv << 2*(chan2num(p_bodeio[1])/2));
+        qDebug() << "[communicator] p_voltdiv" << QString::number(p_voltagedivision,2);
+        p_voltagedivision_changed = true;
+        if( doAgainCount > 3 )
+            doAgainCount = -1;
+        if( doAgainCount < 0 ) {
+            //Calculate next sinus frequency
+            while( round(realSinus) <= p_sinusfrequency )
+                realSinus *= pow(10,1.0/p_decadePoints);
+            p_sinusfrequency = round(realSinus);
+            p_sinusfrequency_changed = true;
+            if( p_sinusfrequency > p_endFreq ) {
+                finished = true;
+                break;
+            }
         }
         p_samplerate = ceil(16500.0*p_sinusfrequency/periodsPerMeasure/1000)*1000;
         if( p_samplerate > 200000 )
             p_samplerate = 200000;
         p_samplerate_changed = true;
         setParameters();
+
         qDebug() << "[communicator] measuring with: p_sinusfrequency" << p_sinusfrequency;
         qDebug() << "[communicator] measuring with: p_samplerate" << p_samplerate;
 
@@ -235,10 +243,9 @@ void communicator::doBodeDiagram()
         unsigned char* buffer = getrawmeasurement();
         bool channel = true; //true=output, false=input
         double inmax = 0, inmin = 0, outmax = 0, outmin = 0;
-        for(int index = 0; index < getrawvaluecount(); index++) {
+        for(int index = 0; index < getrawvaluecount()-1; index++) {
             channel = !channel;
             double value = calcvalue(channel?chan2num(p_bodeio[1]):chan2num(p_bodeio[0]),buffer[index]);
-            //qDebug() << "[communicator] measured value" << value << "ch" << channel;
             if( channel ) {
                 if( value > outmax )
                     outmax = value;
@@ -257,24 +264,65 @@ void communicator::doBodeDiagram()
             if( p_stop )
                 break;
         }
-        bodestate state;
-        state.frequency = p_sinusfrequency;
-        state.inputAmplitude = inmax-inmin;
-        state.outputAmplitude = outmax-outmin;
-        state.amplification = 20*log(fabs(state.outputAmplitude/state.inputAmplitude));
-        state.samplerate = p_samplerate;
-        state.progress = round(100.0*realSinus/(p_endFreq-p_startFreq));
-        p_bodetarget->append(QPointF(p_sinusfrequency,state.amplification));
-        emit bodeStateUpdate(state);
 
+        unsigned char old_invdiv = p_voltagedivision >> 2*(chan2num(p_bodeio[0])/2) & 3, old_outvdiv = p_voltagedivision >> 2*(chan2num(p_bodeio[1])/2) & 3;
+        //Check range: case 1 - range too big
+        if( (inmax > fabs(inmin) ? inmax : fabs(inmin)) < 1.58*getrangefactor(invdiv-1) ) {
+            qDebug() << "[communicator] smaller range possible!";
+            if( invdiv > 0 ) {
+                invdiv--;
+                doAgainCount++;
+            }
+            else
+                doAgainCount = -1;
+        } //case 2 - range too small
+        else if( (inmax > fabs(inmin) ? inmax : fabs(inmin)) >= 1.58*getrangefactor(invdiv) ) {
+            qDebug() << "[communicator] bigger range needed!";
+            if( invdiv < 3 ) {
+                invdiv++;
+                doAgainCount++;
+            }
+            else
+                doAgainCount = -1;
+        }
+        //Check range: case 1 - range too big
+        if( (outmax > fabs(outmin) ? outmax : fabs(outmin)) < 1.58*getrangefactor(outvdiv-1) ) {
+            qDebug() << "[communicator] smaller range possible!";
+            if( outvdiv > 0 ) {
+                outvdiv--;
+                doAgainCount += doAgainCount < 0;
+            }
+        } //case 2 - range too small
+        else if( (outmax > fabs(outmin) ? outmax : fabs(outmin)) >= 1.58*getrangefactor(outvdiv) ) {
+            qDebug() << "[communicator] bigger range needed!";
+            if( outvdiv < 3 ) {
+                outvdiv++;
+                doAgainCount += doAgainCount < 0;
+            }
+        }
+        //case 3 - range okay
+        if( doAgainCount == -1 ) {
+            qDebug() << "[communicator] range okay";
+            doAgainCount = -1;
+            bodestate state;
+            state.frequency = p_sinusfrequency;
+            state.inputAmplitude = inmax-inmin;
+            state.outputAmplitude = outmax-outmin;
+            state.amplification = 20*log10(fabs(state.outputAmplitude/state.inputAmplitude));
+            state.samplerate = p_samplerate;
+            state.progress = round(100.0*realSinus/(p_endFreq-p_startFreq));
+            p_bodetarget->append(QPointF(p_sinusfrequency,state.amplification));
+            emit bodeStateUpdate(state);
+            qDebug() << "[communicator] new bodestate: state.inputAmplitude" << state.inputAmplitude;
+            qDebug() << "[communicator] new bodestate: state.outputAmplitude" << state.outputAmplitude;
+            qDebug() << "[communicator] new bodestate: state.amplification" << state.amplification;
+        }
+        qDebug() << "[communicator] invdiv from" << QString::number(old_invdiv,2) << "to" << QString::number(invdiv,2);
+        qDebug() << "[communicator] outvdiv from" << QString::number(old_outvdiv,2) << "to" << QString::number(outvdiv,2);
 #ifdef DEBUGBODE
         p_storage->appendDataset(newset);
         emit displayNewDataset();
 #endif
-
-        qDebug() << "[communicator] new bodestate: state.inputAmplitude" << state.inputAmplitude;
-        qDebug() << "[communicator] new bodestate: state.outputAmplitude" << state.outputAmplitude;
-        qDebug() << "[communicator] new bodestate: state.amplification" << state.amplification;
     }
     emit measureStateChanged(false);
     qDebug() << "[communicator] bode complete";
@@ -320,10 +368,12 @@ double communicator::getrangefactor(const unsigned char index) const
     switch( index ) {
     case 0 : return(0.5);
              break;
+    case 1 : return(1);
+             break;
     case 2 : return(2);
              break;
     case 3 : return(10);
-    default : return(1);
+    default : return(0);
               break;
     }
 }

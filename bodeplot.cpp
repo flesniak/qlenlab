@@ -161,6 +161,12 @@ bodedialog::bodedialog(bodeplot *parent) : QDialog(parent), parent(parent)
     connect(radioButton_outputch4,SIGNAL(toggled(bool)),SLOT(outputRadiosChanged()));
 }
 
+void bodedialog::closeEvent(QCloseEvent *)
+{
+    if( parent->p_com->isRunning() )
+        parent->p_com->stop();
+}
+
 void bodedialog::start()
 {
     if( parent->p_com->setRunMode(meta::bode) ) {

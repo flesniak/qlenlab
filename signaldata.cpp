@@ -39,7 +39,6 @@ size_t datawrapper::size() const
 
 QRectF datawrapper::boundingRect() const
 {
-    qDebug() << "[datawrapper] boundingRect" << p_data->p_boundingRect;
     return p_data->p_boundingRect;
 }
 
