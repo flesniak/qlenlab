@@ -152,6 +152,7 @@ void communicator::doMeasure()
         for(int index=0;index<4;index++) {
             if( newset.channel[index]->size() != 0 ) {
                 newset.channel[index]->setTimeInterval(1000.0/samplerate);
+                newset.channel[index]->smooth(p_smoothFactor);
                 newset.channel[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
             }
             else {
@@ -487,6 +488,12 @@ void communicator::settriggermode(meta::triggermode mode, double value)
 {
     p_triggermode = mode;
     p_triggervalue = value;
+}
+
+void communicator::setsmoothfactor(const float smoothFactor)
+{
+    p_smoothFactor = smoothFactor;
+    qDebug() << "[communicator] set smooth factor" << smoothFactor;
 }
 
 bool communicator::setsinusfrequency(unsigned short frequency)

@@ -77,11 +77,13 @@ private:
     QDoubleSpinBox *spinBox_yaxis_upper;
     QCheckBox *checkBox_autoscale;
     QDoubleSpinBox *spinBox_autoscaleGrid;
+    QSlider *slider_smoothFactor;
 
 private slots:
     void updateViewportXValue(QString value);
     void submitViewportX();
     void submitViewportY();
+    void submitSmoothFactor();
     void submitYAutoscale(bool on);
 
 signals:
@@ -89,6 +91,7 @@ signals:
     void viewportYChanged(const double, const double);
     void autoscaleYChanged(bool);
     void autoscaleYGridChanged(double);
+    void smoothFactorChanged(float);
 };
 
 class dockWidget_scope : public QDockWidget
