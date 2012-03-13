@@ -61,6 +61,7 @@ public slots:
     bool setoffset(unsigned char channels);
     bool setsamplerate(unsigned int samplerate);
     void settriggermode(meta::triggermode mode, double value);
+    void setsmoothfactor(const float smoothFactor);
 
     //some stuff for easier signal/slot handling
     bool setchannel1active(bool active);
@@ -123,6 +124,7 @@ protected:
     unsigned short p_endFreq;
     unsigned short p_decadePoints;
     meta::channel p_bodeio[2];
+    double p_smoothFactor;
 
 signals:
     void connectionStateChanged(meta::connectstate);

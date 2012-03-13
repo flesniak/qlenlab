@@ -249,10 +249,6 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     spinBox_xaxis->setValue(20);
     spinBox_xaxis->setSuffix("ms");
 
-    QHBoxLayout *layout_xaxis = new QHBoxLayout(groupBox_xaxis);
-    layout_xaxis->addWidget(comboBox_xaxis);
-    layout_xaxis->addWidget(spinBox_xaxis);
-
     spinBox_yaxis_lower = new QDoubleSpinBox(groupBox_yaxis);
     spinBox_yaxis_lower->setRange(-40,40);
     spinBox_yaxis_lower->setValue(-5);
@@ -262,7 +258,7 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     spinBox_yaxis_upper->setValue(5);
     spinBox_yaxis_upper->setSuffix("V");
 
-    QLabel *label_yaxis_dummy = new QLabel("-");
+    QLabel *label_yaxis_dummy = new QLabel("-",groupBox_yaxis);
     label_yaxis_dummy->setAlignment(Qt::AlignCenter);
 
     checkBox_autoscale = new QCheckBox(tr("Autoscale"),groupBox_yaxis);
@@ -272,6 +268,14 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     spinBox_autoscaleGrid->setRange(0.0,10.0);
     spinBox_autoscaleGrid->setSingleStep(0.5);
     spinBox_autoscaleGrid->setEnabled(false);
+
+    QLabel *label_smoothFactor_dummy = new QLabel("Glättung",widget);
+    slider_smoothFactor = new QSlider(Qt::Horizontal,widget);
+    slider_smoothFactor->setRange(0,100);
+
+    QHBoxLayout *layout_xaxis = new QHBoxLayout(groupBox_xaxis);
+    layout_xaxis->addWidget(comboBox_xaxis);
+    layout_xaxis->addWidget(spinBox_xaxis);
 
     QHBoxLayout *layout_yaxis_1 = new QHBoxLayout;
     layout_yaxis_1->addWidget(spinBox_yaxis_lower);
@@ -287,9 +291,14 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     layout_yaxis->addLayout(layout_yaxis_1);
     layout_yaxis->addLayout(layout_yaxis_2);
 
+    QHBoxLayout *layout_smooth = new QHBoxLayout;
+    layout_smooth->addWidget(label_smoothFactor_dummy);
+    layout_smooth->addWidget(slider_smoothFactor);
+
     QVBoxLayout *layout = new QVBoxLayout(widget);
     layout->addWidget(groupBox_xaxis);
     layout->addWidget(groupBox_yaxis);
+    layout->addLayout(layout_smooth);
 
     connect(comboBox_xaxis,SIGNAL(currentIndexChanged(QString)),SLOT(updateViewportXValue(QString)));
     connect(spinBox_xaxis,SIGNAL(valueChanged(int)),SLOT(submitViewportX()));
@@ -298,6 +307,7 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     connect(checkBox_autoscale,SIGNAL(toggled(bool)),SLOT(submitYAutoscale(bool)));
     connect(checkBox_autoscale,SIGNAL(toggled(bool)),spinBox_autoscaleGrid,SLOT(setEnabled(bool)));
     connect(spinBox_autoscaleGrid,SIGNAL(valueChanged(double)),SIGNAL(autoscaleYGridChanged(double)));
+    connect(slider_smoothFactor,SIGNAL(valueChanged(int)),SLOT(submitSmoothFactor()));
 
     setWidget(widget);
 }
@@ -316,6 +326,7 @@ void dockWidget_viewport::restoreSettings()
     }
     checkBox_autoscale->setChecked(settings.value("viewport/yaxis_autoscale",false).toBool());
     spinBox_autoscaleGrid->setValue(settings.value("viewport/yaxis_autoscalegrid",0.0).toDouble());
+    slider_smoothFactor->setValue(settings.value("viewport/smoothfactor",0).toInt());
 }
 
 void dockWidget_viewport::saveSettings()
@@ -326,12 +337,18 @@ void dockWidget_viewport::saveSettings()
     settings.setValue("viewport/yaxis_upper",spinBox_yaxis_upper->value());
     settings.setValue("viewport/yaxis_autoscale",checkBox_autoscale->isChecked());
     settings.setValue("viewport/yaxis_autoscalegrid",spinBox_autoscaleGrid->value());
+    settings.setValue("viewport/smoothfactor",slider_smoothFactor->value());
 }
 
 void dockWidget_viewport::updateViewportXValue(QString value)
 {
     if( !value.isEmpty() )
         spinBox_xaxis->setValue(value.toInt());
+}
+
+void dockWidget_viewport::submitSmoothFactor()
+{
+    emit smoothFactorChanged(sqrt(slider_smoothFactor->value())/10);
 }
 
 void dockWidget_viewport::submitYAutoscale(bool on)
