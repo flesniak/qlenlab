@@ -31,6 +31,7 @@ class datawrapper;
 class QColor;
 class QwtPlotCurve;
 class QwtPlotGrid;
+class QwtPlotZoomer;
 
 class plot : public QwtPlot
 {
@@ -42,6 +43,7 @@ private:
     QwtInterval interval;
     QwtPlotCurve* curve[4];
     QwtPlotGrid* grid;
+    QwtPlotZoomer* zoomer;
     storage* p_storage;
     datawrapper* p_data[4];
     bool p_autoscale;

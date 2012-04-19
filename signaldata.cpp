@@ -59,7 +59,8 @@ void datawrapper::unsetData()
 
 // ########## SIGNALDATA ##########
 
-signaldata::signaldata(datawrapper *parent) : p_parent(parent), p_boundingRect(0.0,0.0,0.0,0.0)
+
+signaldata::signaldata(datawrapper *parent) : p_parent(parent), p_boundingRect(0.0,0.0,0.0,0.0), triggerFineness(10)
 {
     p_offset = 0;
     p_interval = 0;
@@ -75,6 +76,15 @@ signaldata::~signaldata()
 void signaldata::setParent(datawrapper *parent)
 {
     p_parent = parent;
+}
+
+void signaldata::smooth(float factor)
+{
+    if( factor == 0 )
+        return;
+    for(int value=1; value < p_data.size(); value++) {
+        p_data[value]=(1-factor)*p_data[value]+factor*p_data[value-1];
+    }
 }
 
 bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, const double tolerance)
@@ -95,7 +105,7 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                       return true;
                       break;
                       }
-    case meta::rising : while( p_data[p_offset] > trigger-tolerance ) {
+    case meta::rising : /*while( p_data[p_offset] > trigger+tolerance ) {
                             p_offset++;
                             if( p_offset >= p_data.size() ) {
                                 p_offset = 0;
@@ -110,8 +120,46 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                                 return false;
                             }
                         }
+                        if( p_offset < triggerFineness )
+                            p_offset = triggerFineness;
+                        p_offset++;
+                        p_offset += triggerFineness;
+                        while( average(p_offset,triggerFineness) < trigger ) { //+tolerance
+                            p_offset++;
+                            if( p_offset >= p_data.size() ) {
+                                p_offset = 0;
+                                return false;
+                            }
+                        }*/
+                        //new algorithm
+                        {unsigned int under = 0;
+                        while( under < triggerFineness ) {
+                            if( p_data[p_offset] < trigger-0.1*p_boundingRect.bottom() )
+                                under++;
+                            else
+                                under = 0;
+                            p_offset++;
+                            if( p_offset >= p_data.size() ) {
+                                p_offset = 0;
+                                return false;
+                            }
+                        }
+                        while( p_data[p_offset] < trigger ) {
+                            p_offset++;
+                            if( p_offset >= p_data.size() ) {
+                                p_offset = 0;
+                                return false;
+                            }
+                        }
+                        //p_offset -= triggerFineness+1;
+                        //debug trigger position
+                        p_data[p_offset]= -3;
+                        p_data[p_offset+triggerFineness+1] = 3;
+                        p_offset = 0;
+                        for(int c=0; c<=60; c++)
+                            p_data.prepend(0);
                         return true;
-                        break;
+                        break;}
     case meta::falling : while( p_data[p_offset] < trigger+tolerance ) {
                              p_offset++;
                              if( p_offset >= p_data.size() ) {
@@ -129,8 +177,23 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                          }
                          return true;
                          break;
-    default :            return false;
+    default :            p_offset = 0;
+                         return false;
     }
+}
+
+double signaldata::average(unsigned int position, unsigned int valueCount)
+{
+    /*if( (unsigned int)p_data.size() < valueCount )
+        valueCount = p_data.size();*/
+    int values = valueCount;
+    double result = 0;
+    while( values > 0 ) {
+        result += p_data.at(position-values+1);
+        values--;
+    }
+    result /= valueCount;
+    return result;
 }
 
 void signaldata::setTimeInterval(const double interval)

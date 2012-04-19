@@ -26,6 +26,7 @@
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
 #include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_zoomer.h>
 
 #include "plot.h"
 #include "storage.h"
@@ -37,9 +38,7 @@ plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.
     setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
     plotLayout()->setAlignCanvasToScales(true);
 
-    /*QPalette pal = canvas()->palette();
-    pal.setColor(QPalette::Window, Qt::black);
-    canvas()->setPalette(pal);*/
+    zoomer = new QwtPlotZoomer(canvas());
 
     grid = new QwtPlotGrid();
     grid->enableX(true);
