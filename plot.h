@@ -22,9 +22,9 @@
 
 #include "meta.h"
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_layout.h>
-#include <qwt/qwt_interval.h>
+#include <qwt6/qwt_plot.h>
+#include <qwt6/qwt_plot_layout.h>
+#include <qwt6/qwt_interval.h>
 
 class storage;
 class datawrapper;

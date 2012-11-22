@@ -22,11 +22,11 @@
 #include <QPen>
 #include <QColor>
 
-#include <qwt/qwt_plot_grid.h>
-#include <qwt/qwt_plot_canvas.h>
-#include <qwt/qwt_plot_layout.h>
-#include <qwt/qwt_plot_curve.h>
-#include <qwt/qwt_plot_zoomer.h>
+#include <qwt6/qwt_plot_grid.h>
+#include <qwt6/qwt_plot_canvas.h>
+#include <qwt6/qwt_plot_layout.h>
+#include <qwt6/qwt_plot_curve.h>
+#include <qwt6/qwt_plot_zoomer.h>
 
 #include "plot.h"
 #include "storage.h"

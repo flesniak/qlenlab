@@ -20,7 +20,7 @@
 #ifndef SIGNALDATA_H
 #define SIGNALDATA_H
 
-#include <qwt/qwt_series_data.h>
+#include <qwt6/qwt_series_data.h>
 
 #include "meta.h"
 
