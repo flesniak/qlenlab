@@ -1,6 +1,6 @@
 /***************************************************************************
  * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
- *                                                                         *
+ *                         Max Bruckner   <max.bruckner@student.kit.edu>   *
  * This file is part of the QLenLab project.                               *
  *                                                                         *
  * QLenLab is free software: you can redistribute it and/or modify it      *
@@ -23,6 +23,7 @@
 #include "qlenlab.h"
 #include "signaldata.h"
 #include "settingsdialog.h"
+#include "exportdialog.h"
 #include "plot.h"
 #include "communicator.h"
 #include "dockwidgets.h"
@@ -35,11 +36,14 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     resize(940,0);
 
     settingsdlg = NULL;
+    exportdlg	= NULL;
+    lastbode = NULL;
 
     p_storage = new storage;
     com = new communicator(p_storage,this);
     plotter = new plot(p_storage,this);
     settingsdlg = new settingsdialog(com,this);
+    exportdlg	= new exportdialog(plotter, lastbode, this);
     label_connectionstatus = new QLabel(this);
 
     tabWidget = new QTabWidget(this);
@@ -86,6 +90,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     action_start = menu_measurement->addAction(tr("Starten"));
     action_stop = menu_measurement->addAction(tr("Stoppen"));
     action_bode = menu_measurement->addAction(tr("Bode-Diagramm erstellen"));
+    QAction *action_export = menu_measurement->addAction(tr("Messung exportieren"));
 
     //various connects
     connect(com,SIGNAL(connectionStateChanged(meta::connectstate)),SLOT(setConnectionStatus(meta::connectstate)));
@@ -154,6 +159,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(action_start,SIGNAL(triggered()),SLOT(start()));
     connect(action_stop,SIGNAL(triggered()),SLOT(stop()));
     connect(action_bode,SIGNAL(triggered()),SLOT(initBode()));
+    connect(action_export,SIGNAL(triggered()),SLOT(showExport()));
 
     setConnectionStatus(meta::disconnected);
     statusBar()->clearMessage();
@@ -212,6 +218,7 @@ void QLenLab::stop()
 void QLenLab::initBode()
 {
     bodeplot* bode = new bodeplot(com,this);
+    exportdlg->setBode(bode);
     tabWidget->addTab(bode,bode->windowTitle());
     //tabWidget->setCurrentWidget(bode);
     bode->exec();
@@ -220,6 +227,12 @@ void QLenLab::initBode()
 void QLenLab::showSettings()
 {
     settingsdlg->exec();
+}
+
+void QLenLab::showExport()
+{
+    exportdlg->setBode(lastbode);
+    exportdlg->exec();
 }
 
 void QLenLab::closeTab(int index)

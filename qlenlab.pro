@@ -1,6 +1,6 @@
 # ************************************************************************
 # * Copyright (C) 2011 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
-# *                                                                      *
+# *                    Max Bruckner   <max.bruckner@student.kit.edu>     *
 # * This file is part of the QLenLab project.                            *
 # *                                                                      *
 # * QLenLab is free software: you can redistribute it and/or modify      *
@@ -22,10 +22,10 @@ TARGET = qlenlab
 CONFIG += qwt
 LIBS += -lstdc++ -lqwt
 
-SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp \
+SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp exportdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp \
     storage.cpp \
     bodeplot.cpp
-HEADERS += qlenlab.h settingsdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h \
+HEADERS += qlenlab.h settingsdialog.h exportdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h \
     storage.h \
     bodeplot.h
 FORMS +=

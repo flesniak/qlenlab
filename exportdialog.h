@@ -17,76 +17,48 @@
  * with QLenLab. If not, see <http://www.gnu.org/licenses/>.               *
  **************************************************************************/
 
-#ifndef QLENLAB_H
-#define QLENLAB_H
+#ifndef EXPORTDIALOG_H
+#define EXPORTDIALOG_H
 
-#include <QMainWindow>
-#include <QLabel>
-#include <QTabWidget>
-#include <QString>
-#include <QMutex>
+#include <QtGui>
 
 #include "meta.h"
 
-class settingsdialog;
-class exportdialog;
 class plot;
 class bodeplot;
-class communicator;
-class signaldata;
-class storage;
-class dockWidget_scope;
-class dockWidget_viewport;
-class dockWidget_generator;
-class dockWidget_trigger;
-class dockWidget_dataview;
+class QwtPlotRenderer;
+class QwtPlot;
 
-class QLenLab : public QMainWindow
+class exportdialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit QLenLab(QWidget *parent = 0);
-    ~QLenLab();
+    explicit exportdialog(plot *plot, bodeplot *bodeplot, QWidget *parent = 0);
+    ~exportdialog();
 
 public slots:
-    void setConnectionStatus(meta::connectstate state);
-    void setMeasureStatus(bool measuring);
-
-protected:
-    void closeEvent(QCloseEvent *);
-
+    int exec();
+    void setBode(bodeplot *newBode);
+    
 private:
-    void restoreSettings();
-
-    dockWidget_scope *dw_scope;
-    dockWidget_viewport *dw_viewport;
-    dockWidget_generator *dw_generator;
-    dockWidget_trigger *dw_trigger;
-    dockWidget_dataview *dw_dataview;
-    settingsdialog *settingsdlg;
-    exportdialog *exportdlg;
-    plot *plotter;
-    bodeplot *lastbode;
-    communicator *com;
-    signaldata *data;
-    storage *p_storage;
-
-    QTabWidget *tabWidget;
-    QLabel *label_connectionstatus;
-    QAction *action_start;
-    QAction *action_stop;
-    QAction *action_bode;
+	QwtPlotRenderer *renderer;
+	QwtPlot *plot_export;
+	
+	plot *mainPlot;
+	bodeplot *bode;
+	
+	QComboBox *comboBox_format;
+	QSpinBox *spinBox_height;
+	QSpinBox *spinBox_width;
+	QSpinBox *spinBox_res;
+	QPushButton *pushButton_export;
+	QRadioButton *radioButton_plot;
+	QRadioButton *radioButton_bode;
 
 private slots:
-    void start();
-    void stop();
-    void showSettings();
-    void showExport();
-    void about();
-    void quit();
-    void initBode();
-    void closeTab(int index);
+	void exportPlot();
+
 };
 
-#endif // QLENLAB_H
+#endif // EXPORTDIALOG_H
