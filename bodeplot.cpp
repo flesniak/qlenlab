@@ -18,11 +18,11 @@
  **************************************************************************/
 
 #include <QtGui>
-#include <qwt/qwt_plot_grid.h>
-#include <qwt/qwt_plot_curve.h>
-#include <qwt/qwt_plot_canvas.h>
-#include <qwt/qwt_plot_layout.h>
-#include <qwt/qwt_scale_engine.h>
+#include <qwt6/qwt_plot_grid.h>
+#include <qwt6/qwt_plot_curve.h>
+#include <qwt6/qwt_plot_canvas.h>
+#include <qwt6/qwt_plot_layout.h>
+#include <qwt6/qwt_scale_engine.h>
 
 #include "bodeplot.h"
 #include "signaldata.h"

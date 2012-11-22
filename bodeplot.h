@@ -20,7 +20,7 @@
 #ifndef BODEPLOT_H
 #define BODEPLOT_H
 
-#include <qwt/qwt_plot.h>
+#include <qwt6/qwt_plot.h>
 #include <QtGui/QDialog>
 
 #include "meta.h"
