@@ -218,7 +218,8 @@ void QLenLab::stop()
 void QLenLab::initBode()
 {
     bodeplot* bode = new bodeplot(com,this);
-    exportdlg->setBode(bode);
+    lastbode = bode;
+    exportdlg->setBode(lastbode);
     tabWidget->addTab(bode,bode->windowTitle());
     //tabWidget->setCurrentWidget(bode);
     bode->exec();

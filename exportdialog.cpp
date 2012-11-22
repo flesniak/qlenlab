@@ -149,4 +149,5 @@ void exportdialog::setBode(bodeplot *newBode)
 	}
 	else
 		radioButton_bode->setCheckable(true);
+		
 }
