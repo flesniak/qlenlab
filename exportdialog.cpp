@@ -21,8 +21,8 @@
 #include "plot.h"
 #include "bodeplot.h"
 
-#include <qwt6/qwt_plot_renderer.h>
-#include <qwt6/qwt_plot.h>
+#include <qwt/qwt_plot_renderer.h>
+#include <qwt/qwt_plot.h>
 #include <QSizeF>
 #include <QFileDialog>
 
