@@ -1,6 +1,7 @@
 /************************************************************************
- * Copyright (C) 2011 Lars Wolff <lars.wolff@student.kit.edu>           *
+ * Copyright (C) 2011 Lars Wolff     <lars.wolff@student.kit.edu>       *
  * Copyright (C) 2012 Fabian Lesniak <fabian.lesniak@student.kit.edu>   *
+ * Copyright (C) 2013 Max Bruckner   <max.bruckner@student.kit.edu>     *
  *                                                                      *
  *   LENlib.cpp     07.12.2011                                          *
  *                                                                      *
@@ -86,30 +87,12 @@ unsigned char lenboard::flagstonum(bool* flagarray) const {
 }
 
 void lenboard::numtoflags(bool* flagarray, unsigned char number) const {
-    if(number >= 8){
-        number -= 8;
-        flagarray[3] = true;
-    }else
-        flagarray[3] = false;
-
-    if(number >= 4){
-        number -= 4;
-        flagarray[2] = true;
-    }else
-        flagarray[2] = false;
-
-    if(number >= 2){
-        number -= 2;
-        flagarray[1] = true;
-    }else
-        flagarray[1] = false;
-
-    if(number >= 1){
-        number -= 1;
-        flagarray[0] = true;
-    }else
-        flagarray[0] = false;
-
+	//logical and returns positive value if according bit is set, otherwise zero:	
+	flagarray[3] = number & 8;
+	flagarray[2] = number & 4;
+	flagarray[1] = number & 2;
+	flagarray[0] = number & 1;
+	
     return;
 }
 
