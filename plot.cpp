@@ -1,5 +1,6 @@
 /***************************************************************************
  * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                         Max Bruckner   <max.bruckner@student.kit.edu>   *
  *                                                                         *
  * This file is part of the QLenLab project.                               *
  *                                                                         *
@@ -138,4 +139,9 @@ void plot::updateViewportY(const double lower, const double upper)
     p_autoscale = false;
     setAxisScale(QwtPlot::yLeft, lower, upper);
     replot();
+}
+
+datawrapper** plot::getData()
+{
+	return p_data;
 }

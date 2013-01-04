@@ -25,6 +25,7 @@
 #include "meta.h"
 
 class plot;
+class datawrapper;
 class bodeplot;
 class QwtPlotRenderer;
 class QwtPlot;
@@ -36,10 +37,11 @@ class exportdialog : public QDialog
 public:
     explicit exportdialog(plot *plot, bodeplot *bodeplot, QWidget *parent = 0);
     ~exportdialog();
+	
+	void setBode(bodeplot *newBode);
 
 public slots:
     int exec();
-    void setBode(bodeplot *newBode);
     
 private:
 	QwtPlotRenderer *renderer;
@@ -56,8 +58,13 @@ private:
 	QRadioButton *radioButton_plot;
 	QRadioButton *radioButton_bode;
 
+	datawrapper** p_data;
+
+	void exportCSV(QString);
+
 private slots:
 	void exportPlot();
+	void updateGUI();
 
 };
 

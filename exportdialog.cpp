@@ -20,11 +20,16 @@
 #include "exportdialog.h"
 #include "plot.h"
 #include "bodeplot.h"
+#include "signaldata.h"
 
 #include <qwt/qwt_plot_renderer.h>
 #include <qwt/qwt_plot.h>
 #include <QSizeF>
 #include <QFileDialog>
+#include <QFile>
+#include <QString>
+#include <QErrorMessage>
+#include <QDebug>
 
 exportdialog::exportdialog(plot *inputplot, bodeplot* bodeplot, QWidget *parent) : QDialog(parent)
 {
@@ -47,6 +52,7 @@ exportdialog::exportdialog(plot *inputplot, bodeplot* bodeplot, QWidget *parent)
     comboBox_format->addItem("ppm");
     comboBox_format->addItem("tiff");
     comboBox_format->addItem("xpm");
+    comboBox_format->addItem("csv");
     
     QVBoxLayout *layout_format = new QVBoxLayout(box_format);
     layout_format->addWidget(comboBox_format);
@@ -102,14 +108,9 @@ exportdialog::exportdialog(plot *inputplot, bodeplot* bodeplot, QWidget *parent)
     layout->addWidget(pushButton_export,3,0,1,2,0);
     
     connect(pushButton_export,SIGNAL(clicked()),SLOT(exportPlot()));
+    connect(comboBox_format, SIGNAL(currentIndexChanged(int)),SLOT(updateGUI()));
     
-    if(bode == NULL)
-	{
-		radioButton_bode->setCheckable(false);
-		radioButton_plot->setChecked(true);
-	}
-	else
-		radioButton_bode->setCheckable(true);
+    updateGUI();
 }
 
 exportdialog::~exportdialog()
@@ -132,16 +133,128 @@ void exportdialog::exportPlot()
 	else if(radioButton_bode->isChecked())
 		plot_export = bode;
 	else
+	{
+		QMessageBox::warning(this,tr("Fehler"),tr("Sie müssen einen Plot auswählen!"));
 		return;
+	}
 	
-	
-	renderer->renderDocument(plot_export, filename, comboBox_format->currentText(), *new QSizeF(spinBox_width->value(),spinBox_height->value()), 300);
+	if(comboBox_format->currentText() == "csv")
+	{
+		exportCSV(filename);
+	}
+	else
+	{
+		renderer->renderDocument(plot_export, filename, comboBox_format->currentText(), *new QSizeF(spinBox_width->value(),spinBox_height->value()), 300);
+	}
 }
 
 void exportdialog::setBode(bodeplot *newBode)
 {
 	bode = newBode;
 	
+	updateGUI();
+		
+}
+
+void exportdialog::exportCSV(QString filename)
+{
+	QFile csvFile(filename);
+		if(csvFile.open(QIODevice::WriteOnly | QIODevice::Text))
+		{		
+			QTextStream outstream(&csvFile);
+			
+			p_data = mainPlot->getData();
+			
+			//Write first line
+			bool first = false;
+			if(p_data[0]->size())
+			{	
+				outstream << "Zeit [ms],Kanal 1 [V]";
+				first = true;
+			}
+			if(p_data[1]->size())
+			{
+				if(first)
+					outstream << ",";
+				else
+				{
+					first = true;
+					outstream << "Zeit [ms],";
+				}
+				outstream << "Kanal 2 [V]";
+			}
+			if(p_data[2]->size())
+			{
+				if(first)
+					outstream << ",";
+				else
+				{
+					first = true;
+					outstream << "Zeit [ms],";
+				}
+				outstream << "Kanal 3 [V]";
+			}
+			if(p_data[3]->size())
+			{
+				if(first)
+					outstream << ",";
+				else
+					outstream << "Zeit [ms],";
+				outstream << "Kanal 4 [V]";
+			}
+			outstream << "\n";
+			
+			//Write csv
+			for(unsigned int i = 0; (i < p_data[0]->size()) || (i < p_data[1]->size()) || (i < p_data[2]->size()) || (i < p_data[3]->size()); i++)
+			{
+				first = false;
+				if(p_data[0]->size())
+				{
+					first = true;	
+					outstream << p_data[0]->sample(i).x() << "," << p_data[0]->sample(i).y();
+				}
+				if(p_data[1]->size())
+				{
+					if(first)
+						outstream << ",";
+					else
+					{
+						first = true;
+						outstream << p_data[1]->sample(i).x() << ",";
+					}
+					outstream << p_data[1]->sample(i).y();
+				}
+				if(p_data[2]->size())
+				{
+					if(first)
+						outstream << ",";
+					else
+					{
+						first = true;
+						outstream << p_data[2]->sample(i).x() << ",";
+					}
+					outstream << p_data[2]->sample(i).y();
+				}
+				if(p_data[3]->size())
+				{
+					if(first)
+						outstream << ",";
+					else
+						outstream << p_data[1]->sample(i).x() << ",";
+					outstream << p_data[3]->sample(i).y();
+				}
+				outstream << "\n";
+			}
+		}
+		else
+		{
+			QMessageBox::warning(this, tr("Schreibfehler"),
+                                tr("Exportieren fehlgeschlagen!"));
+		}
+}
+
+void exportdialog::updateGUI()
+{
 	if(bode == NULL)
 	{
 		radioButton_bode->setCheckable(false);
@@ -150,4 +263,16 @@ void exportdialog::setBode(bodeplot *newBode)
 	else
 		radioButton_bode->setCheckable(true);
 		
+	if(comboBox_format->currentText() == "csv")
+	{
+		spinBox_height->setReadOnly(true);
+		spinBox_width->setReadOnly(true);
+		spinBox_res->setReadOnly(true);
+	}
+	else
+	{
+		spinBox_height->setReadOnly(false);
+		spinBox_width->setReadOnly(false);
+		spinBox_res->setReadOnly(false);
+	}
 }

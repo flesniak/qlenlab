@@ -1,5 +1,6 @@
 /***************************************************************************
  * Copyright (C) 2011-2012 Fabian Lesniak <fabian.lesniak@student.kit.edu> *
+ *                         Max Bruckner   <max.bruckner@student.kit.edu>   *
  *                                                                         *
  * This file is part of the QLenLab project.                               *
  *                                                                         *
@@ -21,6 +22,7 @@
 #define PLOT_H
 
 #include "meta.h"
+#include "signaldata.h"
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_layout.h>
@@ -58,6 +60,7 @@ public slots:
     void setYAutoscale(bool on);
     void setYAutoscaleGrid(const double grid = 0);
     void showDataset(const int index = -1);
+    datawrapper** getData();
 };
 
 #endif // PLOT_H
