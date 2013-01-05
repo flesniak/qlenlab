@@ -24,9 +24,9 @@
 #include "meta.h"
 #include "signaldata.h"
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_layout.h>
-#include <qwt/qwt_interval.h>
+#include <qwt_plot.h>
+#include <qwt_plot_layout.h>
+#include <qwt_interval.h>
 
 class storage;
 class datawrapper;

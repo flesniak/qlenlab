@@ -22,8 +22,8 @@
 #include "bodeplot.h"
 #include "signaldata.h"
 
-#include <qwt/qwt_plot_renderer.h>
-#include <qwt/qwt_plot.h>
+#include <qwt_plot_renderer.h>
+#include <qwt_plot.h>
 #include <QSizeF>
 #include <QFileDialog>
 #include <QFile>

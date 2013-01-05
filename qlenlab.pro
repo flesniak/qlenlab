@@ -20,16 +20,14 @@
 QT += core gui
 TARGET = qlenlab
 CONFIG += qwt
-LIBS += -lstdc++ -lqwt
 
-SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp exportdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp \
-    storage.cpp \
-    bodeplot.cpp
-HEADERS += qlenlab.h settingsdialog.h exportdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h \
-    storage.h \
-    bodeplot.h
+#If your installation of qwt does not install its feature file correctly,
+#uncomment and edit the following lines to match your installation.
+#For further information, see: http://qwt.sourceforge.net/qwtinstall.html
+#LIBS += -lstdc++ -lqwt
+#INCLUDEPATH += /usr/include/qwt6
+
+SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp exportdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp storage.cpp bodeplot.cpp
+HEADERS += qlenlab.h settingsdialog.h exportdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h storage.h bodeplot.h
 FORMS +=
-
-
-
 
