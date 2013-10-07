@@ -102,7 +102,6 @@ void lenboard::freeme(bool check){
     return;
 }
 
-
 int lenboard::openport(char* portname){
 
     char path[60] = "/dev/";
@@ -126,6 +125,8 @@ int lenboard::openport(char* portname){
     tcgetattr(hserial, &options);   //Get the current options for the port
     cfsetispeed(&options, B115200);     //Set the baud rates to 115200
     cfsetospeed(&options, B115200);
+    options.c_oflag = 0; //reset default flags as they seem to have INLCR and sim
+    options.c_iflag = 0;
     options.c_cflag |= (CLOCAL | CREAD);    //Enable the receiver and set local mode
     if(tcsetattr(hserial, TCSANOW, &options) < 0){   //Set the new options for the port
         closeport();
@@ -471,9 +472,6 @@ int lenboard::measure(){
         stopmeasure();
         return -1;
     }
-
-    stopmeasure();
-    return -1;
 }
 
 unsigned char* lenboard::getrawmeasurement() const {
