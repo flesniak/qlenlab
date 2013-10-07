@@ -125,7 +125,9 @@ void communicator::doMeasure()
         setParameters();
         unsigned char actives = ((p_activechannels & 1) ? 1 : 0) + ((p_activechannels & 2) ? 1 : 0) + ((p_activechannels & 4) ? 1 : 0) + ((p_activechannels & 8) ? 1 : 0);
         if( actives == 0 ) {
-            stop();
+            qDebug() << "[communicator] no channels active, stopping";
+            p_stop = true;
+            stopmeasure();
             break;
         }
         measure();
@@ -151,13 +153,19 @@ void communicator::doMeasure()
             if( newset.channel[index]->size() != 0 ) {
                 newset.channel[index]->setTimeInterval(1000.0/samplerate);
                 newset.channel[index]->smooth(p_smoothFactor);
-                newset.channel[index]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[index/2]));
-            }
-            else {
+            } else {
                 delete newset.channel[index];
                 newset.channel[index] = 0;
             }
         }
+
+        //trigger on the first activated channel
+        //TODO selectable trigger channel
+        channel = 0;
+        while( newset.channel[channel] == 0) //no need to check for endless loop, no active channels is impossible here
+            channel++;
+        newset.channel[channel]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[channel/2]));
+
         p_storage->appendDataset(newset);
         emit displayNewDataset();
     }
