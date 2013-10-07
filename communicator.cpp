@@ -109,8 +109,10 @@ void communicator::doConnect()
         setConnectState(meta::connecting);
         if( lenboard::openport(p_port.toAscii().data()) >= 0 )
             setConnectState(meta::connected);
-        else
+        else {
+            qDebug() << "[communicator] failed to open port" << p_port;
             setConnectState(meta::connectfail);
+        }
     }
 }
 
@@ -135,11 +137,7 @@ void communicator::doMeasure()
         newset.channel[1] = new signaldata;
         newset.channel[2] = new signaldata;
         newset.channel[3] = new signaldata;
-        unsigned char channel;
-        if( activechannels[0] && activechannels[1] && !activechannels[2] && !activechannels[3] ) //override presumable controller bug swapping curves 1a/1b when enabled unique
-            channel = 0;
-        else
-            channel = -1; //results in 255, is okay anyway
+        unsigned char channel = 255; //to get channel = 0 for index == 0
         for(int index = 0; index < getrawvaluecount(); index++) {
             do {
                 if( channel < 3 )
@@ -228,7 +226,7 @@ void communicator::doBodeDiagram()
         qDebug() << "[communicator] measuring with: p_sinusfrequency" << p_sinusfrequency;
         qDebug() << "[communicator] measuring with: p_samplerate" << p_samplerate;
 
-#define DEBUGBODE
+//#define DEBUGBODE
 #ifdef DEBUGBODE
         dataset newset;
         newset.timestamp = new QTime(QTime::currentTime());
@@ -439,17 +437,9 @@ QString& communicator::port()
 void communicator::setParameters()
 {
     if( p_activechannels_changed ) {
-        /*if( p_firstrun && ((p_activechannels & 0x0F) == 3) ) {
-            qDebug() << "[communicator] measuring once to override presumable controller bug";
-            if( lenboard::setactivechannels( 1 ) )
-                qDebug() << "[communicator] setting active channels failed";
-            p_activechannels_changed = true;
-        }
-        else {*/
-            if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
-                qDebug() << "[communicator] setting active channels failed";
-            p_activechannels_changed = false;
-        //}
+        if( lenboard::setactivechannels( p_activechannels & 0x0F ) )
+            qDebug() << "[communicator] setting active channels failed";
+        p_activechannels_changed = false;
     }
     if( p_channeloffset_changed ) {
         if( lenboard::setoffset( p_activechannels >> 4 ) )
