@@ -20,6 +20,7 @@
 QT += core gui
 TARGET = qlenlab
 CONFIG += qwt
+QMAKE_CXXFLAGS += -Wall -Wextra
 
 LIBS += -lstdc++ -lqwt
 INCLUDEPATH += /usr/include/qwt6
