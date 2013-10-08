@@ -66,10 +66,10 @@ lenboard::~lenboard(){
 
 int lenboard::portsend(char* data, int length){
     long int result = write(hserial, data, length);
-	if(result != length)
-		return -1;
+    if(result != length)
+        return -1;
 
-	return 0;
+    return 0;
 }
 
 unsigned char lenboard::flagstonum(bool* flagarray) const {
@@ -123,10 +123,12 @@ int lenboard::openport(char* portname){
 
     struct termios options;
     tcgetattr(hserial, &options);   //Get the current options for the port
-    cfsetispeed(&options, B115200);     //Set the baud rates to 115200
-    cfsetospeed(&options, B115200);
     options.c_oflag = 0; //reset default flags as they seem to have INLCR and sim
     options.c_iflag = 0;
+    options.c_cflag = 0;
+    options.c_lflag = 0;
+    cfsetispeed(&options, B115200);     //Set the baud rates to 115200
+    cfsetospeed(&options, B115200);
     options.c_cflag |= (CLOCAL | CREAD);    //Enable the receiver and set local mode
     if(tcsetattr(hserial, TCSANOW, &options) < 0){   //Set the new options for the port
         closeport();
@@ -448,13 +450,13 @@ int lenboard::measure(){
         if(read(hserial, measurement+pointer, 1) < 1){
             if(failcount > 100)
                 break;
-            usleep(500);
+            usleep(100);
             failcount++;
         }else{
             failcount = 0;
             pointer++;
         }
-    }while(pointer < 16500);
+    }while(pointer < 16420); //we seem to receive 16409 bytes in any case
 
     if(pointer > 10){
         // check header
