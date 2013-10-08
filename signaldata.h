@@ -31,6 +31,8 @@ public:
     signaldata(datawrapper *parent = 0);
     ~signaldata();
     void append(const double voltage);
+    int getTriggerOffset() const;
+    void inheritTriggerOffset(const int offset);
     bool setTrigger(const meta::triggermode mode, const double trigger, const double tolerance = 0);
     void setParent(datawrapper *parent = 0);
     void setTimeInterval(const double interval);
@@ -46,7 +48,6 @@ private:
     double p_interval;
     datawrapper* p_parent;
     QRectF p_boundingRect;
-    const unsigned char triggerFineness;
 
     double average(unsigned int position, unsigned int valueCount);
 };

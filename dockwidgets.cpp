@@ -599,18 +599,14 @@ void dockWidget_scope::updateColor(meta::colorindex ci, QColor color)
     }
 }
 
+// ########## DOCKWIDGET TRIGGER #########
 
-dockWidget_trigger::dockWidget_trigger(QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags)
+dockWidget_trigger::dockWidget_trigger(QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags), p_enabled_channels(0)
 {
     setWindowTitle(tr("Trigger"));
     setObjectName("dockWidget_trigger");
 
     QWidget *widget = new QWidget(this);
-
-    spinBox_triggervoltage = new QDoubleSpinBox(widget);
-    spinBox_triggervoltage->setRange(-40,40);
-    spinBox_triggervoltage->setSuffix("V");
-    spinBox_triggervoltage->setEnabled(false);
 
     comboBox_edge = new QComboBox(widget);
     comboBox_edge->addItems(QStringList() << tr("Deaktiviert")
@@ -618,14 +614,27 @@ dockWidget_trigger::dockWidget_trigger(QWidget *parent, Qt::WindowFlags flags) :
                                           << tr("steigende Flanke")
                                           << tr("fallende Flanke"));
 
-    QHBoxLayout *layout = new QHBoxLayout(widget);
-    layout->addWidget(comboBox_edge);
-    layout->addWidget(spinBox_triggervoltage);
+    comboBox_channel = new QComboBox(widget);
+    comboBox_channel->setEnabled(false);
+
+    spinBox_triggervoltage = new QDoubleSpinBox(widget);
+    spinBox_triggervoltage->setRange(-40,40);
+    spinBox_triggervoltage->setSuffix("V");
+    spinBox_triggervoltage->setEnabled(false);
+
+    QLabel* label_triggervoltage = new QLabel(tr("Triggerspannung:"),widget);
+
+    QGridLayout *layout = new QGridLayout(widget);
+    layout->addWidget(comboBox_edge,0,0);
+    layout->addWidget(comboBox_channel,0,1);
+    layout->addWidget(label_triggervoltage,1,0);
+    layout->addWidget(spinBox_triggervoltage,1,1);
 
     setWidget(widget);
 
     qRegisterMetaType<meta::triggermode>("meta::triggermode");
 
+    connect(comboBox_channel,SIGNAL(currentIndexChanged(int)),SLOT(comboBox_channel_changed(int)));
     connect(comboBox_edge,SIGNAL(currentIndexChanged(int)),SLOT(updateTriggerSpinBox(int)));
     connect(spinBox_triggervoltage,SIGNAL(valueChanged(double)),SLOT(submitTriggerMode(double)));
 }
@@ -633,6 +642,7 @@ dockWidget_trigger::dockWidget_trigger(QWidget *parent, Qt::WindowFlags flags) :
 void dockWidget_trigger::restoreSettings()
 {
     QSettings settings;
+    comboBox_channel->setCurrentIndex(settings.value("trigger/channel",0).toInt());
     comboBox_edge->setCurrentIndex(settings.value("trigger/mode",0).toInt());
     spinBox_triggervoltage->setValue(settings.value("trigger/voltage",0.0).toDouble());
 }
@@ -640,20 +650,102 @@ void dockWidget_trigger::restoreSettings()
 void dockWidget_trigger::saveSettings()
 {
     QSettings settings;
+    settings.setValue("trigger/channel",comboBox_channel->currentIndex());
     settings.setValue("trigger/mode",comboBox_edge->currentIndex());
     settings.setValue("trigger/voltage",spinBox_triggervoltage->value());
+}
+
+unsigned char dockWidget_trigger::getChannel() const
+{
+    unsigned char index = comboBox_channel->currentIndex()+1; //number of bits we need to find
+    for(unsigned char bit = 0; bit < 4; bit++) {
+        if( (1 << bit) & p_enabled_channels ) //bit number "bit" is active, increase index count
+            index--;
+        if( index == 0)
+            return bit;
+    }
+    return 0; //should not happen
+}
+
+void dockWidget_trigger::comboBox_channel_changed(int index)
+{
+    Q_UNUSED(index);
+    submitTriggerMode(spinBox_triggervoltage->value());
 }
 
 void dockWidget_trigger::updateTriggerSpinBox(int index)
 {
     spinBox_triggervoltage->setEnabled(index != 0);
+    comboBox_channel->setEnabled(index != 0);
     submitTriggerMode(spinBox_triggervoltage->value());
 }
 
 void dockWidget_trigger::submitTriggerMode(double value)
 {
-    emit triggerModeChanged((meta::triggermode)comboBox_edge->currentIndex(),value);
+    emit triggerModeChanged((meta::triggermode)comboBox_edge->currentIndex(),value,getChannel());
 }
+
+//these slots are some dirty hacks to ensure content correctness in comboBox_channel
+void dockWidget_trigger::channel1changed(bool activated)
+{
+    if( (p_enabled_channels & 1) == activated ) //channel already active/inactive
+        return;
+
+    if( activated ) {
+        comboBox_channel->insertItem(0,tr("Kanal 1"));
+        p_enabled_channels |= 1;
+    } else {
+        comboBox_channel->removeItem(0);
+        p_enabled_channels &= ~1;
+    }
+}
+
+void dockWidget_trigger::channel2changed(bool activated)
+{
+    if( (p_enabled_channels >> 1 & 1) == activated ) //channel already active/inactive
+        return;
+
+    const int index = p_enabled_channels & 1 ? 1 : 0;
+    if( activated ) {
+        comboBox_channel->insertItem(index,tr("Kanal 2"));
+        p_enabled_channels |= 2;
+    } else {
+        comboBox_channel->removeItem(index);
+        p_enabled_channels &= ~2;
+    }
+}
+
+void dockWidget_trigger::channel3changed(bool activated)
+{
+    if( (p_enabled_channels >> 2 & 1) == activated ) //channel already active/inactive
+        return;
+
+    const int index = (p_enabled_channels & 1 ? 1 : 0) + (p_enabled_channels & 2 ? 1 : 0);
+    if( activated ) {
+        comboBox_channel->insertItem(index,tr("Kanal 3"));
+        p_enabled_channels |= 4;
+    } else {
+        comboBox_channel->removeItem(index);
+        p_enabled_channels &= ~4;
+    }
+}
+
+void dockWidget_trigger::channel4changed(bool activated)
+{
+    if( (p_enabled_channels >> 3 & 1) == activated ) //channel already active/inactive
+        return;
+
+    const int index = (p_enabled_channels & 1 ? 1 : 0) + (p_enabled_channels & 2 ? 1 : 0) + (p_enabled_channels & 4 ? 1 : 0);
+    if( activated ) {
+        comboBox_channel->insertItem(index,tr("Kanal 4"));
+        p_enabled_channels |= 8;
+    } else {
+        comboBox_channel->removeItem(index);
+        p_enabled_channels &= ~8;
+    }
+}
+
+// ########## DOCKWIDGET DATAVIEW #########
 
 dockWidget_dataview::dockWidget_dataview(storage *datastorage, QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags), p_storage(datastorage)
 {

@@ -60,7 +60,7 @@ public slots:
     bool setoffsetchannel(meta::channel c, bool active);
     bool setoffset(unsigned char channels);
     bool setsamplerate(unsigned int samplerate);
-    void settriggermode(meta::triggermode mode, double value);
+    void settriggermode(meta::triggermode mode, double value, unsigned char channel);
     void setsmoothfactor(const float smoothFactor);
 
     //some stuff for easier signal/slot handling
@@ -100,6 +100,7 @@ protected:
     meta::runmode p_runmode;
     meta::connectstate p_connectstate;
     meta::triggermode p_triggermode;
+    unsigned char p_triggerchannel;
     storage *p_storage;
     bodedata *p_bodetarget;
     bool p_stop;

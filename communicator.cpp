@@ -32,6 +32,9 @@ communicator::communicator(storage *datastorage, QObject *parent) : QThread(pare
     p_runmode = meta::none;
     p_connectstate = meta::disconnected;
 
+    p_triggermode = meta::deactivated;
+    p_triggerchannel = 0;
+
     p_activechannels = 0xF0;
     p_activechannels_changed = false;
     p_channeloffset_changed = false;
@@ -149,6 +152,7 @@ void communicator::doMeasure()
             } while( !activechannels[channel] );
             newset.channel[channel]->append(calcvalue(channel,buffer[index]));
         }
+
         for(int index=0;index<4;index++) {
             if( newset.channel[index]->size() != 0 ) {
                 newset.channel[index]->setTimeInterval(1000.0/samplerate);
@@ -159,12 +163,10 @@ void communicator::doMeasure()
             }
         }
 
-        //trigger on the first activated channel
-        //TODO selectable trigger channel
-        channel = 0;
-        while( newset.channel[channel] == 0) //no need to check for endless loop, no active channels is impossible here
-            channel++;
-        newset.channel[channel]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[channel/2]));
+        newset.channel[p_triggerchannel]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[channel/2]));
+        for(int index=0;index<4;index++)
+            if( newset.channel[index] != 0 && index != p_triggerchannel )
+                newset.channel[index]->inheritTriggerOffset(newset.channel[p_triggerchannel]->getTriggerOffset());
 
         p_storage->appendDataset(newset);
         emit displayNewDataset();
@@ -482,10 +484,12 @@ void communicator::setParameters()
     p_firstrun = false;
 }
 
-void communicator::settriggermode(meta::triggermode mode, double value)
+void communicator::settriggermode(meta::triggermode mode, double value, unsigned char channel)
 {
     p_triggermode = mode;
     p_triggervalue = value;
+    p_triggerchannel = channel; //store as plain number instead of meta::channel to save cpu time in doMeasure()
+    qDebug() << "[communicator] set trigger mode" << mode << "value" << value << "channel" << channel;
 }
 
 void communicator::setsmoothfactor(const float smoothFactor)

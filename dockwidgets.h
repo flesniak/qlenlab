@@ -145,17 +145,27 @@ public:
     dockWidget_trigger(QWidget *parent = 0, Qt::WindowFlags flags = 0);
     void restoreSettings();
     void saveSettings();
+    unsigned char getChannel() const;
 
 private:
-    QDoubleSpinBox *spinBox_triggervoltage;
     QComboBox *comboBox_edge;
+    QComboBox *comboBox_channel;
+    QDoubleSpinBox *spinBox_triggervoltage;
+    unsigned char p_enabled_channels;
+
+public slots:
+    void channel1changed(bool activated);
+    void channel2changed(bool activated);
+    void channel3changed(bool activated);
+    void channel4changed(bool activated);
 
 private slots:
+    void comboBox_channel_changed(int index);
     void updateTriggerSpinBox(int index);
     void submitTriggerMode(double value);
 
 signals:
-    void triggerModeChanged(meta::triggermode mode, double value);
+    void triggerModeChanged(meta::triggermode mode, double value, unsigned char channel);
 };
 
 class storage;

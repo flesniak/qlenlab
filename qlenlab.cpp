@@ -106,6 +106,10 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(dw_scope->checkBox_ch2active,SIGNAL(toggled(bool)),com,SLOT(setchannel2active(bool)));
     connect(dw_scope->checkBox_ch3active,SIGNAL(toggled(bool)),com,SLOT(setchannel3active(bool)));
     connect(dw_scope->checkBox_ch4active,SIGNAL(toggled(bool)),com,SLOT(setchannel4active(bool)));
+    connect(dw_scope->checkBox_ch1active,SIGNAL(toggled(bool)),dw_trigger,SLOT(channel1changed(bool)));
+    connect(dw_scope->checkBox_ch2active,SIGNAL(toggled(bool)),dw_trigger,SLOT(channel2changed(bool)));
+    connect(dw_scope->checkBox_ch3active,SIGNAL(toggled(bool)),dw_trigger,SLOT(channel3changed(bool)));
+    connect(dw_scope->checkBox_ch4active,SIGNAL(toggled(bool)),dw_trigger,SLOT(channel4changed(bool)));
     connect(dw_scope->checkBox_ch1offset,SIGNAL(toggled(bool)),com,SLOT(setchannel1offset(bool)));
     connect(dw_scope->checkBox_ch2offset,SIGNAL(toggled(bool)),com,SLOT(setchannel2offset(bool)));
     connect(dw_scope->checkBox_ch3offset,SIGNAL(toggled(bool)),com,SLOT(setchannel3offset(bool)));
@@ -134,7 +138,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(dw_viewport,SIGNAL(smoothFactorChanged(float)),com,SLOT(setsmoothfactor(float)));
 
     //connects for dockWidget_trigger
-    connect(dw_trigger,SIGNAL(triggerModeChanged(meta::triggermode,double)),com,SLOT(settriggermode(meta::triggermode,double)));
+    connect(dw_trigger,SIGNAL(triggerModeChanged(meta::triggermode,double,unsigned char)),com,SLOT(settriggermode(meta::triggermode,double,unsigned char)));
 
     //connects for dockWidget_dataview
     connect(dw_dataview,SIGNAL(maximumDatasetsChanged(int)),p_storage,SLOT(setMaximumDatasets(int)));

@@ -60,7 +60,7 @@ void datawrapper::unsetData()
 // ########## SIGNALDATA ##########
 
 
-signaldata::signaldata(datawrapper *parent) : p_parent(parent), p_boundingRect(0.0,0.0,0.0,0.0), triggerFineness(10)
+signaldata::signaldata(datawrapper *parent) : p_parent(parent), p_boundingRect(0.0,0.0,0.0,0.0)
 {
     p_offset = 0;
     p_interval = 0;
@@ -87,11 +87,25 @@ void signaldata::smooth(float factor)
     }
 }
 
+int signaldata::getTriggerOffset() const
+{
+    return p_offset;
+}
+
+void signaldata::inheritTriggerOffset(const int offset)
+{
+    if( offset >= p_data.size() )
+        p_offset = 0;
+    else
+        p_offset = offset;
+}
+
 bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, const double tolerance)
 {
     p_offset = 0;
     if( p_data.size() == 0 )
         return false;
+    const unsigned int minimumPoints = 20; //trigger requires 10 following points to be greater trigger level
     switch( mode ) {
     case meta::both : {
                       bool above = (p_data[p_offset] >= trigger);
@@ -105,81 +119,102 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                       return true;
                       break;
                       }
-    case meta::rising : /*while( p_data[p_offset] > trigger+tolerance ) {
-                            p_offset++;
-                            if( p_offset >= p_data.size() ) {
-                                p_offset = 0;
-                                return false;
+    case meta::rising : {
+                            /* OLD ALGORITHM
+                            while( p_data[p_offset] > trigger-tolerance ) { //search from below trigger level
+                                p_offset++;
+                                if( p_offset >= p_data.size() ) {
+                                    p_offset = 0;
+                                    return false;
+                                }
                             }
-                        }
-                        p_offset += 5; //Generic p_offset to prevent triggering on imprecise falling edges
-                        while( p_data[p_offset] < trigger-tolerance ) {
-                            p_offset++;
-                            if( p_offset >= p_data.size() ) {
-                                p_offset = 0;
-                                return false;
+                            p_offset += 5; //Generic p_offset to prevent triggering on imprecise rising edges
+                            while( p_data[p_offset] < trigger+tolerance ) {
+                                p_offset++;
+                                if( p_offset >= p_data.size() ) {
+                                    p_offset = 0;
+                                    return false;
+                                }
                             }
-                        }
-                        if( p_offset < triggerFineness )
-                            p_offset = triggerFineness;
-                        p_offset++;
-                        p_offset += triggerFineness;
-                        while( average(p_offset,triggerFineness) < trigger ) { //+tolerance
-                            p_offset++;
-                            if( p_offset >= p_data.size() ) {
-                                p_offset = 0;
-                                return false;
-                            }
-                        }*/
-                        //new algorithm
-                        {unsigned int under = 0;
-                        while( under < triggerFineness ) {
-                            if( p_data[p_offset] < trigger-0.1*p_boundingRect.bottom() )
-                                under++;
-                            else
-                                under = 0;
-                            p_offset++;
-                            if( p_offset >= p_data.size() ) {
-                                p_offset = 0;
-                                return false;
-                            }
-                        }
-                        while( p_data[p_offset] < trigger ) {
-                            p_offset++;
-                            if( p_offset >= p_data.size() ) {
-                                p_offset = 0;
-                                return false;
-                            }
-                        }
-                        //p_offset -= triggerFineness+1;
-                        //debug trigger position
-                        p_data[p_offset]= -3;
-                        p_data[p_offset+triggerFineness+1] = 3;
-                        p_offset = 0;
-                        for(int c=0; c<=60; c++)
-                            p_data.prepend(0);
-                        return true;
-                        break;}
-    case meta::falling : while( p_data[p_offset] < trigger+tolerance ) {
-                             p_offset++;
-                             if( p_offset >= p_data.size() ) {
-                                 p_offset = 0;
-                                 return false;
-                             }
+                            return true; */
+                            //NEW ALGORITHM - that shall work better...
+                            while( p_data[p_offset] > trigger-tolerance ) { //in case we are already above or on the trigger level, advance until we are not anymore
+                                p_offset++;
+                                if( p_offset >= p_data.size() ) {
+                                    p_offset = 0;
+                                    return false;
+                                }
+                            } //now we are under the trigger level
+                            unsigned int satisfyingPoints;
+                            do {
+                                satisfyingPoints = 0;
+                                while( p_data[p_offset] < trigger ) { //search until we pass our trigger level
+                                    p_offset++;
+                                    if( p_offset >= p_data.size() ) {
+                                        p_offset = 0;
+                                        return false;
+                                    }
+                                }
+                                while( p_data[p_offset] >= trigger ) { //count how many points are over the trigger level
+                                    p_offset++;
+                                    satisfyingPoints++;
+                                    if( p_offset >= p_data.size() )
+                                        break;
+                                }
+                            } while( satisfyingPoints < minimumPoints ); //loop while we dont have enough
+                            p_offset -= satisfyingPoints; //we have found a p_offset at which minimumPoints points are already over our trigger level, to lets calculate the right offset
+                            break;
                          }
-                         p_offset += 5; //Generic p_offset to prevent triggering on imprecise rising edges
-                         while( p_data[p_offset] > trigger+tolerance ) {
-                             p_offset++;
-                             if( p_offset >= p_data.size() ) {
-                                 p_offset = 0;
-                                 return false;
-                             }
+    case meta::falling : {
+                            /* OLD ALGORITHM
+                            while( p_data[p_offset] < trigger+tolerance ) { //search from below trigger level
+                                p_offset++;
+                                if( p_offset >= p_data.size() ) {
+                                    p_offset = 0;
+                                    return false;
+                                }
+                            }
+                            p_offset += 5; //Generic p_offset to prevent triggering on imprecise rising edges
+                            while( p_data[p_offset] > trigger-tolerance ) {
+                                p_offset++;
+                                if( p_offset >= p_data.size() ) {
+                                    p_offset = 0;
+                                    return false;
+                                }
+                            }
+                            return true; */
+                            //NEW ALGORITHM - that shall work better...
+                            while( p_data[p_offset] < trigger+tolerance ) { //in case we are already above or on the trigger level, advance until we are not anymore
+                                p_offset++;
+                                if( p_offset >= p_data.size() ) {
+                                    p_offset = 0;
+                                    return false;
+                                }
+                            } //now we are under the trigger level
+                            unsigned int satisfyingPoints;
+                            do {
+                                satisfyingPoints = 0;
+                                while( p_data[p_offset] > trigger ) { //search until we pass our trigger level
+                                    p_offset++;
+                                    if( p_offset >= p_data.size() ) {
+                                        p_offset = 0;
+                                        return false;
+                                    }
+                                }
+                                while( p_data[p_offset] <= trigger ) { //count how many points are over the trigger level
+                                    p_offset++;
+                                    satisfyingPoints++;
+                                    if( p_offset >= p_data.size() )
+                                        break;
+                                }
+                            } while( satisfyingPoints < minimumPoints ); //loop while we dont have enough
+                            p_offset -= satisfyingPoints; //we have found a p_offset at which minimumPoints points are already over our trigger level, to lets calculate the right offset
+                            break;
                          }
-                         return true;
-                         break;
     default :            p_offset = 0;
                          return false;
     }
+    return false;
 }
 
 double signaldata::average(unsigned int position, unsigned int valueCount)
