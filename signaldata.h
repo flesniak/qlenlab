@@ -24,40 +24,49 @@
 
 #include "meta.h"
 
-class datawrapper;
-class signaldata
+//class datawrapper;
+class signaldata : public QwtSeriesData<QPointF>
 {
 public:
-    signaldata(datawrapper *parent = 0);
+    signaldata();
     ~signaldata();
-    void append(const double voltage);
-    int getTriggerOffset() const;
-    void inheritTriggerOffset(const int offset);
-    bool setTrigger(const meta::triggermode mode, const double trigger, const double tolerance = 0);
-    void setParent(datawrapper *parent = 0);
-    void setTimeInterval(const double interval);
-    void smooth(float factor);
-    void clear();
-    int size();
-
-    friend class datawrapper;
+    void    append(const double value);
+    QRectF  boundingRect() const;
+    void    clear();
+    const double* constRawData() const;
+    signaldata* getFft() const;
+    double  getInterval() const;
+    int     getTriggerOffset() const;
+    void    inheritTriggerOffset(const int offset);
+    double* rawData(unsigned int size = 0);
+    size_t  rawSize() const;
+    void    reserve(unsigned int count);
+    QPointF sample(size_t i) const;
+    void    setFft(signaldata* fft);
+    bool    setTrigger(const meta::triggermode mode, const double triggerValue, const double tolerance = 0);
+    void    setInterval(const double interval);
+    size_t  size() const;
+    void    smooth(float factor);
 
 private:
     QVector<double> p_data;
-    int p_offset;
-    double p_interval;
-    datawrapper* p_parent;
-    QRectF p_boundingRect;
+    QRectF          p_boundingRect;
+    signaldata*     p_fft;
+    double          p_interval;
+    int             p_offset;
 
     double average(unsigned int position, unsigned int valueCount);
 };
 
+//class datawrapper has the only purpose working around an uncomfortable QwtPlotCurve behaviour:
+//using QwtPlotCurve::setData deletes the old data, thus we use this datawrapper to leave signaldata intact
+//qwt 6.1.0 introduces QwtSeriesStore, which includes swapData that does not seem to delete old data
+//however, qlenlab is designed to work with qwt 6.0.x, thus this class
 class datawrapper : public QwtSeriesData<QPointF>
 {
 public:
-    datawrapper();
+    datawrapper(signaldata* data = 0);
     void setData(signaldata* data);
-    void unsetData();
     signaldata* currentData() const;
 
     QPointF sample(size_t i) const;
@@ -66,7 +75,6 @@ public:
 
 private:
     signaldata* p_data;
-    signaldata* p_nulldata;
 };
 
 class bodedata : public QwtSeriesData<QPointF>
@@ -84,5 +92,21 @@ private:
     unsigned int p_freqStart, p_freqEnd;
     double p_min, p_max;
 };
+
+//class fftdata : public QwtSeriesData<QPointF>
+//{
+//public:
+//    fftdata();
+//    void append(QPointF point);
+//    void setFreqs(unsigned int freqStart, unsigned int freqEnd);
+//    QPointF sample(size_t i) const;
+//    size_t size() const;
+//    QRectF boundingRect() const;
+
+//private:
+//    QVector<QPointF> p_data;
+//    unsigned int p_freqStart, p_freqEnd;
+//    double p_min, p_max;
+//};
 
 #endif // SIGNALDATA_H

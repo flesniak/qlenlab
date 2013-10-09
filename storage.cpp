@@ -31,26 +31,25 @@ storage::storage(QObject *parent) : QAbstractListModel(parent)
 
 storage::~storage()
 {
-    while( datasets.size() > 0 )
-        deleteDataset(0);
+    deleteDataset(-1); //delete all datasets
 }
 
-void storage::setPlotData(datawrapper *wrapper, meta::channel channel, int index)
+signaldata* storage::getData(meta::channel channel, int index)
+{
+    return getData(chan2num(channel),index);
+}
+
+signaldata* storage::getData(unsigned char channel, int index)
 {
     if( index == -1 )
         index = datasets.size()-1;
-
-    signaldata *data = datasets.at(index).channel[chan2num(channel)];
-    if( data != 0 ) {
-        data->setParent(wrapper);
-        wrapper->setData(data);
-    }
-    else
-        wrapper->unsetData();
+    return datasets.at(index).channel[channel];
 }
 
-dataset storage::getDataset(unsigned int index)
+dataset storage::getDataset(int index)
 {
+    if( index == -1 )
+        index = datasets.size()-1;
     return datasets.at(index);
 }
 
@@ -72,9 +71,15 @@ void storage::appendDataset(dataset &newdataset)
     emit dataChanged(createIndex(0,0),createIndex(datasets.size()-1,0));
 }
 
-bool storage::deleteDataset(unsigned int index)
+bool storage::deleteDataset(int index)
 {
-    if( index < (unsigned int)datasets.size() ) {
+    if( index < 0 ) {
+        while( datasets.size() > 0 )
+            deleteDataset(0);
+        return true;
+    }
+
+    if( index < datasets.size() ) {
         dataset todelete = datasets.takeAt(index);
         delete todelete.timestamp;
         delete todelete.channel[0];

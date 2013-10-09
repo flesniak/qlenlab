@@ -7,3 +7,4 @@ qlenlab
 ui_*.h
 Makefile
 *.pro.user
+unused/*.hex

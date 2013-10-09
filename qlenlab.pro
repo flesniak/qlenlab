@@ -20,13 +20,15 @@
 QT += core gui
 TARGET = qlenlab
 CONFIG += qwt
-QMAKE_CXXFLAGS += -Wall -Wextra
+QMAKE_CXXFLAGS += -Wall -Wextra -funroll-loops
 
-LIBS += -lstdc++ -lqwt
+LIBS += -lstdc++ -lqwt -lfftw3
 INCLUDEPATH += /usr/include/qwt6
 INCLUDEPATH += /usr/include/qwt
 
-SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp exportdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp storage.cpp bodeplot.cpp
-HEADERS += qlenlab.h settingsdialog.h exportdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h storage.h bodeplot.h
+SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp exportdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp storage.cpp bodeplot.cpp \
+    fftthread.cpp
+HEADERS += qlenlab.h settingsdialog.h exportdialog.h plot.h signaldata.h LENlib/LENlib.h communicator.h meta.h dockwidgets.h storage.h bodeplot.h \
+    fftthread.h
 FORMS +=
 

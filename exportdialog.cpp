@@ -162,8 +162,8 @@ void exportdialog::exportCSV(QString filename)
 		if(csvFile.open(QIODevice::WriteOnly | QIODevice::Text))
 		{		
 			QTextStream outstream(&csvFile);
-			
-			p_data = mainPlot->getData();
+
+            p_data = mainPlot->getCurrentData();
 			
 			//Write first line
 			bool first = false;
@@ -262,7 +262,7 @@ void exportdialog::updateGUI()
 	}
 	else
 		radioButton_bode->setCheckable(true);
-		
+
 	if(comboBox_format->currentText() == "csv")
 	{
 		spinBox_height->setReadOnly(true);

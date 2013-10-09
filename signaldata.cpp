@@ -19,72 +19,57 @@
 
 #include "signaldata.h"
 
-// ########## DATAWRAPPER ##########
-
-datawrapper::datawrapper()
-{
-    p_nulldata = new signaldata;
-    p_data = p_nulldata;
-}
-
-QPointF datawrapper::sample(size_t i) const
-{
-    return QPointF(i*p_data->p_interval,p_data->p_data.value(i+p_data->p_offset));
-}
-
-size_t datawrapper::size() const
-{
-    return p_data->p_data.size()-p_data->p_offset;
-}
-
-QRectF datawrapper::boundingRect() const
-{
-    return p_data->p_boundingRect;
-}
-
-void datawrapper::setData(signaldata *data)
-{
-    p_data = data;
-}
-
-signaldata* datawrapper::currentData() const
-{
-    return p_data;
-}
-
-void datawrapper::unsetData()
-{
-    p_data = p_nulldata;
-}
-
 // ########## SIGNALDATA ##########
 
 
-signaldata::signaldata(datawrapper *parent) : p_parent(parent), p_boundingRect(0.0,0.0,0.0,0.0)
+signaldata::signaldata() : p_boundingRect(0.0,0.0,0.0,0.0), p_fft(0), p_interval(0), p_offset(0)
 {
-    p_offset = 0;
-    p_interval = 0;
 }
 
 signaldata::~signaldata()
 {
-    if( p_parent != 0 )
-        if( p_parent->currentData() == this )
-            p_parent->unsetData();
+    if( p_fft != 0 )
+        delete p_fft;
 }
 
-void signaldata::setParent(datawrapper *parent)
+const double* signaldata::constRawData() const
 {
-    p_parent = parent;
+    return p_data.data();
 }
 
 void signaldata::smooth(float factor)
 {
     if( factor == 0 )
         return;
-    for(int value=1; value < p_data.size(); value++) {
+    for(int value=1; value < p_data.size(); value++)
         p_data[value]=(1-factor)*p_data[value]+factor*p_data[value-1];
-    }
+}
+
+QPointF signaldata::sample(size_t i) const
+{
+//    if( getFft() == 0 )
+//        qDebug() << "[datawrapper] noFft sample fetched" << QPointF(i*p_interval,p_data.value(i+p_offset));
+    return QPointF(i*p_interval,p_data.value(i+p_offset));
+}
+
+size_t signaldata::size() const
+{
+    return p_data.size()-p_offset;
+}
+
+QRectF signaldata::boundingRect() const
+{
+    return p_boundingRect;
+}
+
+signaldata* signaldata::getFft() const
+{
+    return p_fft;
+}
+
+double signaldata::getInterval() const
+{
+    return p_interval;
 }
 
 int signaldata::getTriggerOffset() const
@@ -100,16 +85,21 @@ void signaldata::inheritTriggerOffset(const int offset)
         p_offset = offset;
 }
 
-bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, const double tolerance)
+void signaldata::setFft(signaldata* fft)
+{
+    p_fft = fft;
+}
+
+bool signaldata::setTrigger(const meta::triggermode mode, const double triggerValue, const double tolerance)
 {
     p_offset = 0;
     if( p_data.size() == 0 )
         return false;
-    const unsigned int minimumPoints = 20; //trigger requires 10 following points to be greater trigger level
+    const unsigned int minimumPoints = 10; //trigger requires 10 following points to be greater trigger level
     switch( mode ) {
     case meta::both : {
-                      bool above = (p_data[p_offset] >= trigger);
-                      while( (p_data[p_offset] <= trigger) != above ) {
+                      bool above = (p_data[p_offset] >= triggerValue);
+                      while( (p_data[p_offset] <= triggerValue) != above ) {
                           p_offset++;
                           if( p_offset >= p_data.size() ) {
                               p_offset = 0;
@@ -121,7 +111,7 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                       }
     case meta::rising : {
                             /* OLD ALGORITHM
-                            while( p_data[p_offset] > trigger-tolerance ) { //search from below trigger level
+                            while( p_data[p_offset] > triggerValue-tolerance ) { //search from below triggerValue
                                 p_offset++;
                                 if( p_offset >= p_data.size() ) {
                                     p_offset = 0;
@@ -129,7 +119,7 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                                 }
                             }
                             p_offset += 5; //Generic p_offset to prevent triggering on imprecise rising edges
-                            while( p_data[p_offset] < trigger+tolerance ) {
+                            while( p_data[p_offset] < triggerValue+tolerance ) {
                                 p_offset++;
                                 if( p_offset >= p_data.size() ) {
                                     p_offset = 0;
@@ -138,36 +128,38 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                             }
                             return true; */
                             //NEW ALGORITHM - that shall work better...
-                            while( p_data[p_offset] > trigger-tolerance ) { //in case we are already above or on the trigger level, advance until we are not anymore
+                            while( p_data[p_offset] > triggerValue-tolerance ) { //in case we are already above or on triggerValue, advance until we are not anymore
                                 p_offset++;
                                 if( p_offset >= p_data.size() ) {
                                     p_offset = 0;
                                     return false;
                                 }
-                            } //now we are under the trigger level
+                            } //now we are under the triggerValue level
                             unsigned int satisfyingPoints;
                             do {
                                 satisfyingPoints = 0;
-                                while( p_data[p_offset] < trigger ) { //search until we pass our trigger level
+                                while( p_data[p_offset] < triggerValue ) { //search until we pass triggerValue
                                     p_offset++;
                                     if( p_offset >= p_data.size() ) {
                                         p_offset = 0;
                                         return false;
                                     }
                                 }
-                                while( p_data[p_offset] >= trigger ) { //count how many points are over the trigger level
+                                while( p_data[p_offset] >= triggerValue ) { //count how many points are over triggerValue
                                     p_offset++;
                                     satisfyingPoints++;
-                                    if( p_offset >= p_data.size() )
-                                        break;
+                                    if( p_offset >= p_data.size() ) {
+                                        p_offset = 0;
+                                        return false;
+                                    }
                                 }
                             } while( satisfyingPoints < minimumPoints ); //loop while we dont have enough
-                            p_offset -= satisfyingPoints; //we have found a p_offset at which minimumPoints points are already over our trigger level, to lets calculate the right offset
+                            p_offset -= satisfyingPoints; //we have found a p_offset at which minimumPoints points are already over triggerValue, to lets calculate the right offset
                             break;
                          }
     case meta::falling : {
                             /* OLD ALGORITHM
-                            while( p_data[p_offset] < trigger+tolerance ) { //search from below trigger level
+                            while( p_data[p_offset] < triggerValue+tolerance ) { //search from below triggerValue
                                 p_offset++;
                                 if( p_offset >= p_data.size() ) {
                                     p_offset = 0;
@@ -175,7 +167,7 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                                 }
                             }
                             p_offset += 5; //Generic p_offset to prevent triggering on imprecise rising edges
-                            while( p_data[p_offset] > trigger-tolerance ) {
+                            while( p_data[p_offset] > triggerValue-tolerance ) {
                                 p_offset++;
                                 if( p_offset >= p_data.size() ) {
                                     p_offset = 0;
@@ -184,31 +176,37 @@ bool signaldata::setTrigger(const meta::triggermode mode, const double trigger, 
                             }
                             return true; */
                             //NEW ALGORITHM - that shall work better...
-                            while( p_data[p_offset] < trigger+tolerance ) { //in case we are already above or on the trigger level, advance until we are not anymore
+                            while( p_data[p_offset] < triggerValue+tolerance ) {
                                 p_offset++;
                                 if( p_offset >= p_data.size() ) {
                                     p_offset = 0;
                                     return false;
                                 }
-                            } //now we are under the trigger level
+                            }
+                            if( p_offset >= p_data.size() ) {
+                                p_offset = 0;
+                                return false;
+                            }
                             unsigned int satisfyingPoints;
                             do {
                                 satisfyingPoints = 0;
-                                while( p_data[p_offset] > trigger ) { //search until we pass our trigger level
+                                while( p_data[p_offset] > triggerValue ) {
                                     p_offset++;
                                     if( p_offset >= p_data.size() ) {
                                         p_offset = 0;
                                         return false;
                                     }
                                 }
-                                while( p_data[p_offset] <= trigger ) { //count how many points are over the trigger level
+                                while( p_data[p_offset] <= triggerValue ) {
                                     p_offset++;
                                     satisfyingPoints++;
-                                    if( p_offset >= p_data.size() )
-                                        break;
+                                    if( p_offset >= p_data.size() ) {
+                                        p_offset = 0;
+                                        return false;
+                                    }
                                 }
-                            } while( satisfyingPoints < minimumPoints ); //loop while we dont have enough
-                            p_offset -= satisfyingPoints; //we have found a p_offset at which minimumPoints points are already over our trigger level, to lets calculate the right offset
+                            } while( satisfyingPoints < minimumPoints );
+                            p_offset -= satisfyingPoints;
                             break;
                          }
     default :            p_offset = 0;
@@ -231,23 +229,36 @@ double signaldata::average(unsigned int position, unsigned int valueCount)
     return result;
 }
 
-void signaldata::setTimeInterval(const double interval)
+double* signaldata::rawData(unsigned int size)
+{
+    if( size )
+        p_data.resize(size);
+    return p_data.data();
+}
+
+size_t signaldata::rawSize() const
+{
+    return p_data.size();
+}
+
+void signaldata::reserve(unsigned int count)
+{
+    if( count != 0 )
+        p_data.reserve(count);
+}
+
+void signaldata::setInterval(const double interval)
 {
     p_interval = interval;
 }
 
-void signaldata::append(const double voltage)
+void signaldata::append(const double value)
 {
-    p_data.append(voltage);
-    if( voltage > p_boundingRect.top() )
-        p_boundingRect.setTop(voltage);
-    if( voltage < p_boundingRect.bottom() )
-        p_boundingRect.setBottom(voltage);
-}
-
-int signaldata::size()
-{
-    return p_data.size();
+    p_data.append(value);
+    if( value > p_boundingRect.top() )
+        p_boundingRect.setTop(value);
+    if( value < p_boundingRect.bottom() )
+        p_boundingRect.setBottom(value);
 }
 
 void signaldata::clear()
@@ -258,7 +269,45 @@ void signaldata::clear()
     p_interval = 0;
 }
 
+// ########## DATAWRAPPER ##########
+
+datawrapper::datawrapper(signaldata* data) : p_data(data)
+{
+}
+
+void datawrapper::setData(signaldata* data)
+{
+    p_data = data;
+}
+
+signaldata* datawrapper::currentData() const
+{
+    return p_data;
+}
+
+QPointF datawrapper::sample(size_t i) const
+{
+    return p_data->sample(i);
+}
+
+size_t datawrapper::size() const
+{
+    if( p_data != 0 )
+        return p_data->size();
+    else
+        return 0; //makes datawrapper usable without data set
+}
+
+QRectF datawrapper::boundingRect() const
+{
+    if( p_data != 0 )
+        return p_data->boundingRect();
+    else
+        return QRectF(0,0,0,0); //makes datawrapper usable without data set
+}
+
 // ########## BODEDATA ##########
+
 bodedata::bodedata()
 {
     d_boundingRect = QRectF(0,-1,0,-1);

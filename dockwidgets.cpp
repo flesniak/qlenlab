@@ -231,7 +231,7 @@ void dockWidget_generator::submitSquareRatio()
 
 // ########## DOCKWIDGET VIEWPORT #########
 
-dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags)
+dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags) : QDockWidget(parent,flags), p_mode(meta::scope)
 {
     setWindowTitle(tr("Anzeigeeinstellungen"));
     setObjectName("dockWidget_viewport");
@@ -241,25 +241,22 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     QGroupBox *groupBox_xaxis = new QGroupBox(tr("X-Achse"));
     QGroupBox *groupBox_yaxis = new QGroupBox(tr("Y-Achse"));
 
+    p_x_scope = 200;    p_x_fft = 1000;
+    p_y_min_scope = -10;
+    p_y_max_scope = 10;  p_y_max_fft = 20;
+    p_autoscale_scope = 0;  p_autoscale_fft = 0;
+    p_autoscale_grid_scope = 0; p_autoscale_grid_fft = 0;
+
+    //these elements will be configured by setMode
     comboBox_xaxis = new QComboBox(groupBox_xaxis);
-    comboBox_xaxis->addItems(QStringList() << "5" << "10" << "20" << "50" << "100" << "200" << "500" << "1000" << "2000");
-
     spinBox_xaxis = new QSpinBox(groupBox_xaxis);
-    spinBox_xaxis->setRange(1,10000);
-    spinBox_xaxis->setValue(20);
-    spinBox_xaxis->setSuffix("ms");
-
     spinBox_yaxis_lower = new QDoubleSpinBox(groupBox_yaxis);
-    spinBox_yaxis_lower->setRange(-40,40);
-    spinBox_yaxis_lower->setValue(-5);
-    spinBox_yaxis_lower->setSuffix("V");
     spinBox_yaxis_upper = new QDoubleSpinBox(groupBox_yaxis);
-    spinBox_yaxis_upper->setRange(-40,40);
-    spinBox_yaxis_upper->setValue(5);
-    spinBox_yaxis_upper->setSuffix("V");
 
     QLabel *label_yaxis_dummy = new QLabel("-",groupBox_yaxis);
     label_yaxis_dummy->setAlignment(Qt::AlignCenter);
+
+    pushButton_setZoom = new QPushButton(QIcon::fromTheme("zoom-fit-best"),QString(),this);
 
     checkBox_autoscale = new QCheckBox(tr("Autoscale"),groupBox_yaxis);
     spinBox_autoscaleGrid = new QDoubleSpinBox(groupBox_yaxis);
@@ -281,6 +278,7 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     layout_yaxis_1->addWidget(spinBox_yaxis_lower);
     layout_yaxis_1->addWidget(label_yaxis_dummy);
     layout_yaxis_1->addWidget(spinBox_yaxis_upper);
+    layout_yaxis_1->addWidget(pushButton_setZoom);
 
     QHBoxLayout *layout_yaxis_2 = new QHBoxLayout;
     layout_yaxis_2->addWidget(checkBox_autoscale);
@@ -306,38 +304,121 @@ dockWidget_viewport::dockWidget_viewport(QWidget *parent, Qt::WindowFlags flags)
     connect(spinBox_yaxis_upper,SIGNAL(valueChanged(double)),SLOT(submitViewportY()));
     connect(checkBox_autoscale,SIGNAL(toggled(bool)),SLOT(submitYAutoscale(bool)));
     connect(checkBox_autoscale,SIGNAL(toggled(bool)),spinBox_autoscaleGrid,SLOT(setEnabled(bool)));
-    connect(spinBox_autoscaleGrid,SIGNAL(valueChanged(double)),SIGNAL(autoscaleYGridChanged(double)));
+    connect(spinBox_autoscaleGrid,SIGNAL(valueChanged(double)),SLOT(submitYAutoscaleGrid(double)));
     connect(slider_smoothFactor,SIGNAL(valueChanged(int)),SLOT(submitSmoothFactor()));
+    connect(pushButton_setZoom,SIGNAL(clicked()),SLOT(submitViewportX()));
+    connect(pushButton_setZoom,SIGNAL(clicked()),SLOT(submitViewportY()));
 
     setWidget(widget);
+    setMode(meta::scope);
 }
 
 void dockWidget_viewport::restoreSettings()
 {
     QSettings settings;
-    spinBox_xaxis->setValue(settings.value("viewport/xaxis",50).toInt());
-    double yaxis_lower = settings.value("viewport/yaxis_lower").toDouble();
-    double yaxis_upper = settings.value("viewport/yaxis_upper").toDouble();
-    if( yaxis_lower < yaxis_upper) {
-        spinBox_yaxis_upper->setValue(yaxis_upper);
-        spinBox_yaxis_lower->setValue(yaxis_lower);
-        submitViewportX();
-        submitViewportY();
+    p_x_scope = settings.value("viewport/xaxis",200).toInt();
+    p_y_min_scope = settings.value("viewport/yaxis_lower").toDouble();
+    p_y_max_scope = settings.value("viewport/yaxis_upper").toDouble();
+    if( p_y_min_scope >= p_y_max_scope) {
+        p_y_max_scope = 10;
+        p_y_min_scope = -10;
     }
-    checkBox_autoscale->setChecked(settings.value("viewport/yaxis_autoscale",false).toBool());
-    spinBox_autoscaleGrid->setValue(settings.value("viewport/yaxis_autoscalegrid",0.0).toDouble());
+    p_autoscale_scope = settings.value("viewport/yaxis_autoscale",false).toBool();
+    p_autoscale_grid_scope = settings.value("viewport/yaxis_autoscalegrid",2.0).toDouble();
+
+    p_x_fft = settings.value("viewport/xaxis_fft",1000).toInt();
+    p_y_max_fft = settings.value("viewport/yaxis_upper_fft").toDouble();
+    if( p_y_max_fft <=  0)
+        p_y_max_fft = 10;
+    p_autoscale_fft = settings.value("viewport/yaxis_autoscale_fft",false).toBool();
+    p_autoscale_grid_fft = settings.value("viewport/yaxis_autoscalegrid_fft",2.0).toDouble();
+
+    setMode(meta::scope);
+
     slider_smoothFactor->setValue(settings.value("viewport/smoothfactor",0).toInt());
 }
 
 void dockWidget_viewport::saveSettings()
 {
+    backupVariables();
     QSettings settings;
-    settings.setValue("viewport/xaxis",spinBox_xaxis->value());
-    settings.setValue("viewport/yaxis_lower",spinBox_yaxis_lower->value());
-    settings.setValue("viewport/yaxis_upper",spinBox_yaxis_upper->value());
-    settings.setValue("viewport/yaxis_autoscale",checkBox_autoscale->isChecked());
-    settings.setValue("viewport/yaxis_autoscalegrid",spinBox_autoscaleGrid->value());
+    settings.setValue("viewport/xaxis",p_x_scope);
+    settings.setValue("viewport/yaxis_lower",p_y_min_scope);
+    settings.setValue("viewport/yaxis_upper",p_y_max_scope);
+    settings.setValue("viewport/yaxis_autoscale",p_autoscale_scope);
+    settings.setValue("viewport/yaxis_autoscalegrid",p_autoscale_grid_scope);
+
+    settings.setValue("viewport/xaxis_fft",p_x_fft);
+    settings.setValue("viewport/yaxis_upper_fft",p_y_max_fft);
+    settings.setValue("viewport/yaxis_autoscale_fft",p_autoscale_fft);
+    settings.setValue("viewport/yaxis_autoscalegrid_fft",p_autoscale_grid_fft);
+
     settings.setValue("viewport/smoothfactor",slider_smoothFactor->value());
+}
+
+void dockWidget_viewport::backupVariables()
+{
+    switch(p_mode) {
+    case meta::scope :
+        p_x_scope = spinBox_xaxis->value();
+        p_y_min_scope = spinBox_yaxis_lower->value();
+        p_y_max_scope = spinBox_yaxis_upper->value();
+        p_autoscale_scope = checkBox_autoscale->isChecked();
+        p_autoscale_grid_scope = spinBox_autoscaleGrid->value();
+        break;
+    case meta::fft :
+        p_x_fft = spinBox_xaxis->value();
+        p_y_max_fft = spinBox_yaxis_upper->value();
+        p_autoscale_fft = checkBox_autoscale->isChecked();
+        p_autoscale_grid_fft = spinBox_autoscaleGrid->value();
+        break;
+    }
+}
+
+void dockWidget_viewport::setMode(meta::plotmode mode)
+{
+    if( mode != p_mode )
+        backupVariables();
+    switch(mode) {
+    case meta::scope :
+        p_mode = mode;
+        comboBox_xaxis->clear();
+        comboBox_xaxis->blockSignals(true);
+        comboBox_xaxis->addItems(QStringList() << "5" << "10" << "20" << "50" << "100" << "200" << "500" << "1000" << "2000");
+        comboBox_xaxis->blockSignals(false);
+        spinBox_xaxis->setRange(1,10000);
+        spinBox_xaxis->setSuffix("ms");
+        spinBox_yaxis_lower->setEnabled(true);
+        spinBox_yaxis_lower->setRange(-40,40);
+        spinBox_yaxis_lower->setSuffix("V");
+        spinBox_yaxis_upper->setRange(-40,40);
+        spinBox_yaxis_upper->setSuffix("V");
+
+        spinBox_xaxis->setValue(p_x_scope);
+        spinBox_yaxis_upper->setValue(p_y_max_scope);
+        spinBox_yaxis_lower->setValue(p_y_min_scope);
+        checkBox_autoscale->setChecked(p_autoscale_scope);
+        spinBox_autoscaleGrid->setValue(p_autoscale_grid_scope);
+        break;
+    case meta::fft :
+        p_mode = mode;
+        comboBox_xaxis->clear();
+        comboBox_xaxis->blockSignals(true);
+        comboBox_xaxis->addItems(QStringList() << "10" << "50" << "100" << "500" << "1000" << "5000" << "10000" << "50000");
+        comboBox_xaxis->blockSignals(false);
+        spinBox_xaxis->setRange(1,100000);
+        spinBox_xaxis->setSuffix("Hz");
+        spinBox_yaxis_lower->setEnabled(false);
+        spinBox_yaxis_upper->setRange(0.01,40);
+        spinBox_yaxis_upper->setSuffix("V");
+
+        spinBox_xaxis->setValue(p_x_fft);
+        spinBox_yaxis_upper->setValue(p_y_max_fft);
+        spinBox_yaxis_lower->setValue(0);
+        checkBox_autoscale->setChecked(p_autoscale_fft);
+        spinBox_autoscaleGrid->setValue(p_autoscale_grid_fft);
+        break;
+    }
 }
 
 void dockWidget_viewport::updateViewportXValue(QString value)
@@ -353,9 +434,16 @@ void dockWidget_viewport::submitSmoothFactor()
 
 void dockWidget_viewport::submitYAutoscale(bool on)
 {
-    if( on )
-        emit autoscaleYChanged(on);
-    else {
+    if( on ) {
+        switch(p_mode) {
+        case meta::scope :
+            emit autoscaleYScopeChanged(on);
+            break;
+        case meta::fft :
+            emit autoscaleYFftChanged(on);
+            break;
+        }
+    } else {
         submitViewportX();
         submitViewportY();
     }
@@ -364,15 +452,41 @@ void dockWidget_viewport::submitYAutoscale(bool on)
 void dockWidget_viewport::submitViewportX()
 {
     comboBox_xaxis->setCurrentIndex(comboBox_xaxis->findText(QString::number(spinBox_xaxis->value())));
-    emit viewportXChanged(spinBox_xaxis->value());
+    switch(p_mode) {
+    case meta::scope :
+        emit viewportXScopeChanged(spinBox_xaxis->value());
+        break;
+    case meta::fft :
+        emit viewportXFftChanged(spinBox_xaxis->value());
+        break;
+    }
 }
 
 void dockWidget_viewport::submitViewportY()
 {
     checkBox_autoscale->setChecked(false);
     const double upper = spinBox_yaxis_upper->value();
-    spinBox_yaxis_lower->setMaximum(upper);
-    emit viewportYChanged(spinBox_yaxis_lower->value(),upper);
+    spinBox_yaxis_lower->setMaximum(upper-0.01);
+    switch(p_mode) {
+    case meta::scope :
+        emit viewportYScopeChanged(spinBox_yaxis_lower->value(),upper);
+        break;
+    case meta::fft :
+        emit viewportYFftChanged(0,upper);
+        break;
+    }
+}
+
+void dockWidget_viewport::submitYAutoscaleGrid(double grid)
+{
+    switch(p_mode) {
+    case meta::scope :
+        emit autoscaleYScopeGridChanged(grid);
+        break;
+    case meta::fft :
+        emit autoscaleYFftGridChanged(grid);
+        break;
+    }
 }
 
 // ########## DOCKWIDGET SCOPE #########

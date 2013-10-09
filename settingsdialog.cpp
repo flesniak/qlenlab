@@ -217,7 +217,7 @@ void settingsdialog::accept()
     QDialog::accept();
 }
 
-QColor settingsdialog::getChannelColor(meta::channel c)
+QColor settingsdialog::getChannelColor(meta::colorindex c) const
 {
     return channelColor[c];
 }

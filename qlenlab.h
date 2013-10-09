@@ -32,6 +32,7 @@ class settingsdialog;
 class exportdialog;
 class plot;
 class bodeplot;
+class fftthread;
 class communicator;
 class signaldata;
 class storage;
@@ -67,16 +68,19 @@ private:
     settingsdialog *settingsdlg;
     exportdialog *exportdlg;
     plot *plotter;
+    plot* fftplot;
     bodeplot *lastbode;
     communicator *com;
     signaldata *data;
     storage *p_storage;
+    fftthread* p_fftthread;
 
     QTabWidget *tabWidget;
     QLabel *label_connectionstatus;
     QAction *action_start;
     QAction *action_stop;
     QAction *action_bode;
+    QAction *action_fft;
 
 private slots:
     void start();
@@ -86,7 +90,9 @@ private slots:
     void about();
     void quit();
     void initBode();
+    void showFft();
     void closeTab(int index);
+    void changedTab(int index);
 };
 
 #endif // QLENLAB_H

@@ -26,7 +26,6 @@
 #include "meta.h"
 
 class signaldata;
-class datawrapper;
 class QVariant;
 
 class storage : public QAbstractListModel
@@ -35,11 +34,12 @@ class storage : public QAbstractListModel
 public:
     storage(QObject *parent = 0);
     ~storage();
-    void setPlotData(datawrapper* wrapper, meta::channel channel, int index = -1);
 
     void appendDataset(dataset &newdataset);
-    dataset getDataset(unsigned int index);
-    bool deleteDataset(unsigned int index);
+    dataset getDataset(int index);
+    bool deleteDataset(int index);
+    signaldata* getData(meta::channel channel, int index = -1);
+    signaldata* getData(unsigned char channel, int index = -1);
 
     unsigned int maximumDatasets() const;
     unsigned int datasetInterval() const;

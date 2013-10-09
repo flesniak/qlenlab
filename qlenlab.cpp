@@ -35,20 +35,21 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     setWindowTitle(tr("QLenLab %1").arg(meta::version));
     resize(940,0);
 
-    settingsdlg = NULL;
-    exportdlg	= NULL;
-    lastbode = NULL;
+    settingsdlg = 0;
+    exportdlg = 0;
+    lastbode = 0;
+    fftplot = 0;
 
     p_storage = new storage;
     com = new communicator(p_storage,this);
-    plotter = new plot(p_storage,this);
+    plotter = new plot(meta::scope,p_storage,this);
     settingsdlg = new settingsdialog(com,this);
     exportdlg	= new exportdialog(plotter, lastbode, this);
     label_connectionstatus = new QLabel(this);
 
     tabWidget = new QTabWidget(this);
     setCentralWidget(tabWidget);
-    tabWidget->addTab(plotter,tr("Plot"));
+    tabWidget->addTab(plotter,plotter->windowTitle());
     tabWidget->setTabsClosable(true);
     QWidget *master_tab_button = tabWidget->findChild<QTabBar *>()->tabButton(0,QTabBar::RightSide);
     master_tab_button->resize(0,0);
@@ -90,6 +91,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     action_start = menu_measurement->addAction(tr("Starten"));
     action_stop = menu_measurement->addAction(tr("Stoppen"));
     action_bode = menu_measurement->addAction(tr("Bode-Diagramm erstellen"));
+    action_fft = menu_measurement->addAction(tr("Fourier-Transformation"));
     QAction *action_export = menu_measurement->addAction(tr("Messung exportieren"));
 
     //various connects
@@ -99,6 +101,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),plotter,SLOT(updateColor(meta::colorindex,QColor)));
     connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),dw_scope,SLOT(updateColor(meta::colorindex,QColor)));
     connect(tabWidget,SIGNAL(tabCloseRequested(int)),SLOT(closeTab(int)));
+    connect(tabWidget,SIGNAL(currentChanged(int)),SLOT(changedTab(int)));
 
     //connects for dockWidget_scope
     connect(dw_scope,SIGNAL(sampleRateChanged(unsigned int)),com,SLOT(setsamplerate(unsigned int)));
@@ -131,10 +134,10 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(dw_generator,SIGNAL(freqSqrRatioChanged(unsigned char)),com,SLOT(setsquareratio(unsigned char)));
 
     //connects for dockWidget_viewport
-    connect(dw_viewport,SIGNAL(viewportXChanged(int)),plotter,SLOT(updateViewportX(int)));
-    connect(dw_viewport,SIGNAL(viewportYChanged(double,double)),plotter,SLOT(updateViewportY(double,double)));
-    connect(dw_viewport,SIGNAL(autoscaleYChanged(bool)),plotter,SLOT(setYAutoscale(bool)));
-    connect(dw_viewport,SIGNAL(autoscaleYGridChanged(double)),plotter,SLOT(setYAutoscaleGrid(double)));
+    connect(dw_viewport,SIGNAL(viewportXScopeChanged(int)),plotter,SLOT(updateViewportX(int)));
+    connect(dw_viewport,SIGNAL(viewportYScopeChanged(double,double)),plotter,SLOT(updateViewportY(double,double)));
+    connect(dw_viewport,SIGNAL(autoscaleYScopeChanged(bool)),plotter,SLOT(setYAutoscale(bool)));
+    connect(dw_viewport,SIGNAL(autoscaleYScopeGridChanged(double)),plotter,SLOT(setYAutoscaleGrid(double)));
     connect(dw_viewport,SIGNAL(smoothFactorChanged(float)),com,SLOT(setsmoothfactor(float)));
 
     //connects for dockWidget_trigger
@@ -144,7 +147,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(dw_dataview,SIGNAL(maximumDatasetsChanged(int)),p_storage,SLOT(setMaximumDatasets(int)));
     connect(dw_dataview,SIGNAL(showDataset(int)),plotter,SLOT(showDataset(int)));
 
-    //connect DockWidgets and corresponding menu actions
+    //connect dockWidgets and corresponding menu actions
     connect(action_viewport,SIGNAL(triggered(bool)),dw_viewport,SLOT(setShown(bool)));
     connect(action_scope,SIGNAL(triggered(bool)),dw_scope,SLOT(setShown(bool)));
     connect(action_generator,SIGNAL(triggered(bool)),dw_generator,SLOT(setShown(bool)));
@@ -163,6 +166,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     connect(action_start,SIGNAL(triggered()),SLOT(start()));
     connect(action_stop,SIGNAL(triggered()),SLOT(stop()));
     connect(action_bode,SIGNAL(triggered()),SLOT(initBode()));
+    connect(action_fft,SIGNAL(triggered()),SLOT(showFft()));
     connect(action_export,SIGNAL(triggered()),SLOT(showExport()));
 
     setConnectionStatus(meta::disconnected);
@@ -197,6 +201,8 @@ void QLenLab::closeEvent(QCloseEvent *)
     dw_generator->saveSettings();
     dw_trigger->saveSettings();
     dw_dataview->saveSettings();
+    if( fftplot != 0 )
+        delete fftplot;
     delete dw_dataview;
     delete plotter;
     delete com;
@@ -217,6 +223,28 @@ void QLenLab::start()
 void QLenLab::stop()
 {
     com->stop();
+}
+
+void QLenLab::showFft()
+{
+    if( fftplot == 0 ) {
+        fftplot = new plot(meta::fft,p_storage,tabWidget);
+        tabWidget->addTab(fftplot,fftplot->windowTitle());
+        fftplot->updateColor(meta::background,settingsdlg->getChannelColor(meta::background));
+        fftplot->updateColor(meta::grid,settingsdlg->getChannelColor(meta::grid));
+        fftplot->updateColor(meta::channel1,settingsdlg->getChannelColor(meta::channel1));
+        fftplot->updateColor(meta::channel2,settingsdlg->getChannelColor(meta::channel2));
+        fftplot->updateColor(meta::channel3,settingsdlg->getChannelColor(meta::channel3));
+        fftplot->updateColor(meta::channel4,settingsdlg->getChannelColor(meta::channel4));
+        connect(com,SIGNAL(displayNewDataset()),fftplot,SLOT(showDataset()));
+        connect(settingsdlg,SIGNAL(colorChanged(meta::colorindex,QColor)),fftplot,SLOT(updateColor(meta::colorindex,QColor)));
+        connect(dw_dataview,SIGNAL(showDataset(int)),fftplot,SLOT(showDataset(int)));
+        connect(dw_viewport,SIGNAL(viewportXFftChanged(int)),fftplot,SLOT(updateViewportX(int)));
+        connect(dw_viewport,SIGNAL(viewportYFftChanged(double,double)),fftplot,SLOT(updateViewportY(double,double)));
+        connect(dw_viewport,SIGNAL(autoscaleYFftChanged(bool)),fftplot,SLOT(setYAutoscale(bool)));
+        connect(dw_viewport,SIGNAL(autoscaleYFftGridChanged(double)),fftplot,SLOT(setYAutoscaleGrid(double)));
+    } else
+        tabWidget->setCurrentWidget(fftplot);
 }
 
 void QLenLab::initBode()
@@ -240,10 +268,26 @@ void QLenLab::showExport()
     exportdlg->exec();
 }
 
+void QLenLab::changedTab(int index)
+{
+    if( index < 0 )
+        return;
+    if ( plot* derived = dynamic_cast<plot*>(tabWidget->widget(index)) ) { //check if selected widget is a child of plot
+        if( derived->getMode() == meta::fft )
+            dw_viewport->setMode(meta::fft);
+        else
+            dw_viewport->setMode(meta::scope);
+        return;
+    }
+    dw_viewport->setMode(meta::scope); //on bodeplot, set to scope mode
+}
+
 void QLenLab::closeTab(int index)
 {
     QWidget *w = tabWidget->widget(index);
     tabWidget->removeTab(index);
+    if( dynamic_cast<plot*>(w) == fftplot )
+        fftplot = 0;
     delete w;
 }
 
@@ -295,5 +339,5 @@ void QLenLab::about()
                                 "QLenLab is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. "
                                 "See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with QLenLab. "
                                 "If not, see <http://www.gnu.org/licenses/>.\n\nQLenLab is based in part on the work of the Qwt project (http://qwt.sf.net)."
-                                "\n\nQLenLab is based in part on the work of the LENlib project."));
+                                "\n\nQLenLab is based in part on the work of the LENlib project.\n\nQLenLab uses libfftw3 (http://www.fftw.org/)"));
 }

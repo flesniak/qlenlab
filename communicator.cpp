@@ -138,10 +138,11 @@ void communicator::doMeasure()
         unsigned char* buffer = getrawmeasurement();
         dataset newset;
         newset.timestamp = new QTime(QTime::currentTime());
-        newset.channel[0] = new signaldata;
-        newset.channel[1] = new signaldata;
-        newset.channel[2] = new signaldata;
-        newset.channel[3] = new signaldata;
+        for(unsigned char i=0; i<4; i++) {
+            newset.channel[i] = new signaldata;
+            if( activechannels[i] )
+                newset.channel[i]->reserve(16400/actives);
+        }
         unsigned char channel = 255; //to get channel = 0 for index == 0
         for(int index = 0; index < getrawvaluecount(); index++) {
             do {
@@ -153,15 +154,12 @@ void communicator::doMeasure()
             newset.channel[channel]->append(calcvalue(channel,buffer[index]));
         }
 
-        for(int index=0;index<4;index++) {
+        for(int index=0;index<4;index++)
             if( newset.channel[index]->size() != 0 ) {
-                newset.channel[index]->setTimeInterval(1000.0/samplerate);
+                newset.channel[index]->setInterval(1000.0/samplerate);
                 newset.channel[index]->smooth(p_smoothFactor);
-            } else {
-                delete newset.channel[index];
-                newset.channel[index] = 0;
             }
-        }
+        //do not delete empty datasets
 
         newset.channel[p_triggerchannel]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[channel/2]));
         for(int index=0;index<4;index++)

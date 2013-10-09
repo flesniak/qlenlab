@@ -25,7 +25,7 @@
 #include "meta.h"
 
 class plot;
-class datawrapper;
+class signaldata;
 class bodeplot;
 class QwtPlotRenderer;
 class QwtPlot;
@@ -58,7 +58,7 @@ private:
 	QRadioButton *radioButton_plot;
 	QRadioButton *radioButton_bode;
 
-	datawrapper** p_data;
+    signaldata** p_data;
 
 	void exportCSV(QString);
 

@@ -69,6 +69,7 @@ public:
     dockWidget_viewport(QWidget *parent = 0, Qt::WindowFlags flags = 0);
     void restoreSettings();
     void saveSettings();
+    void setMode(meta::plotmode mode);
 
 private:
     QComboBox *comboBox_xaxis;
@@ -78,6 +79,17 @@ private:
     QCheckBox *checkBox_autoscale;
     QDoubleSpinBox *spinBox_autoscaleGrid;
     QSlider *slider_smoothFactor;
+    QPushButton* pushButton_setZoom;
+
+    int p_x_scope, p_x_fft;
+    int p_y_min_scope;
+    int p_y_max_scope, p_y_max_fft;
+    bool p_autoscale_scope, p_autoscale_fft;
+    double p_autoscale_grid_scope, p_autoscale_grid_fft;
+
+    meta::plotmode p_mode;
+
+    void backupVariables();
 
 private slots:
     void updateViewportXValue(QString value);
@@ -85,12 +97,19 @@ private slots:
     void submitViewportY();
     void submitSmoothFactor();
     void submitYAutoscale(bool on);
+    void submitYAutoscaleGrid(double grid);
 
 signals:
-    void viewportXChanged(const int);
-    void viewportYChanged(const double, const double);
-    void autoscaleYChanged(bool);
-    void autoscaleYGridChanged(double);
+    void viewportXScopeChanged(const int);
+    void viewportYScopeChanged(const double, const double);
+    void autoscaleYScopeChanged(bool);
+    void autoscaleYScopeGridChanged(double);
+
+    void viewportXFftChanged(const int);
+    void viewportYFftChanged(const double, const double);
+    void autoscaleYFftChanged(bool);
+    void autoscaleYFftGridChanged(double);
+
     void smoothFactorChanged(float);
 };
 

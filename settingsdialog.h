@@ -40,7 +40,7 @@ public slots:
     void connectSerial();
     void disconnectSerial();
     void restoreSettings();
-    QColor getChannelColor(meta::channel c);
+    QColor getChannelColor(meta::colorindex c) const;
 
 private:
     communicator* com;

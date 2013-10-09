@@ -32,12 +32,14 @@ enum triggermode { deactivated = 0, both = 1, rising = 2, falling = 3 };
 enum runmode { none, measure, bode, connect };
 
 enum connectstate { disconnected = 0, connectfail = 1, connecting = 2, connected = 3 };
+
+enum plotmode { scope, fft };
 }
 
 class signaldata;
 class QTime;
 struct dataset {
-    QTime *timestamp;
+    QTime* timestamp;
     signaldata* channel[4];
 };
 

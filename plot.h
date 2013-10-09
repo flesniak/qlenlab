@@ -22,14 +22,15 @@
 #define PLOT_H
 
 #include "meta.h"
-#include "signaldata.h"
 
 #include <qwt_plot.h>
 #include <qwt_plot_layout.h>
 #include <qwt_interval.h>
 
 class storage;
+class signaldata;
 class datawrapper;
+class fftthread;
 class QColor;
 class QwtPlotCurve;
 class QwtPlotGrid;
@@ -39,15 +40,20 @@ class plot : public QwtPlot
 {
     Q_OBJECT
 public:
-    explicit plot(storage *datastorage, QWidget *parent = 0);
+    explicit plot(meta::plotmode mode, storage *datastorage, QWidget *parent = 0);
+    virtual ~plot();
+    meta::plotmode getMode() const;
 
 private:
+    meta::plotmode p_mode;
     QwtInterval interval;
     QwtPlotCurve* curve[4];
     QwtPlotGrid* grid;
     QwtPlotZoomer* zoomer;
     storage* p_storage;
-    datawrapper* p_data[4];
+    dataset p_dataset;
+    datawrapper* p_datawrapper[4];
+    fftthread* p_fftthread;
     bool p_autoscale;
     double p_autoscaleGrid;
 
@@ -60,7 +66,8 @@ public slots:
     void setYAutoscale(bool on);
     void setYAutoscaleGrid(const double grid = 0);
     void showDataset(const int index = -1);
-    datawrapper** getData();
+    void showFftDataset();
+    signaldata** getCurrentData();
 };
 
 #endif // PLOT_H

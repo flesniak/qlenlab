@@ -29,14 +29,27 @@
 #include <qwt_plot_curve.h>
 #include <qwt_plot_zoomer.h>
 
+#include "fftthread.h"
 #include "plot.h"
-#include "storage.h"
 #include "signaldata.h"
+#include "storage.h"
 
-plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0)
+plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot(parent), p_mode(mode), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0)
 {
-    setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
-    setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
+    switch(mode) {
+    case meta::scope :
+        setWindowTitle(tr("Plot"));
+        setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
+        setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
+        break;
+    case meta::fft :
+        setWindowTitle(tr("Fourier-Transformation"));
+        setAxisTitle(QwtPlot::xBottom, tr("Frequenz [Hz]"));
+        setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
+        break;
+    default : qDebug() << "[plot] unhandled meta::plotmode";
+    }
+
     plotLayout()->setAlignCanvasToScales(true);
 
     zoomer = new QwtPlotZoomer(canvas());
@@ -48,31 +61,84 @@ plot::plot(storage *datastorage, QWidget *parent) : QwtPlot(parent), interval(0.
     grid->enableYMin(false);
     grid->attach(this);
 
-    p_data[0] = new datawrapper;
-    p_data[1] = new datawrapper;
-    p_data[2] = new datawrapper;
-    p_data[3] = new datawrapper;
+    p_datawrapper[0] = new datawrapper;
+    p_datawrapper[1] = new datawrapper;
+    p_datawrapper[2] = new datawrapper;
+    p_datawrapper[3] = new datawrapper;
 
     curve[0] = new QwtPlotCurve(tr("Kanal 1"));
-    curve[0]->setData(p_data[0]);
+    curve[0]->setData(p_datawrapper[0]);
     curve[0]->attach(this);
     curve[1] = new QwtPlotCurve(tr("Kanal 2"));
-    curve[1]->setData(p_data[1]);
+    curve[1]->setData(p_datawrapper[1]);
     curve[1]->attach(this);
     curve[2] = new QwtPlotCurve(tr("Kanal 3"));
-    curve[2]->setData(p_data[2]);
+    curve[2]->setData(p_datawrapper[2]);
     curve[2]->attach(this);
     curve[3] = new QwtPlotCurve(tr("Kanal 4"));
-    curve[3]->setData(p_data[3]);
+    curve[3]->setData(p_datawrapper[3]);
     curve[3]->attach(this);
+
+    if( p_mode == meta::fft ) {
+        p_fftthread = new fftthread(this);
+        connect(p_fftthread,SIGNAL(finished()),SLOT(showFftDataset()));
+    }
+}
+
+plot::~plot()
+{
+    if( p_mode == meta::fft )
+        delete p_fftthread; //calls destructor which stops fftthread in case its running
+}
+
+meta::plotmode plot::getMode() const
+{
+    return p_mode;
 }
 
 void plot::showDataset(const int index)
 {
-    p_storage->setPlotData(p_data[0],meta::ch1a,index);
-    p_storage->setPlotData(p_data[1],meta::ch1b,index);
-    p_storage->setPlotData(p_data[2],meta::ch2a,index);
-    p_storage->setPlotData(p_data[3],meta::ch2b,index);
+    p_dataset = p_storage->getDataset(index);
+    switch(p_mode) {
+    case meta::scope :
+        p_datawrapper[0]->setData(p_dataset.channel[0]);
+        p_datawrapper[1]->setData(p_dataset.channel[1]);
+        p_datawrapper[2]->setData(p_dataset.channel[2]);
+        p_datawrapper[3]->setData(p_dataset.channel[3]);
+        break;
+    case meta::fft :
+        bool allFftsFound = true;
+        for(unsigned int i = 0; i < 4; i++)
+            if( p_dataset.channel[i]->size() && p_dataset.channel[i]->getFft() == 0 ) {
+                allFftsFound = false;
+                break;
+            }
+        if( !allFftsFound ) {
+            p_fftthread->setDataset(p_dataset);
+            p_fftthread->start(); //dataset will be shown when thread is finished
+            return; //don't start drawing if ffts are not calculated yet
+        } else {
+            p_datawrapper[0]->setData(p_dataset.channel[0]->getFft());
+            p_datawrapper[1]->setData(p_dataset.channel[1]->getFft());
+            p_datawrapper[2]->setData(p_dataset.channel[2]->getFft());
+            p_datawrapper[3]->setData(p_dataset.channel[3]->getFft());
+        }
+        break;
+    }
+
+    if( p_autoscale )
+        autoscale();
+    replot();
+}
+
+void plot::showFftDataset()
+{
+    p_dataset = p_fftthread->getDataset();
+    p_datawrapper[0]->setData(p_dataset.channel[0]->getFft());
+    p_datawrapper[1]->setData(p_dataset.channel[1]->getFft());
+    p_datawrapper[2]->setData(p_dataset.channel[2]->getFft());
+    p_datawrapper[3]->setData(p_dataset.channel[3]->getFft());
+
     if( p_autoscale )
         autoscale();
     replot();
@@ -94,7 +160,7 @@ void plot::autoscale()
 {
     double lower = 0, upper = 0;
     for(int i=0;i<4;i++) {
-         QRectF rect = p_data[i]->boundingRect();
+         QRectF rect = p_dataset.channel[i]->boundingRect();
          if( rect.bottom() < lower )
              lower = rect.bottom();
          if( rect.top() > upper )
@@ -141,7 +207,7 @@ void plot::updateViewportY(const double lower, const double upper)
     replot();
 }
 
-datawrapper** plot::getData()
+signaldata** plot::getCurrentData()
 {
-	return p_data;
+    return p_dataset.channel;
 }
