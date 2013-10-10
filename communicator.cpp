@@ -398,12 +398,13 @@ void communicator::setPort(QString port)
 void communicator::stop()
 {
     qDebug() << "[communicator] stop requested!";
-    p_stop = true;
-    stopmeasure();
-    if( !wait(2000) ) {
-        qDebug() << "[communicator] thread not stopping, terminating!";
-        terminate();
-    }
+    if( p_stop ) { //if we already had one unsuccessful stop request, terminate the thread after 2 seconds
+        if( !wait(2000) ) {
+            qDebug() << "[communicator] thread not stopping, terminating!";
+            terminate();
+        }
+    } else
+        p_stop = true;
 }
 
 int communicator::activechannelcount() const

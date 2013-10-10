@@ -57,6 +57,7 @@ lenboard::lenboard(){
     offsetchannels[3] = true;
     measuredvalues = NULL;
     measurementlength = 0;
+    measuretime = 0;
     return;
 }
 
@@ -440,7 +441,7 @@ int lenboard::measure(){
     portsend(query, 9);
 
     //calculate measurement time and wait
-    long unsigned int measuretime = (16400 * 1000) / ((activechannels[0] ? 1 : 0)+(activechannels[1] ? 1 : 0)+(activechannels[2] ? 1 : 0)+(activechannels[3] ? 1 : 0)) / (samplerate/1000);
+    measuretime = (16400 * 1000) / ((activechannels[0] ? 1 : 0)+(activechannels[1] ? 1 : 0)+(activechannels[2] ? 1 : 0)+(activechannels[3] ? 1 : 0)) / (samplerate/1000);
     usleep((unsigned int)measuretime);
 
     unsigned int pointer = 0;
@@ -458,6 +459,7 @@ int lenboard::measure(){
         }
     }while(pointer < 16420); //we seem to receive 16409 bytes in any case
 
+    measuretime = 0;
     if(pointer > 10){
         // check header
         if(!(measurement[0] == 0xDE && measurement[1] == 0xAD && measurement[2] == 0xBE && measurement[3] == 0xEF))

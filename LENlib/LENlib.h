@@ -95,6 +95,7 @@ protected:
     unsigned char measurement[16500];
     unsigned char* measuredvalues;
     unsigned int measurementlength;
+    long unsigned int measuretime;
 };
 
 class portlist{
