@@ -91,7 +91,7 @@ QLenLab::QLenLab(QWidget *parent) : QMainWindow(parent)
     action_start = menu_measurement->addAction(tr("Starten"));
     action_stop = menu_measurement->addAction(tr("Stoppen"));
     action_bode = menu_measurement->addAction(tr("Bode-Diagramm erstellen"));
-    action_fft = menu_measurement->addAction(tr("Fourier-Transformation"));
+    action_fft = menu_measurement->addAction(tr("Fourier-Analyse"));
     QAction *action_export = menu_measurement->addAction(tr("Messung exportieren"));
 
     //various connects

@@ -43,7 +43,7 @@ plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot
         setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
         break;
     case meta::fft :
-        setWindowTitle(tr("Fourier-Transformation"));
+        setWindowTitle(tr("Fourier-Analyse"));
         setAxisTitle(QwtPlot::xBottom, tr("Frequenz [Hz]"));
         setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
         break;
