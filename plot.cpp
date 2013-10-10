@@ -27,7 +27,6 @@
 #include <qwt_plot_canvas.h>
 #include <qwt_plot_layout.h>
 #include <qwt_plot_curve.h>
-#include <qwt_plot_zoomer.h>
 
 #include "fftthread.h"
 #include "plot.h"
@@ -36,23 +35,11 @@
 
 plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot(parent), p_mode(mode), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0), p_currentIndex(-2)
 {
-    switch(mode) {
-    case meta::scope :
-        setWindowTitle(tr("Plot"));
-        setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
-        setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
-        break;
-    case meta::fft :
-        setWindowTitle(tr("Fourier-Analyse"));
-        setAxisTitle(QwtPlot::xBottom, tr("Frequenz [Hz]"));
-        setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
-        break;
-    default : qDebug() << "[plot] unhandled meta::plotmode";
-    }
-
     plotLayout()->setAlignCanvasToScales(true);
 
-    zoomer = new QwtPlotZoomer(canvas());
+    zoomer = new plotzoomer(canvas());
+    zoomer->setTrackerMode(QwtPicker::AlwaysOn);
+    zoomer->setRubberBand(QwtPicker::RectRubberBand);
 
     grid = new QwtPlotGrid();
     grid->enableX(true);
@@ -60,6 +47,22 @@ plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot
     grid->enableY(true);
     grid->enableYMin(false);
     grid->attach(this);
+
+    switch(mode) {
+    case meta::scope :
+        setWindowTitle(tr("Plot"));
+        setAxisTitle(QwtPlot::xBottom, tr("Zeit [ms]"));
+        setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
+        zoomer->setUnits("ms","V");
+        break;
+    case meta::fft :
+        setWindowTitle(tr("Fourier-Analyse"));
+        setAxisTitle(QwtPlot::xBottom, tr("Frequenz [Hz]"));
+        setAxisTitle(QwtPlot::yLeft, tr("Spannung [V]"));
+        zoomer->setUnits("Hz","V");
+        break;
+    default : qDebug() << "[plot] unhandled meta::plotmode";
+    }
 
     p_datawrapper[0] = new datawrapper;
     p_datawrapper[1] = new datawrapper;
@@ -229,4 +232,36 @@ void plot::updateViewportY(const double lower, const double upper)
 signaldata** plot::getCurrentData()
 {
     return p_dataset.channel;
+}
+
+plotzoomer::plotzoomer(QwtPlotCanvas* canvas, bool doReplot) : QwtPlotZoomer(canvas, doReplot)
+{
+}
+
+plotzoomer::plotzoomer(int xAxis, int yAxis, QwtPlotCanvas* canvas, bool doReplot) : QwtPlotZoomer(xAxis, yAxis, canvas, doReplot)
+{
+}
+
+void plotzoomer::setUnits(const QString& hUnit, const QString& vUnit)
+{
+    p_hUnit = hUnit;
+    p_vUnit = vUnit;
+}
+
+QwtText plotzoomer::trackerTextF(const QPointF& pos) const
+{
+    QString text;
+
+    switch ( rubberBand() )
+    {
+        case HLineRubberBand:
+            text.sprintf( "%.3f%s", pos.y(), p_vUnit.toStdString().c_str() );
+            break;
+        case VLineRubberBand:
+            text.sprintf( "%.3f%s", pos.x(), p_hUnit.toStdString().c_str() );
+            break;
+        default:
+            text.sprintf( "%.3f%s, %.3f%s", pos.x(), p_hUnit.toStdString().c_str(), pos.y(), p_vUnit.toStdString().c_str() );
+    }
+    return QwtText( text );
 }

@@ -23,9 +23,10 @@
 
 #include "meta.h"
 
+#include <qwt_interval.h>
 #include <qwt_plot.h>
 #include <qwt_plot_layout.h>
-#include <qwt_interval.h>
+#include <qwt_plot_zoomer.h>
 
 class storage;
 class signaldata;
@@ -34,7 +35,7 @@ class fftthread;
 class QColor;
 class QwtPlotCurve;
 class QwtPlotGrid;
-class QwtPlotZoomer;
+class plotzoomer;
 
 class plot : public QwtPlot
 {
@@ -50,7 +51,7 @@ private:
     QwtInterval interval;
     QwtPlotCurve* curve[4];
     QwtPlotGrid* grid;
-    QwtPlotZoomer* zoomer;
+    plotzoomer* zoomer;
     storage* p_storage;
     dataset p_dataset;
     datawrapper* p_datawrapper[4];
@@ -70,6 +71,24 @@ public slots:
     void showDataset(const int index = -1);
     void showFftDataset();
     signaldata** getCurrentData();
+};
+
+class plotzoomer : public QwtPlotZoomer
+{
+    Q_OBJECT
+public:
+    plotzoomer(QwtPlotCanvas* canvas, bool doReplot = true);
+    plotzoomer(int xAxis, int yAxis, QwtPlotCanvas* canvas, bool doReplot = true);
+
+public slots:
+    void setUnits(const QString& hUnit, const QString& vUnit);
+
+protected:
+    virtual QwtText trackerTextF(const QPointF& pos) const;
+
+private:
+    QString p_hUnit;
+    QString p_vUnit;
 };
 
 #endif // PLOT_H
