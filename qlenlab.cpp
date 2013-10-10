@@ -229,7 +229,7 @@ void QLenLab::showFft()
 {
     if( fftplot == 0 ) {
         fftplot = new plot(meta::fft,p_storage,tabWidget);
-        tabWidget->addTab(fftplot,fftplot->windowTitle());
+        int index = tabWidget->addTab(fftplot,fftplot->windowTitle());
         fftplot->updateColor(meta::background,settingsdlg->getChannelColor(meta::background));
         fftplot->updateColor(meta::grid,settingsdlg->getChannelColor(meta::grid));
         fftplot->updateColor(meta::channel1,settingsdlg->getChannelColor(meta::channel1));
@@ -243,6 +243,9 @@ void QLenLab::showFft()
         connect(dw_viewport,SIGNAL(viewportYFftChanged(double,double)),fftplot,SLOT(updateViewportY(double,double)));
         connect(dw_viewport,SIGNAL(autoscaleYFftChanged(bool)),fftplot,SLOT(setYAutoscale(bool)));
         connect(dw_viewport,SIGNAL(autoscaleYFftGridChanged(double)),fftplot,SLOT(setYAutoscaleGrid(double)));
+        tabWidget->setCurrentIndex(index);
+        if( plotter->getCurrentIndex() != -2 ) //if plotter already display something
+            fftplot->showDataset(plotter->getCurrentIndex()); //calculate and display the fft of our current picture
     } else
         tabWidget->setCurrentWidget(fftplot);
 }

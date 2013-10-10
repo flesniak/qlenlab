@@ -34,7 +34,7 @@
 #include "signaldata.h"
 #include "storage.h"
 
-plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot(parent), p_mode(mode), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0)
+plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot(parent), p_mode(mode), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0), p_currentIndex(-2)
 {
     switch(mode) {
     case meta::scope :
@@ -91,6 +91,11 @@ plot::~plot()
         delete p_fftthread; //calls destructor which stops fftthread in case its running
 }
 
+int plot::getCurrentIndex() const
+{
+    return p_currentIndex;
+}
+
 meta::plotmode plot::getMode() const
 {
     return p_mode;
@@ -98,6 +103,7 @@ meta::plotmode plot::getMode() const
 
 void plot::showDataset(const int index)
 {
+    p_currentIndex = index;
     p_dataset = p_storage->getDataset(index);
     switch(p_mode) {
     case meta::scope :

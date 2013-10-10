@@ -43,6 +43,7 @@ public:
     explicit plot(meta::plotmode mode, storage *datastorage, QWidget *parent = 0);
     virtual ~plot();
     meta::plotmode getMode() const;
+    int getCurrentIndex() const;
 
 private:
     meta::plotmode p_mode;
@@ -56,6 +57,7 @@ private:
     fftthread* p_fftthread;
     bool p_autoscale;
     double p_autoscaleGrid;
+    int p_currentIndex;
 
     void autoscale();
 
