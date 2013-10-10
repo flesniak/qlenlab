@@ -178,6 +178,11 @@ void plot::updateColor(meta::colorindex ci, QColor color)
     switch( ci ) {
     case meta::background : //canvas()->setPalette(QPalette(QPalette::Base,color));
                             setCanvasBackground(color);
+                            color.setBlueF(1.0-color.blueF());
+                            color.setRedF(1.0-color.redF());
+                            color.setGreenF(1.0-color.greenF());
+                            zoomer->setTrackerPen(QPen(color));
+                            zoomer->setRubberBandPen(QPen(color));
                             break;
     case meta::grid       : grid->setPen(QPen(color, 0.0, Qt::DotLine));
                             break;
@@ -197,6 +202,10 @@ void plot::updateViewportX(const int msecs)
 {
     interval.setMaxValue(interval.minValue()+msecs);
     setAxisScale(QwtPlot::xBottom, interval.minValue(), interval.maxValue());
+    QRectF zoomBase = zoomer->zoomBase();
+    zoomBase.setLeft(interval.minValue());
+    zoomBase.setRight(interval.maxValue());
+    zoomer->setZoomBase(zoomBase);
     replot();
 }
 
@@ -204,6 +213,10 @@ void plot::updateViewportY(const double lower, const double upper)
 {
     p_autoscale = false;
     setAxisScale(QwtPlot::yLeft, lower, upper);
+    QRectF zoomBase = zoomer->zoomBase();
+    zoomBase.setTop(upper);
+    zoomBase.setBottom(lower);
+    zoomer->setZoomBase(zoomBase);
     replot();
 }
 
