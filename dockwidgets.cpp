@@ -652,7 +652,7 @@ void dockWidget_scope::saveSettings()
     settings.setValue("scope/ch4alternate",checkBox_ch4offset->isChecked());
     settings.setValue("scope/ch4invert",checkBox_ch4invert->isChecked());
     settings.setValue("scope/ch4offset",spinBox_ch4offset->value());
-    settings.setValue("scope/samplerat",spinBox_samplerate->value());
+    settings.setValue("scope/samplerate",spinBox_samplerate->value());
     settings.setValue("scope/range1_index",comboBox_range1->currentIndex());
     settings.setValue("scope/range2_index",comboBox_range2->currentIndex());
 }
@@ -669,19 +669,16 @@ bool dockWidget_scope::checkSampleRate()
     switch( actives ) {
     case 4 : if( spinBox_samplerate->value() > 100 ) {
                  spinBox_samplerate->setValue(100);
-                 //comboBox_samplerate->setCurrentIndex(3);
                  return true;
              }
              break;
     case 3 : if( spinBox_samplerate->value() > 125 ) {
                  spinBox_samplerate->setValue(125);
-                 //comboBox_samplerate->setCurrentIndex(2);
                  return true;
              }
              break;
     case 2 : if( spinBox_samplerate->value() > 200 ) {
                  spinBox_samplerate->setValue(200);
-                 //comboBox_samplerate->setCurrentIndex(1);
                  return true;
              }
              break;
