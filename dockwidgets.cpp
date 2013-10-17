@@ -453,7 +453,6 @@ void dockWidget_viewport::submitYAutoscale(bool on)
 
 void dockWidget_viewport::submitViewportX()
 {
-    qDebug() << "submitViewportX()";
     comboBox_xaxis->setCurrentIndex(comboBox_xaxis->findText(QString::number(spinBox_xaxis->value())));
     switch(p_mode) {
     case meta::scope :
