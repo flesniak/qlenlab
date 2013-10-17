@@ -805,11 +805,11 @@ void dockWidget_trigger::channel1changed(bool activated)
         return;
 
     if( activated ) {
-        comboBox_channel->insertItem(0,tr("Kanal 1"));
         p_enabled_channels |= 1;
+        comboBox_channel->insertItem(0,tr("Kanal 1"));
     } else {
-        comboBox_channel->removeItem(0);
         p_enabled_channels &= ~1;
+        comboBox_channel->removeItem(0);
     }
 }
 
@@ -820,11 +820,11 @@ void dockWidget_trigger::channel2changed(bool activated)
 
     const int index = p_enabled_channels & 1 ? 1 : 0;
     if( activated ) {
-        comboBox_channel->insertItem(index,tr("Kanal 2"));
         p_enabled_channels |= 2;
+        comboBox_channel->insertItem(index,tr("Kanal 2"));
     } else {
-        comboBox_channel->removeItem(index);
         p_enabled_channels &= ~2;
+        comboBox_channel->removeItem(index);
     }
 }
 
@@ -835,11 +835,11 @@ void dockWidget_trigger::channel3changed(bool activated)
 
     const int index = (p_enabled_channels & 1 ? 1 : 0) + (p_enabled_channels & 2 ? 1 : 0);
     if( activated ) {
-        comboBox_channel->insertItem(index,tr("Kanal 3"));
         p_enabled_channels |= 4;
+        comboBox_channel->insertItem(index,tr("Kanal 3"));
     } else {
-        comboBox_channel->removeItem(index);
         p_enabled_channels &= ~4;
+        comboBox_channel->removeItem(index);
     }
 }
 
@@ -850,11 +850,11 @@ void dockWidget_trigger::channel4changed(bool activated)
 
     const int index = (p_enabled_channels & 1 ? 1 : 0) + (p_enabled_channels & 2 ? 1 : 0) + (p_enabled_channels & 4 ? 1 : 0);
     if( activated ) {
-        comboBox_channel->insertItem(index,tr("Kanal 4"));
         p_enabled_channels |= 8;
+        comboBox_channel->insertItem(index,tr("Kanal 4"));
     } else {
-        comboBox_channel->removeItem(index);
         p_enabled_channels &= ~8;
+        comboBox_channel->removeItem(index);
     }
 }
 
