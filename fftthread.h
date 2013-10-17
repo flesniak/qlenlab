@@ -10,8 +10,7 @@
 class signaldata;
 
 /* fftthread starts to calculate the fft of a given data
- * and writes the result to output. if no output is given,
- * it will be created by fftthread. */
+ * and writes the result to inputData->getFft(). */
 
 class fftthread : public QThread
 {
@@ -29,8 +28,10 @@ protected:
 private:
     dataset p_ds;
     fftw_plan p_plan;
-    unsigned int p_plansize;
+    const unsigned int p_plansize;
     bool p_stop;
+    double* p_input;
+    double* p_output;
 };
 
 #endif // FFTTHREAD_H
