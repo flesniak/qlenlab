@@ -25,6 +25,10 @@ QMAKE_CXXFLAGS += -Wall -Wextra -funroll-loops
 LIBS += -lstdc++ -lqwt -lfftw3
 INCLUDEPATH += /usr/include/qwt6
 INCLUDEPATH += /usr/include/qwt
+win32 {
+    INCLUDEPATH += C:/Qt/Qwt-6.1.0/include
+    LIBS += -LC:/Qt/Qwt-6.1.0/lib -llibfftw3-3
+}
 
 SOURCES += main.cpp qlenlab.cpp settingsdialog.cpp exportdialog.cpp plot.cpp signaldata.cpp LENlib/LENlib.cpp communicator.cpp dockwidgets.cpp storage.cpp bodeplot.cpp \
     fftthread.cpp

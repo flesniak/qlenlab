@@ -21,22 +21,30 @@
  * along with LENlib. If not, see <http://www.gnu.org/licenses/>.       *
  ***********************************************************************/
 
+#if defined(__APPLE__)
+#define OS_MAC
+#elif defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
+#define OS_WIN
+#elif defined(linux) || defined(__GNUC__)
+#define OS_LINUX
+#else
+#error "Unknown Operating System"
+#endif
+
 #include "LENlib.h"
 #include <iostream>
 #include <dirent.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <termios.h>
 #include <string.h>
 #include <stdio.h>
 
-#if defined(__APPLE__)
-#define OS_MAC
-#elif defined(linux) || defined(__GNUC__)
-#define OS_LINUX
-#elif defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
-#define OS_WIN
-#endif
+#ifdef OS_WIN
+    #include <windows.h>
+    #include <direct.h>
+#else
+    #include <termios.h>
+#endif //OS_WIN
 
 lenboard::lenboard(){
     checkrange = true;
@@ -108,6 +116,7 @@ int lenboard::openport(char* portname){
     char path[60] = "/dev/";
     strncat(path, portname, 50);
 
+#ifndef OS_WIN
     hserial = open(path, O_RDWR | O_NOCTTY | O_NDELAY);
     if(hserial < 0)
         return -1;
@@ -135,6 +144,41 @@ int lenboard::openport(char* portname){
         closeport();
         return -1;
     }
+#elif defined(OS_WIN)
+    DWORD accessdirection = GENERIC_READ | GENERIC_WRITE;
+    hSerial = CreateFile(portname, accessdirection, 0, 0, OPEN_EXISTING, 0, 0);
+    if (hSerial == INVALID_HANDLE_VALUE) {
+        //call GetLastError(); to gain more information
+        return -1;
+    }
+    DCB dcbSerialParams = {0};
+    dcbSerialParams.DCBlength=sizeof(dcbSerialParams);
+    if (!GetCommState(hSerial, &dcbSerialParams)) {
+         //could not get the state of the comport
+        closeport();
+        return -1;
+    }
+    dcbSerialParams.BaudRate=115200;
+    dcbSerialParams.ByteSize=8;
+    dcbSerialParams.StopBits=ONESTOPBIT;
+    dcbSerialParams.Parity=NOPARITY;
+    if(!SetCommState(hSerial, &dcbSerialParams)){
+         //analyse error
+        closeport();
+        return -1;
+    }
+    COMMTIMEOUTS timeouts={0};
+    timeouts.ReadIntervalTimeout=50;
+    timeouts.ReadTotalTimeoutConstant=50;
+    timeouts.ReadTotalTimeoutMultiplier=10;
+    timeouts.WriteTotalTimeoutConstant=50;
+    timeouts.WriteTotalTimeoutMultiplier=10;
+    if(!SetCommTimeouts(hSerial, &timeouts)){
+        //handle error
+        closeport();
+        return -1;
+    }
+#endif
 
     char query[] = "id\x0D\x0A";
     portsend(query, 4);
@@ -534,13 +578,15 @@ portlist::portlist(){
 }
 
 int portlist::refresh(){
+    listcount = 0;
+
+#ifndef OS_WIN
     DIR *pdir = NULL;
     pdir = opendir("/dev");
     struct dirent *pentry = NULL;
     if(pdir == NULL)
         return -1;
 
-    listcount = 0;
     while((pentry = readdir(pdir))){
         #if defined(OS_MAC)
         if((pentry->d_name)[0] == 'c' && (pentry->d_name)[1] == 'u' && (pentry->d_name)[2] == '.' && listcount < 30)
@@ -552,6 +598,23 @@ int portlist::refresh(){
             listcount++;
         }
     }
+#else
+    FILE* comports = popen("comports.exe", "r");
+    if( comports )
+    {
+        char comport[10];
+        while( fgets(comport,10,comports) ) {
+            strncpy(list[listcount],comport,4); //copy 4 bytes for comport
+            listcount++;
+        }
+        pclose(comports);
+
+    } else {
+        printf("unable to run comports.exe\n");
+        return -1;
+    }
+#endif
+
     return 0;
 }
 
