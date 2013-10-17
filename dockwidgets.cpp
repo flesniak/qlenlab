@@ -419,6 +419,8 @@ void dockWidget_viewport::setMode(meta::plotmode mode)
         spinBox_autoscaleGrid->setValue(p_autoscale_grid_fft);
         break;
     }
+    submitViewportX();
+    submitViewportY();
 }
 
 void dockWidget_viewport::updateViewportXValue(QString value)
@@ -451,6 +453,7 @@ void dockWidget_viewport::submitYAutoscale(bool on)
 
 void dockWidget_viewport::submitViewportX()
 {
+    qDebug() << "submitViewportX()";
     comboBox_xaxis->setCurrentIndex(comboBox_xaxis->findText(QString::number(spinBox_xaxis->value())));
     switch(p_mode) {
     case meta::scope :
@@ -612,7 +615,7 @@ dockWidget_scope::dockWidget_scope(QWidget *parent, Qt::WindowFlags flags) : QDo
 void dockWidget_scope::restoreSettings()
 {
     QSettings settings;
-    checkBox_ch1active->setChecked(settings.value("scope/ch1active",false).toBool());
+    checkBox_ch1active->setChecked(settings.value("scope/ch1active",true).toBool());
     checkBox_ch2active->setChecked(settings.value("scope/ch2active",false).toBool());
     checkBox_ch3active->setChecked(settings.value("scope/ch3active",false).toBool());
     checkBox_ch4active->setChecked(settings.value("scope/ch4active",false).toBool());
