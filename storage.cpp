@@ -43,10 +43,10 @@ signaldata* storage::getData(unsigned char channel, int index)
 {
     if( index == -1 )
         index = datasets.size()-1;
-    return datasets.at(index).channel[channel];
+    return datasets.at(index)->channel[channel];
 }
 
-dataset storage::getDataset(int index)
+dataset* storage::getDataset(int index)
 {
     if( index == -1 )
         index = datasets.size()-1;
@@ -64,7 +64,7 @@ void storage::setMaximumDatasets(int maximum)
         p_maximumDatasets = maximum;
 }
 
-void storage::appendDataset(dataset &newdataset)
+void storage::appendDataset(dataset* newdataset)
 {
     datasets.append(newdataset);
     deleteSpares();
@@ -80,12 +80,16 @@ bool storage::deleteDataset(int index)
     }
 
     if( index < datasets.size() ) {
-        dataset todelete = datasets.takeAt(index);
-        delete todelete.timestamp;
-        delete todelete.channel[0];
-        delete todelete.channel[1];
-        delete todelete.channel[2];
-        delete todelete.channel[3];
+        dataset* todelete = datasets.at(index);
+        if( todelete->flags )
+            return deleteDataset(index+1); //we are not allowed to delete this one, try next
+        datasets.removeAt(index);
+        delete todelete->timestamp;
+        delete todelete->channel[0];
+        delete todelete->channel[1];
+        delete todelete->channel[2];
+        delete todelete->channel[3];
+        delete todelete;
         return true;
     }
     else
@@ -94,7 +98,7 @@ bool storage::deleteDataset(int index)
 
 void storage::deleteSpares()
 {
-    while( (unsigned int)datasets.size() > p_maximumDatasets )
+    for(unsigned int i = datasets.size(); i > p_maximumDatasets; i--)
         deleteDataset(0);
 }
 
@@ -109,7 +113,7 @@ QVariant storage::data(const QModelIndex &index, int role) const
     if( index.column() != 0 )
         return QVariant();
     if( role == Qt::DisplayRole && index.row() < datasets.size() )
-        return "Nr. "+QString::number(index.row()+1)+" ("+datasets.at(index.row()).timestamp->toString("hh:mm:ss.zzz")+")";
+        return QString::number(index.row()+1).rightJustified(2,'0')+(datasets.at(index.row())->flags ? "p " : " ")+"("+datasets.at(index.row())->timestamp->toString("hh:mm:ss.zzz")+")";
     return QVariant();
 }
 

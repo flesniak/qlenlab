@@ -18,15 +18,16 @@ fftthread::~fftthread()
     fftw_free(p_output);
 }
 
-dataset fftthread::getDataset() const
+dataset* fftthread::getDataset()
 {
     return p_ds;
 }
 
-bool fftthread::setDataset(dataset ds)
+bool fftthread::setDataset(dataset* ds)
 {
-    if( !isRunning() ) { //drop datasets if machine is still busy -> too slow
+    if( !isRunning() && ds != p_ds ) { //drop datasets if machine is still busy -> too slow
         p_ds = ds;
+        p_ds->flags++;
         return true;
     }
     return false;
@@ -36,7 +37,7 @@ void fftthread::run()
 {
     p_stop = false;
     for(unsigned int i = 0; i < 4 && !p_stop; i++ ) {
-        signaldata* inputData = p_ds.channel[i];
+        signaldata* inputData = p_ds->channel[i];
         if( inputData->size() == 0 )
             continue;
 
@@ -56,6 +57,7 @@ void fftthread::run()
         }
         inputData->getFft()->setInterval(1000.0/p_plansize/inputData->getInterval()); //set frequency to input's fft
     }
+    p_ds->flags--;
 }
 
 void fftthread::stop()

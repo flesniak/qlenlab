@@ -18,15 +18,15 @@ class fftthread : public QThread
 public:
     explicit fftthread(QObject *parent = 0);
     virtual ~fftthread();
-    dataset getDataset() const;
-    bool setDataset(dataset ds);
+    dataset* getDataset();
+    bool setDataset(dataset* ds);
     void stop();
 
 protected:
     void run();
 
 private:
-    dataset p_ds;
+    dataset* p_ds;
     fftw_plan p_plan;
     const unsigned int p_plansize;
     bool p_stop;

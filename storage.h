@@ -35,8 +35,8 @@ public:
     storage(QObject *parent = 0);
     ~storage();
 
-    void appendDataset(dataset &newdataset);
-    dataset getDataset(int index);
+    void appendDataset(dataset* newdataset);
+    dataset* getDataset(int index);
     bool deleteDataset(int index);
     signaldata* getData(meta::channel channel, int index = -1);
     signaldata* getData(unsigned char channel, int index = -1);
@@ -53,7 +53,7 @@ public slots:
     //void setDatasetInterval(int interval);
 
 private:
-    QList<dataset> datasets;
+    QList<dataset*> datasets;
     unsigned int p_maximumDatasets;
     //unsigned int p_datasetInterval;
     void deleteSpares();

@@ -136,12 +136,13 @@ void communicator::doMeasure()
         measure();
 
         unsigned char* buffer = getrawmeasurement();
-        dataset newset;
-        newset.timestamp = new QTime(QTime::currentTime());
+        dataset* newset = new dataset;
+        newset->flags = 0;
+        newset->timestamp = new QTime(QTime::currentTime());
         for(unsigned char i=0; i<4; i++) {
-            newset.channel[i] = new signaldata;
+            newset->channel[i] = new signaldata;
             if( activechannels[i] )
-                newset.channel[i]->reserve(16400/actives);
+                newset->channel[i]->reserve(16400/actives);
         }
         unsigned char channel = 255; //to get channel = 0 for index == 0
         for(int index = 0; index < getrawvaluecount(); index++) {
@@ -151,20 +152,20 @@ void communicator::doMeasure()
                 else
                     channel = 0;
             } while( !activechannels[channel] );
-            newset.channel[channel]->append(calcvalue(channel,buffer[index]));
+            newset->channel[channel]->append(calcvalue(channel,buffer[index]));
         }
 
         for(int index=0;index<4;index++)
-            if( newset.channel[index]->size() != 0 ) {
-                newset.channel[index]->setInterval(1000.0/samplerate);
-                newset.channel[index]->smooth(p_smoothFactor);
+            if( newset->channel[index]->size() != 0 ) {
+                newset->channel[index]->setInterval(1000.0/samplerate);
+                newset->channel[index]->smooth(p_smoothFactor);
             }
         //do not delete empty datasets
 
-        newset.channel[p_triggerchannel]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[channel/2]));
+        newset->channel[p_triggerchannel]->setTrigger(p_triggermode,p_triggervalue,3.3/256*getrangefactor(vdivision[channel/2]));
         for(int index=0;index<4;index++)
-            if( newset.channel[index] != 0 && index != p_triggerchannel )
-                newset.channel[index]->inheritTriggerOffset(newset.channel[p_triggerchannel]->getTriggerOffset());
+            if( newset->channel[index] != 0 && index != p_triggerchannel )
+                newset->channel[index]->inheritTriggerOffset(newset->channel[p_triggerchannel]->getTriggerOffset());
 
         p_storage->appendDataset(newset);
         emit displayNewDataset();
@@ -237,13 +238,13 @@ void communicator::doBodeDiagram()
 //#define DEBUGBODE
 #ifdef DEBUGBODE
         dataset newset;
-        newset.timestamp = new QTime(QTime::currentTime());
-        newset.channel[0] = new signaldata;
-        newset.channel[1] = new signaldata;
-        newset.channel[2] = new signaldata;
-        newset.channel[3] = new signaldata;
-        newset.channel[0]->setTimeInterval(1000.0/samplerate);
-        newset.channel[2]->setTimeInterval(1000.0/samplerate);
+        newset->timestamp = new QTime(QTime::currentTime());
+        newset->channel[0] = new signaldata;
+        newset->channel[1] = new signaldata;
+        newset->channel[2] = new signaldata;
+        newset->channel[3] = new signaldata;
+        newset->channel[0]->setTimeInterval(1000.0/samplerate);
+        newset->channel[2]->setTimeInterval(1000.0/samplerate);
 #endif
 
         measure();
@@ -266,7 +267,7 @@ void communicator::doBodeDiagram()
                     inmin = value;
             }
 #ifdef DEBUGBODE
-            newset.channel[channel?2:0]->append(value);
+            newset->channel[channel?2:0]->append(value);
 #endif
             if( p_stop )
                 break;

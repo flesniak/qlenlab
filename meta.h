@@ -41,6 +41,7 @@ class QTime;
 struct dataset {
     QTime* timestamp;
     signaldata* channel[4];
+    unsigned char flags; //tracks how many threads are using this dataset, has to be 0 to be deleted by storage
 };
 
 struct bodestate {

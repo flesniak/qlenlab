@@ -33,7 +33,7 @@
 #include "signaldata.h"
 #include "storage.h"
 
-plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot(parent), p_mode(mode), interval(0.0, 20.0), p_storage(datastorage), p_autoscale(false), p_autoscaleGrid(0.0), p_currentIndex(-2)
+plot::plot(meta::plotmode mode, storage *datastorage, QWidget *parent) : QwtPlot(parent), p_mode(mode), interval(0.0, 20.0), p_storage(datastorage), p_dataset(0), p_autoscale(false), p_autoscaleGrid(0.0), p_currentIndex(-2)
 {
     plotLayout()->setAlignCanvasToScales(true);
 
@@ -108,29 +108,31 @@ void plot::showDataset(const int index)
 {
     p_currentIndex = index;
     p_dataset = p_storage->getDataset(index);
+    p_dataset->flags++;
     switch(p_mode) {
     case meta::scope :
-        p_datawrapper[0]->setData(p_dataset.channel[0]);
-        p_datawrapper[1]->setData(p_dataset.channel[1]);
-        p_datawrapper[2]->setData(p_dataset.channel[2]);
-        p_datawrapper[3]->setData(p_dataset.channel[3]);
+        p_datawrapper[0]->setData(p_dataset->channel[0]);
+        p_datawrapper[1]->setData(p_dataset->channel[1]);
+        p_datawrapper[2]->setData(p_dataset->channel[2]);
+        p_datawrapper[3]->setData(p_dataset->channel[3]);
         break;
     case meta::fft :
         bool allFftsFound = true;
         for(unsigned int i = 0; i < 4; i++)
-            if( p_dataset.channel[i]->size() && p_dataset.channel[i]->getFft() == 0 ) {
+            if( p_dataset->channel[i]->size() && p_dataset->channel[i]->getFft() == 0 ) {
                 allFftsFound = false;
                 break;
             }
         if( !allFftsFound ) {
             p_fftthread->setDataset(p_dataset);
             p_fftthread->start(); //dataset will be shown when thread is finished
+            p_dataset->flags--; //we don't use it anymore, fftthread sets its own flag
             return; //don't start drawing if ffts are not calculated yet
         } else {
-            p_datawrapper[0]->setData(p_dataset.channel[0]->getFft());
-            p_datawrapper[1]->setData(p_dataset.channel[1]->getFft());
-            p_datawrapper[2]->setData(p_dataset.channel[2]->getFft());
-            p_datawrapper[3]->setData(p_dataset.channel[3]->getFft());
+            p_datawrapper[0]->setData(p_dataset->channel[0]->getFft());
+            p_datawrapper[1]->setData(p_dataset->channel[1]->getFft());
+            p_datawrapper[2]->setData(p_dataset->channel[2]->getFft());
+            p_datawrapper[3]->setData(p_dataset->channel[3]->getFft());
         }
         break;
     }
@@ -138,15 +140,16 @@ void plot::showDataset(const int index)
     if( p_autoscale )
         autoscale();
     replot();
+    p_dataset->flags--;
 }
 
 void plot::showFftDataset()
 {
     p_dataset = p_fftthread->getDataset();
-    p_datawrapper[0]->setData(p_dataset.channel[0]->getFft());
-    p_datawrapper[1]->setData(p_dataset.channel[1]->getFft());
-    p_datawrapper[2]->setData(p_dataset.channel[2]->getFft());
-    p_datawrapper[3]->setData(p_dataset.channel[3]->getFft());
+    p_datawrapper[0]->setData(p_dataset->channel[0]->getFft());
+    p_datawrapper[1]->setData(p_dataset->channel[1]->getFft());
+    p_datawrapper[2]->setData(p_dataset->channel[2]->getFft());
+    p_datawrapper[3]->setData(p_dataset->channel[3]->getFft());
 
     if( p_autoscale )
         autoscale();
@@ -169,7 +172,7 @@ void plot::autoscale()
 {
     double lower = 0, upper = 0;
     for(int i=0;i<4;i++) {
-         QRectF rect = p_dataset.channel[i]->boundingRect();
+         QRectF rect = p_dataset->channel[i]->boundingRect();
          if( rect.bottom() < lower )
              lower = rect.bottom();
          if( rect.top() > upper )
@@ -231,7 +234,7 @@ void plot::updateViewportY(const double lower, const double upper)
 
 signaldata** plot::getCurrentData()
 {
-    return p_dataset.channel;
+    return p_dataset->channel;
 }
 
 plotzoomer::plotzoomer(QwtPlotCanvas* canvas, bool doReplot) : QwtPlotZoomer(canvas, doReplot)

@@ -53,7 +53,7 @@ private:
     QwtPlotGrid* grid;
     plotzoomer* zoomer;
     storage* p_storage;
-    dataset p_dataset;
+    dataset* p_dataset;
     datawrapper* p_datawrapper[4];
     fftthread* p_fftthread;
     bool p_autoscale;
