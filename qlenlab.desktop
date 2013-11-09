@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=QLenLab
+GenericName=QLenLab
+Comment=Freie alternative zu LENLab für das KIT EI-Board
+Exec=qlenlab
+Terminal=false
+Type=Application
+Categories=Science;
