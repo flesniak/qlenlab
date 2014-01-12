@@ -35,6 +35,36 @@
 #define VDIV_2   2
 #define VDIV_10  3
 
+
+#ifdef OS_WIN
+    #include <windows.h>
+    class hserial_t {
+    public:
+        operator HANDLE() {
+            return h;
+        };
+        operator int() {
+            return (int)h;
+        };
+        hserial_t& operator=(const int& a) {
+            h = (HANDLE)a;
+            return *this;
+        };
+        hserial_t operator=(const HANDLE& a) {
+            h = a;
+            return *this;
+        };
+        bool operator<(const int& a) const {
+            return ((int)h<a);
+        };
+    private:
+        HANDLE h;
+    };
+    //typedef HANDLE hserial_t;
+#else
+    typedef int hserial_t;
+#endif //OS_WIN
+
 class lenboard {
 public:
     lenboard();
@@ -79,7 +109,7 @@ private:
     unsigned char flagstonum(bool* flagarray) const;
     void    numtoflags(bool* flagarray, unsigned char number) const;
 
-    int     hserial;
+    hserial_t hserial;
     bool    checkrange;
     char    idstring[50];
     unsigned int sinusfrequency;

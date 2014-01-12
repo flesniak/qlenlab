@@ -146,14 +146,14 @@ int lenboard::openport(char* portname){
     }
 #elif defined(OS_WIN)
     DWORD accessdirection = GENERIC_READ | GENERIC_WRITE;
-    hSerial = CreateFile(portname, accessdirection, 0, 0, OPEN_EXISTING, 0, 0);
-    if (hSerial == INVALID_HANDLE_VALUE) {
+    hserial = CreateFile((LPCWSTR)portname, accessdirection, 0, 0, OPEN_EXISTING, 0, 0);
+    if (hserial == INVALID_HANDLE_VALUE) {
         //call GetLastError(); to gain more information
         return -1;
     }
-    DCB dcbSerialParams = {0};
+    DCB dcbSerialParams;
     dcbSerialParams.DCBlength=sizeof(dcbSerialParams);
-    if (!GetCommState(hSerial, &dcbSerialParams)) {
+    if (!GetCommState(hserial, &dcbSerialParams)) {
          //could not get the state of the comport
         closeport();
         return -1;
@@ -162,18 +162,18 @@ int lenboard::openport(char* portname){
     dcbSerialParams.ByteSize=8;
     dcbSerialParams.StopBits=ONESTOPBIT;
     dcbSerialParams.Parity=NOPARITY;
-    if(!SetCommState(hSerial, &dcbSerialParams)){
+    if(!SetCommState(hserial, &dcbSerialParams)){
          //analyse error
         closeport();
         return -1;
     }
-    COMMTIMEOUTS timeouts={0};
+    COMMTIMEOUTS timeouts;
     timeouts.ReadIntervalTimeout=50;
     timeouts.ReadTotalTimeoutConstant=50;
     timeouts.ReadTotalTimeoutMultiplier=10;
     timeouts.WriteTotalTimeoutConstant=50;
     timeouts.WriteTotalTimeoutMultiplier=10;
-    if(!SetCommTimeouts(hSerial, &timeouts)){
+    if(!SetCommTimeouts(hserial, &timeouts)){
         //handle error
         closeport();
         return -1;

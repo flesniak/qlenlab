@@ -22,9 +22,12 @@ TARGET = qlenlab
 CONFIG += qwt
 QMAKE_CXXFLAGS += -Wall -Wextra -funroll-loops
 
-LIBS += -lstdc++ -lqwt -lfftw3
+LIBS += -lstdc++ -lqwt
 INCLUDEPATH += /usr/include/qwt6
 INCLUDEPATH += /usr/include/qwt
+unix {
+    LIBS += -lfftw3
+}
 win32 {
     INCLUDEPATH += C:/Qt/Qwt-6.1.0/include
     LIBS += -LC:/Qt/Qwt-6.1.0/lib -llibfftw3-3
