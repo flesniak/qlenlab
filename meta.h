@@ -21,7 +21,7 @@
 #define META_H
 
 namespace meta {
-static const char version[] = "0.3";
+static const char version[] = "0.4";
 
 enum channel { ch1a = 1, ch1b = 2, ch2a = 4, ch2b = 8, ch1 = ch1a|ch1b, ch2 = ch2a|ch2b, ch12ab = ch1|ch2 };
 
