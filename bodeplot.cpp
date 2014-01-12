@@ -42,7 +42,7 @@ bodeplot::bodeplot(communicator* com, QWidget *parent) : QwtPlot(parent), p_com(
     grid->enableYMin(false);
     grid->attach(this);
 
-    setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+    setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
 
     p_data = new bodedata;
 

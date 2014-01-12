@@ -24,7 +24,6 @@
 #include <QColor>
 
 #include <qwt_plot_grid.h>
-#include <qwt_plot_canvas.h>
 #include <qwt_plot_layout.h>
 #include <qwt_plot_curve.h>
 
@@ -237,11 +236,11 @@ signaldata** plot::getCurrentData()
     return p_dataset->channel;
 }
 
-plotzoomer::plotzoomer(QwtPlotCanvas* canvas, bool doReplot) : QwtPlotZoomer(canvas, doReplot)
+plotzoomer::plotzoomer(QWidget *canvas, bool doReplot) : QwtPlotZoomer(canvas, doReplot)
 {
 }
 
-plotzoomer::plotzoomer(int xAxis, int yAxis, QwtPlotCanvas* canvas, bool doReplot) : QwtPlotZoomer(xAxis, yAxis, canvas, doReplot)
+plotzoomer::plotzoomer(int xAxis, int yAxis, QWidget *canvas, bool doReplot) : QwtPlotZoomer(xAxis, yAxis, canvas, doReplot)
 {
 }
 

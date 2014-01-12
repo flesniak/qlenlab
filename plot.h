@@ -77,8 +77,8 @@ class plotzoomer : public QwtPlotZoomer
 {
     Q_OBJECT
 public:
-    plotzoomer(QwtPlotCanvas* canvas, bool doReplot = true);
-    plotzoomer(int xAxis, int yAxis, QwtPlotCanvas* canvas, bool doReplot = true);
+    plotzoomer(QWidget* canvas, bool doReplot = true);
+    plotzoomer(int xAxis, int yAxis, QWidget* canvas, bool doReplot = true);
 
 public slots:
     void setUnits(const QString& hUnit, const QString& vUnit);
