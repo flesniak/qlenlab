@@ -39,3 +39,8 @@ HEADERS += qlenlab.h settingsdialog.h exportdialog.h plot.h signaldata.h LENlib/
     fftthread.h
 FORMS +=
 
+target.path = /usr/bin
+SHORTCUT.path = /usr/share/applications
+SHORTCUT.files = $$PWD/qlenlab.desktop
+
+INSTALLS = target SHORTCUT
